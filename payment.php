@@ -57,11 +57,9 @@ if ($final_total <= 0 || empty($pending_items)) {
     exit;
 }
 
-// ── Request payment authority from ZarinPal ───────────────────────────────────
+// ── Request payment authority from ZarinPal / Mock Gateway ────────────────────
 $gateway      = new ZarinPalGateway();
-$callback_url = (isset($_SERVER['HTTPS']) ? 'https' : 'http')
-              . '://' . $_SERVER['HTTP_HOST']
-              . '/petshop/actions/complete_payment.php';
+$callback_url = get_app_base_url() . '/actions/complete_payment.php';
 
 // Fetch user details for ZarinPal metadata
 $user = $currentUser;

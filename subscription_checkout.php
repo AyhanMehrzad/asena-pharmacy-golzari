@@ -38,9 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     
     $gateway = new ZarinPalGateway();
-    $callback_url = (isset($_SERVER['HTTPS']) ? 'https' : 'http')
-                  . '://' . $_SERVER['HTTP_HOST']
-                  . '/petshop/actions/complete_payment.php';
+    $callback_url = get_app_base_url() . '/actions/complete_payment.php';
 
     // Fetch user details for ZarinPal metadata
     $user = $currentUser;

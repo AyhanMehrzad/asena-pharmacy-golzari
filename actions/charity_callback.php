@@ -4,12 +4,12 @@ require_once '../includes/db.php';
 require_once '../includes/functions.php';
 require_once '../includes/gateway.php';
 
-if (!isset($_GET['Authority']) || !isset($_GET['Status'])) {
-    die("Invalid request");
-}
+$authority = trim($_GET['Authority'] ?? $_GET['authority'] ?? '');
+$status    = strtoupper(trim($_GET['Status'] ?? $_GET['status'] ?? ''));
 
-$authority = $_GET['Authority'];
-$status    = $_GET['Status'];
+if (empty($authority) || empty($status)) {
+    die("Invalid request parameters");
+}
 
 if (!isset($_SESSION['pending_donation']) || $_SESSION['pending_donation']['authority'] !== $authority) {
     $_SESSION['charity_error'] = "تراکنش یافت نشد یا منقضی شده است.";

@@ -8,8 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$authority = trim($_GET['Authority'] ?? '');
-$status    = trim($_GET['Status'] ?? '');
+$authority = trim($_GET['Authority'] ?? $_GET['authority'] ?? '');
+$status    = strtoupper(trim($_GET['Status'] ?? $_GET['status'] ?? ''));
 
 // ── Gate 2: Gateway reported failure ──────────────────────────────────────────
 if ($status !== 'OK' || empty($authority)) {

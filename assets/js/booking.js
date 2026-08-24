@@ -10,7 +10,7 @@ const SlotPoller = (() => {
     const INTERVAL   = 10_000; // 10 seconds
 
     function getBookedSlots(doctorId, date) {
-        const url = `/petshop/actions/check_slots.php?doctor_id=${encodeURIComponent(doctorId)}&date=${encodeURIComponent(date)}`;
+        const url = `actions/check_slots.php?doctor_id=${encodeURIComponent(doctorId)}&date=${encodeURIComponent(date)}`;
         fetch(url, { cache: 'no-store' })
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);

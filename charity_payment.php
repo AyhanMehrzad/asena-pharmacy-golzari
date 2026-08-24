@@ -32,9 +32,7 @@ if ($is_anonymous) {
 }
 
 $gateway = new ZarinPalGateway();
-$callback_url = (isset($_SERVER['HTTPS']) ? 'https' : 'http')
-              . '://' . $_SERVER['HTTP_HOST']
-              . '/petshop/actions/charity_callback.php';
+$callback_url = get_app_base_url() . '/actions/charity_callback.php';
 
 $metadata = [];
 if ($user_id) {

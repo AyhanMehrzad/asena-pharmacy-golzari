@@ -134,3 +134,15 @@ function recalculate_bayesian_rating(PDO $pdo, string $target_type, int $target_
     return ['rating' => 4.8, 'review_count' => 0, 'baseline' => 4.8];
 }
 
+/**
+ * Returns dynamic absolute base URL of the current application install.
+ */
+function get_app_base_url(): string {
+    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+    $appRoot = rtrim(str_replace('\\', '/', dirname(__DIR__)), '/');
+    $subDir = str_replace($docRoot, '', $appRoot);
+    return $scheme . '://' . $host . $subDir;
+}
+
