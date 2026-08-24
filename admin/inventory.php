@@ -263,7 +263,7 @@ $pharmacy_tag_names = [
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex gap-2">
-                                    <button onclick='openModal("edit", <?= json_encode($product) ?>)' class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="ویرایش">
+                                    <button type="button" onclick="editProduct(this)" data-product="<?= htmlspecialchars(json_encode($product, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer" title="ویرایش">
                                         <span class="material-symbols-outlined text-lg">edit</span>
                                     </button>
                                     <form method="POST" onsubmit="return confirm('آیا از حذف این کالا اطمینان دارید؟');" class="inline m-0">
@@ -355,6 +355,10 @@ $pharmacy_tag_names = [
                         <input type="number" name="price" id="productPrice" required min="0" class="w-full rounded-xl border border-outline-variant p-2.5 text-sm outline-none focus:border-primary">
                     </div>
                     <div class="space-y-1">
+                        <label class="text-xs font-bold text-on-surface-variant">قیمت ویژه تخفیف‌دار (تومان)</label>
+                        <input type="number" name="discount_price" id="productDiscountPrice" min="0" class="w-full rounded-xl border border-outline-variant p-2.5 text-sm outline-none focus:border-primary">
+                    </div>
+                    <div class="space-y-1">
                         <label class="text-xs font-bold text-on-surface-variant">امتیاز اولیه کارشناسی (Baseline Quality)</label>
                         <input type="number" step="0.1" min="1" max="5" name="baseline_rating" id="productBaselineRating" value="4.8" class="w-full rounded-xl border border-outline-variant p-2.5 text-sm outline-none focus:border-primary">
                     </div>
@@ -396,6 +400,16 @@ $pharmacy_tag_names = [
 </div>
 
 <script>
+function editProduct(btn) {
+    try {
+        const raw = btn.getAttribute('data-product');
+        const product = JSON.parse(raw);
+        openModal('edit', product);
+    } catch(e) {
+        console.error('Error parsing product data:', e);
+    }
+}
+
 function openModal(mode, product = null) {
     const modal = document.getElementById('productModal');
     const form = document.getElementById('productForm');
@@ -405,13 +419,13 @@ function openModal(mode, product = null) {
         title.innerText = 'ویرایش کالا / دارو';
         document.getElementById('form_action').value = 'edit';
         document.getElementById('form_product_id').value = product.id;
-        document.getElementById('productName').value = product.name;
-        document.getElementById('productCategory').value = product.category;
+        document.getElementById('productName').value = product.name || '';
+        document.getElementById('productCategory').value = product.category || 'داروخانه تخصصی';
         document.getElementById('productAnimal').value = product.target_animal || 'all';
         document.getElementById('productPharmacyTag').value = product.pharmacy_tag || '';
         document.getElementById('productBrand').value = product.brand || '';
-        document.getElementById('productStock').value = product.stock;
-        document.getElementById('productPrice').value = product.price;
+        document.getElementById('productStock').value = product.stock ?? 10;
+        document.getElementById('productPrice').value = product.price || 0;
         document.getElementById('productDiscountPrice').value = product.discount_price || '';
         document.getElementById('productBaselineRating').value = product.baseline_rating || 4.8;
         document.getElementById('productImageUrl').value = product.image_url || '';

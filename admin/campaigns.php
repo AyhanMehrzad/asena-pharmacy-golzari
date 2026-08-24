@@ -130,7 +130,7 @@ $totalCollected = array_sum(array_column($campaigns, 'current_amount'));
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex gap-2">
-                                <button onclick='openModal("edit", <?= json_encode($camp) ?>)' class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="ویرایش">
+                                <button type="button" onclick="editCampaign(this)" data-camp="<?= htmlspecialchars(json_encode($camp, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer" title="ویرایش">
                                     <span class="material-symbols-outlined text-lg">edit</span>
                                 </button>
                                 <form method="POST" onsubmit="return confirm('آیا از حذف این کمپین اطمینان دارید؟');" class="inline m-0">
@@ -205,6 +205,16 @@ $totalCollected = array_sum(array_column($campaigns, 'current_amount'));
 </div>
 
 <script>
+function editCampaign(btn) {
+    try {
+        const raw = btn.getAttribute('data-camp');
+        const camp = JSON.parse(raw);
+        openModal('edit', camp);
+    } catch(e) {
+        console.error('Error parsing campaign data:', e);
+    }
+}
+
 function openModal(mode, camp = null) {
     const modal = document.getElementById('campaignModal');
     const form = document.getElementById('campaignForm');
