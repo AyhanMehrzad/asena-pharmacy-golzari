@@ -284,14 +284,14 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
             <p class="text-xs text-on-surface-variant">برای مشاهده محصولات متناسب با پت خود، گونه مورد نظرتان را انتخاب کنید</p>
         </div>
 
-        <div class="relative flex items-center justify-center">
+        <div class="relative flex items-center justify-center max-w-5xl mx-auto px-4">
             <!-- Navigation Arrow Prev -->
-            <button type="button" onclick="scrollAnimalCarousel(-1)" class="w-10 h-10 rounded-full border border-outline-variant/40 bg-white flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95 shrink-0 ml-2" title="قبلی">
+            <button type="button" onclick="scrollAnimalCarousel(-1)" class="w-10 h-10 rounded-full border border-outline-variant/40 bg-white flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95 shrink-0 ml-3 z-10" title="قبلی">
                 <span class="material-symbols-outlined text-[20px]">chevron_right</span>
             </button>
 
             <!-- Centered Species Circles Container -->
-            <div id="animal-carousel-container" class="flex items-center justify-start md:justify-center gap-6 overflow-x-auto py-3 px-2 no-scrollbar scroll-smooth">
+            <div id="animal-carousel-container" class="flex items-center justify-center gap-6 overflow-x-auto py-3 px-2 no-scrollbar scroll-smooth">
                 <?php foreach($animal_list as $key => $species): ?>
                     <?php 
                         $selected = ($animal === $key) || ($key === 'all' && empty($animal)); 
@@ -315,7 +315,7 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
             </div>
 
             <!-- Navigation Arrow Next -->
-            <button type="button" onclick="scrollAnimalCarousel(1)" class="w-10 h-10 rounded-full border border-outline-variant/40 bg-white flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95 shrink-0 mr-2" title="بعدی">
+            <button type="button" onclick="scrollAnimalCarousel(1)" class="w-10 h-10 rounded-full border border-outline-variant/40 bg-white flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95 shrink-0 mr-3 z-10" title="بعدی">
                 <span class="material-symbols-outlined text-[20px]">chevron_left</span>
             </button>
         </div>

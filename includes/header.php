@@ -37,7 +37,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <meta name="description" content="<?php echo isset($page_description) ? htmlspecialchars($page_description) : 'داروخانه آنلاین و تخصصی حیوانات خانگی و دامپزشکی آسنا - تامین مستقیم داروها، واکسن‌ها، مکمل‌ها و ملزومات انواع حیوانات خانگی و دام با تاییدیه دامپزشکی'; ?>">
     <meta property="og:title" content="<?php echo isset($page_title) ? htmlspecialchars($page_title) : 'داروخانه آنلاین و پت شاپ تخصصی آسنا'; ?>">
     <meta property="og:description" content="<?php echo isset($page_description) ? htmlspecialchars($page_description) : 'مرجع معتبر خرید آنلاین داروهای دامپزشکی، واکسن و ملزومات پت با زنجیره سرد و پشتیبانی ۲۴/۷ دکتر داروساز'; ?>">
-    <meta property="og:type" content="website">
+    <link href="assets/css/material-symbols.css" rel="stylesheet">
+    <link href="assets/css/vazirmatn.css" rel="stylesheet">
     <link href="assets/css/geist.css" rel="stylesheet">
     
     <!-- Custom & Tailwind CSS -->
