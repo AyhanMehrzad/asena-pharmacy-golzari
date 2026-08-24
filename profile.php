@@ -76,11 +76,13 @@ if (!empty($user_subscriptions)) {
 
 // Attach order items to each order
 if (!empty($orders)) {
+    $order_ids   = array_column($orders, 'id');
+    $order_ph    = implode(',', array_fill(0, count($order_ids), '?'));
     $itemsStmt   = $pdo->prepare("
         SELECT oi.*, p.image_url, p.category, p.brand, p.target_animal, p.pharmacy_tag, p.is_autoship 
         FROM order_items oi 
         LEFT JOIN products p ON oi.product_id = p.id 
-        WHERE oi.order_id IN ($ph)
+        WHERE oi.order_id IN ($order_ph)
     ");
     $itemsStmt->execute($order_ids);
     $all_items   = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
