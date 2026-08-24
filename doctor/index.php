@@ -7,7 +7,11 @@ if (isset($_SESSION['user_id'])) {
     $stmt = $pdo->prepare("SELECT * FROM doctors WHERE user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $doctorProfile = $stmt->fetch();
-    $doctorId = $doctorProfile['id'] ?? 0;
+    if (!$doctorProfile || ($_SESSION['user_role'] ?? '') !== 'doctor') {
+        header("Location: ../index.php");
+        exit;
+    }
+    $doctorId = (int)$doctorProfile['id'];
 } else {
     header("Location: ../login.php");
     exit;

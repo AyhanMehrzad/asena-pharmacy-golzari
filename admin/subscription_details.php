@@ -1,5 +1,6 @@
 <?php
-require_once '../includes/db.php';
+$currentPage = 'user_subscriptions';
+require_once 'includes/admin_header.php';
 require_once '../includes/functions.php';
 
 $subscription_id = (int)($_GET['id'] ?? 0);
@@ -101,9 +102,6 @@ if (!$subscription) {
 $stmt = $pdo->prepare("SELECT * FROM subscription_deliveries WHERE subscription_id = ? ORDER BY delivery_month ASC");
 $stmt->execute([$subscription_id]);
 $deliveries = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$currentPage = 'user_subscriptions';
-require_once 'includes/admin_header.php';
 
 $fmt = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter::FULL, IntlDateFormatter::FULL, 'Asia/Tehran', IntlDateFormatter::TRADITIONAL, 'yyyy/MM/dd HH:mm');
 $dateOnlyFmt = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter::FULL, IntlDateFormatter::NONE, 'Asia/Tehran', IntlDateFormatter::TRADITIONAL, 'yyyy/MM/dd');

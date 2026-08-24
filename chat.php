@@ -198,6 +198,12 @@ function fetchMessages() {
         });
 }
 
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
 function renderMessages(messages) {
     const container = document.getElementById('chat-messages');
     
@@ -207,9 +213,11 @@ function renderMessages(messages) {
         
         let imgHtml = '';
         if (msg.image_url) {
-            imgHtml = `<img src="${msg.image_url}" class="rounded-xl mb-3 max-w-[200px] h-auto cursor-pointer border border-outline-variant/20">`;
+            const safeImgUrl = escapeHtml(msg.image_url);
+            imgHtml = `<img src="${safeImgUrl}" class="rounded-xl mb-3 max-w-[200px] h-auto cursor-pointer border border-outline-variant/20" alt="ضمیمه چت">`;
         }
 
+        const safeMessage = escapeHtml(msg.message).replace(/\n/g, '<br>');
         const time = new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
 
         if (isUser) {
@@ -217,7 +225,7 @@ function renderMessages(messages) {
                 <div class="flex gap-4 max-w-[85%] flex-row-reverse ml-auto group">
                     <div class="bg-primary text-white px-5 py-4 rounded-3xl rounded-tl-sm shadow-md text-sm leading-relaxed">
                         ${imgHtml}
-                        <div>${msg.message.replace(/\n/g, '<br>')}</div>
+                        <div>${safeMessage}</div>
                         <div class="text-[9px] text-white/70 mt-2 text-left w-full block">${time} <span class="material-symbols-outlined text-[10px] ml-0.5" style="vertical-align: middle">done_all</span></div>
                     </div>
                 </div>
@@ -230,7 +238,7 @@ function renderMessages(messages) {
                     </div>
                     <div class="bg-white px-5 py-4 rounded-3xl rounded-br-sm shadow-md text-sm border border-outline-variant/10 leading-relaxed text-on-surface">
                         ${imgHtml}
-                        <div class="markdown-body">${msg.message.replace(/\n/g, '<br>')}</div>
+                        <div class="markdown-body">${safeMessage}</div>
                         <div class="text-[9px] text-on-surface-variant/70 mt-2 text-right w-full block">${time}</div>
                     </div>
                 </div>

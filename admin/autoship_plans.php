@@ -1,11 +1,10 @@
 <?php
-require_once '../includes/db.php';
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    header('Location: ../login.php');
-    exit;
-}
+$currentPage = 'autoship_plans';
+require_once 'includes/admin_header.php';
+require_once '../includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
     if (isset($_POST['action']) && $_POST['action'] === 'add_plan') {
         $name = trim($_POST['name']);
         $months = (int)$_POST['interval_months'];
@@ -31,7 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmt = $pdo->query("SELECT * FROM autoship_plans ORDER BY interval_months ASC");
 $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<?php include 'includes/header.php'; ?>
 <div class="p-8">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-2xl font-bold text-gray-800">مدیریت پلن‌های اشتراک هوشمند (Autoship)</h1>
@@ -40,13 +38,14 @@ $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </button>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-right text-sm">
-            <thead>
-                <tr class="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+            <thead class="bg-gray-50 text-gray-600">
+                <tr>
                     <th class="px-6 py-4">شناسه</th>
                     <th class="px-6 py-4">نام پلن</th>
-                    <th class="px-6 py-4">بازه زمانی (ماه)</th>
+                    <th class="px-6 py-4">بازه زمانی</th>
                     <th class="px-6 py-4">درصد تخفیف</th>
                     <th class="px-6 py-4 text-center">عملیات</th>
                 </tr>
@@ -61,6 +60,7 @@ $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td class="px-6 py-4 text-center space-x-2 space-x-reverse">
                         <button onclick="openEditModal(<?php echo $plan['id']; ?>, '<?php echo addslashes(htmlspecialchars($plan['name'])); ?>', <?php echo $plan['interval_months']; ?>, <?php echo $plan['discount_percent']; ?>)" class="text-blue-600 hover:text-blue-800"><span class="material-symbols-outlined">edit</span></button>
                         <form method="POST" class="inline" onsubmit="return confirm('آیا مطمئن هستید؟')">
+                            <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="delete_plan">
                             <input type="hidden" name="plan_id" value="<?php echo $plan['id']; ?>">
                             <button type="submit" class="text-red-600 hover:text-red-800"><span class="material-symbols-outlined">delete</span></button>
@@ -79,6 +79,7 @@ $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <button onclick="document.getElementById('addPlanModal').classList.add('hidden')" class="absolute top-4 left-4 text-gray-500 hover:text-red-500"><span class="material-symbols-outlined">close</span></button>
         <h2 class="text-xl font-bold text-gray-800 mb-6">افزودن پلن جدید</h2>
         <form method="POST" class="space-y-4">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="add_plan">
             <div>
                 <label class="block text-sm font-bold mb-1">نام پلن</label>
@@ -103,6 +104,7 @@ $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <button onclick="document.getElementById('editPlanModal').classList.add('hidden')" class="absolute top-4 left-4 text-gray-500 hover:text-red-500"><span class="material-symbols-outlined">close</span></button>
         <h2 class="text-xl font-bold text-gray-800 mb-6">ویرایش پلن</h2>
         <form method="POST" class="space-y-4">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="edit_plan">
             <input type="hidden" name="plan_id" id="edit_plan_id" value="">
             <div>

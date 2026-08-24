@@ -112,15 +112,19 @@ $tomorrowCount = (int)$tomorrowCountStmt->fetchColumn();
 // Specific Issues Metrics: User Not-Received reports + Overdue Dispatches
 $notReceivedCount = (int)$pdo->query("SELECT COUNT(DISTINCT subscription_id) FROM subscription_deliveries WHERE status = 'not_received'")->fetchColumn();
 
-$overdueDispatchCount = (int)$pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) < ? AND status = 'active'")->execute([$todayStr]) ? $pdo->query("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) < '$todayStr' AND status = 'active'")->fetchColumn() : 0;
+$overdueStmt = $pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) < ? AND status = 'active'");
+$overdueStmt->execute([$todayStr]);
+$overdueDispatchCount = (int)$overdueStmt->fetchColumn();
 
-$totalIssuesCount = (int)$pdo->query("
+$issuesStmt = $pdo->prepare("
     SELECT COUNT(DISTINCT o.id) 
     FROM user_subscriptions o 
     LEFT JOIN subscription_deliveries d ON d.subscription_id = o.id 
     WHERE (d.status = 'not_received') 
-       OR (o.status = 'active' AND DATE(o.next_delivery_date) < '$todayStr')
-")->fetchColumn();
+       OR (o.status = 'active' AND DATE(o.next_delivery_date) < ?)
+");
+$issuesStmt->execute([$todayStr]);
+$totalIssuesCount = (int)$issuesStmt->fetchColumn();
 
 $weekCountStmt = $pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) BETWEEN ? AND ? AND status = 'active'");
 $weekCountStmt->execute([$todayStr, $weekEndStr]);

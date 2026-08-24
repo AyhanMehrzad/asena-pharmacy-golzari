@@ -46,13 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'application/pdf'  => 'pdf',
                     default            => 'bin',
                 };
-                $uploadDir  = 'uploads/documents/';
+                $uploadDir  = '../uploads/documents/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
                 $newFileName = bin2hex(random_bytes(16)) . '.' . $ext;
-                $dest_path  = $uploadDir . $newFileName;
+                $target_file = $uploadDir . $newFileName;
+                $db_path     = 'uploads/documents/' . $newFileName;
 
-                if (move_uploaded_file($_FILES['document']['tmp_name'], $dest_path)) {
+                if (move_uploaded_file($_FILES['document']['tmp_name'], $target_file)) {
                     $stmt = $pdo->prepare("INSERT INTO pet_documents (pet_id, user_id, title, file_name, file_path) VALUES (?, ?, ?, ?, ?)");
-                    $stmt->execute([$pet_id, $user_id, $title, $newFileName, $dest_path]);
+                    $stmt->execute([$pet_id, $user_id, $title, $newFileName, $db_path]);
                     $_SESSION['profile_success'] = 'سند با موفقیت آپلود شد.';
                 } else {
                     $_SESSION['profile_error'] = 'خطا در انتقال فایل.';

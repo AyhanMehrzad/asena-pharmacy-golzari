@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/db.php';
+require_once '../includes/functions.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
@@ -10,6 +11,7 @@ $user_id = $_SESSION['user_id'];
 $action = $_POST['action'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'redeem') {
+    csrf_verify();
     $cost = (int)($_POST['cost'] ?? 0);
     $discount = (int)($_POST['discount'] ?? 0);
 

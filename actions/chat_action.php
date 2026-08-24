@@ -80,13 +80,20 @@ if ($action === 'send') {
         $file_tmp = $_FILES['image']['tmp_name'];
         $mime_type = mime_content_type($file_tmp);
         
-        if (strpos($mime_type, 'image/') === 0) {
+        $allowed_mime_map = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+        ];
+        
+        if (isset($allowed_mime_map[$mime_type]) && $_FILES['image']['size'] <= 5 * 1024 * 1024) {
+            $ext = $allowed_mime_map[$mime_type];
             if ($mode === 'admin') {
-                // Save locally for admin
-                $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-                $filename = 'ticket_' . time() . '_' . rand(1000,9999) . '.' . $ext;
+                // Save safely with random hash and strict verified extension
+                $filename = 'ticket_' . bin2hex(random_bytes(10)) . '.' . $ext;
                 $filepath = '../uploads/' . $filename;
-                if (!is_dir('../uploads/')) mkdir('../uploads/', 0777, true);
+                if (!is_dir('../uploads/')) mkdir('../uploads/', 0755, true);
                 if (move_uploaded_file($file_tmp, $filepath)) {
                     $image_url = 'uploads/' . $filename;
                 }

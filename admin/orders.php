@@ -1,9 +1,10 @@
 <?php
-require_once '../includes/db.php';
+$currentPage = 'orders';
+require_once 'includes/admin_header.php';
+require_once '../includes/functions.php';
 
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_order_status') {
-    require_once '../includes/functions.php';
     csrf_verify();
     
     $order_id = (int)$_POST['order_id'];
@@ -27,10 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     header("Location: orders.php");
     exit;
 }
-
-$currentPage = 'orders';
-require_once 'includes/admin_header.php';
-require_once '../includes/functions.php';
 
 // Fetch orders
 $stmt = $pdo->query("SELECT o.*, u.name as user_name FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT 50");

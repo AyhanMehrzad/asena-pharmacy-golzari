@@ -35,8 +35,22 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" name="viewport">
     <title><?php echo isset($page_title) ? htmlspecialchars($page_title) : 'داروخانه آنلاین و پت شاپ تخصصی آسنا'; ?></title>
     <meta name="description" content="<?php echo isset($page_description) ? htmlspecialchars($page_description) : 'داروخانه آنلاین و تخصصی حیوانات خانگی و دامپزشکی آسنا - تامین مستقیم داروها، واکسن‌ها، مکمل‌ها و ملزومات انواع حیوانات خانگی و دام با تاییدیه دامپزشکی'; ?>">
+    <link rel="canonical" href="<?php echo htmlspecialchars((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"); ?>">
+    
+    <!-- Open Graph / Facebook / Telegram -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="داروخانه و پت‌شاپ آنلاین آسنا">
+    <meta property="og:locale" content="fa_IR">
     <meta property="og:title" content="<?php echo isset($page_title) ? htmlspecialchars($page_title) : 'داروخانه آنلاین و پت شاپ تخصصی آسنا'; ?>">
     <meta property="og:description" content="<?php echo isset($page_description) ? htmlspecialchars($page_description) : 'مرجع معتبر خرید آنلاین داروهای دامپزشکی، واکسن و ملزومات پت با زنجیره سرد و پشتیبانی ۲۴/۷ دکتر داروساز'; ?>">
+    <meta property="og:image" content="assets/images/logo.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?php echo isset($page_title) ? htmlspecialchars($page_title) : 'داروخانه آنلاین و پت شاپ تخصصی آسنا'; ?>">
+    <meta name="twitter:description" content="<?php echo isset($page_description) ? htmlspecialchars($page_description) : 'مرجع معتبر خرید آنلاین داروهای دامپزشکی و ملزومات پت با تاییدیه دامپزشکی'; ?>">
+
+    <!-- Fonts & Icons -->
     <link href="assets/css/material-symbols.css" rel="stylesheet">
     <link href="assets/css/vazirmatn.css" rel="stylesheet">
     <link href="assets/css/geist.css" rel="stylesheet">

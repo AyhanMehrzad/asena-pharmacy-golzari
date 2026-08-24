@@ -1,8 +1,11 @@
 <?php
-require_once '../includes/db.php';
+$currentPage = 'dashboard';
+require_once 'includes/admin_header.php';
+require_once '../includes/functions.php';
 
 // Handle Event Post Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
     if (isset($_POST['action']) && $_POST['action'] === 'add_event') {
         $title = trim($_POST['title']);
         $time = trim($_POST['time']);
@@ -19,9 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: index.php");
     exit;
 }
-
-$currentPage = 'dashboard';
-require_once 'includes/admin_header.php';
 
 // Fetch dynamic data for dashboard
 
@@ -303,6 +303,7 @@ $dashboard_events = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <p class="text-xs text-on-surface-variant"><?= htmlspecialchars($ev['event_time']) ?></p>
                         </div>
                         <form action="index.php" method="POST" class="m-0" onsubmit="return confirm('آیا از حذف این رویداد اطمینان دارید؟');">
+                            <?= csrf_field() ?>
                             <input type="hidden" name="action" value="delete_event">
                             <input type="hidden" name="event_id" value="<?= $ev['id'] ?>">
                             <button type="submit" class="text-error hover:bg-error/10 p-1 rounded transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button>
@@ -316,6 +317,7 @@ $dashboard_events = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         <!-- Add new event form -->
         <form action="index.php" method="POST" class="space-y-4">
+            <?= csrf_field() ?>
             <h3 class="font-bold text-sm text-on-surface-variant mb-2">افزودن رویداد جدید:</h3>
             <input type="hidden" name="action" value="add_event">
             <div>

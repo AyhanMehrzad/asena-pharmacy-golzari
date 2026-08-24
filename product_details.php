@@ -20,6 +20,7 @@ if (!$product) {
 
 // Handle review submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_review') {
+    csrf_verify();
     if (!isset($_SESSION['user_id'])) {
         $error = "برای ثبت نظر باید وارد حساب کاربری شوید.";
     } else {
@@ -320,6 +321,7 @@ $autoship_price = round($base_price * (100 - $autoship_discount) / 100);
             <?php if(isset($_SESSION['user_id'])): ?>
             <h3 class="font-bold text-on-surface mb-4 text-sm">ثبت دیدگاه یا تجربه مصرف دارو</h3>
             <form action="product_details.php?id=<?php echo $product_id; ?>" method="POST" class="space-y-4">
+                <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="submit_review">
                 
                 <div>
@@ -435,8 +437,43 @@ function addToCart(btn, productId) {
         btn.innerHTML = originalText;
         btn.disabled = false;
     });
-}
+</script>
 
+<!-- Schema.org JSON-LD Structured Data for Google Rich Snippets (Product, Offer, Rating) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": <?php echo json_encode($product['name']); ?>,
+  "image": [
+    <?php echo json_encode($product['image_url'] ?: 'assets/images/pharma-default.svg'); ?>
+  ],
+  "description": <?php echo json_encode(strip_tags($product['description'] ?? $product['name'])); ?>,
+  "brand": {
+    "@type": "Brand",
+    "name": <?php echo json_encode($product['brand'] ?? 'داروخانه آسنا'); ?>
+  },
+  "category": <?php echo json_encode($product['category'] ?? 'دامپزشکی'); ?>,
+  "offers": {
+    "@type": "Offer",
+    "url": <?php echo json_encode((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"); ?>,
+    "priceCurrency": "IRR",
+    "price": "<?php echo ($product['discount_price'] ?: $product['price']) * 10; ?>",
+    "priceValidUntil": "<?php echo date('Y-12-31'); ?>",
+    "itemCondition": "https://schema.org/NewCondition",
+    "availability": "<?php echo ($product['stock'] > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'; ?>",
+    "seller": {
+      "@type": "Pharmacy",
+      "name": "داروخانه آنلاین و تخصصی آسنا"
+    }
+  }<?php if(!empty($product['rating_cache']) && $product['rating_cache'] > 0): ?>,
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "<?php echo $product['rating_cache']; ?>",
+    "reviewCount": "<?php echo max(1, (int)($product['review_count_cache'] ?? count($reviews))); ?>"
+  }
+  <?php endif; ?>
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>

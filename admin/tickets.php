@@ -148,23 +148,31 @@ function fetchAdminMessages() {
         });
 }
 
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
 function renderAdminMessages(messages) {
     const container = document.getElementById('admin-chat-messages');
     
     messages.forEach(msg => {
         const isAdmin = msg.sender_type === 'admin';
         const time = new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+        const safeMessage = escapeHtml(msg.message).replace(/\n/g, '<br>');
         
         let imgHtml = '';
         if (msg.image_url) {
-            imgHtml = `<img src="../${msg.image_url}" class="rounded-xl mb-3 max-w-[250px] border border-outline-variant/20 cursor-pointer" onclick="window.open(this.src)">`;
+            const safeImg = escapeHtml(msg.image_url);
+            imgHtml = `<img src="../${safeImg}" class="rounded-xl mb-3 max-w-[250px] border border-outline-variant/20 cursor-pointer" onclick="window.open(this.src)" alt="ضمیمه پیام">`;
         }
 
         if (isAdmin) {
             container.insertAdjacentHTML('beforeend', `
                 <div class="flex gap-4 max-w-[85%] flex-row-reverse ml-auto group">
                     <div class="bg-primary text-white px-5 py-4 rounded-3xl rounded-tl-sm shadow-md text-sm leading-relaxed">
-                        <div>${msg.message.replace(/\n/g, '<br>')}</div>
+                        <div>${safeMessage}</div>
                         <div class="text-[9px] text-white/70 mt-2 text-left w-full block">${time}</div>
                     </div>
                 </div>
@@ -174,7 +182,7 @@ function renderAdminMessages(messages) {
                 <div class="flex gap-4 max-w-[85%]">
                     <div class="bg-white px-5 py-4 rounded-3xl rounded-br-sm shadow-md text-sm border border-outline-variant/10 leading-relaxed text-on-surface">
                         ${imgHtml}
-                        <div>${msg.message.replace(/\n/g, '<br>')}</div>
+                        <div>${safeMessage}</div>
                         <div class="text-[9px] text-on-surface-variant/70 mt-2 text-right w-full block">${time}</div>
                     </div>
                 </div>
