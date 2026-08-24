@@ -504,118 +504,159 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
 </table>
 </div>
 </div>
-<!-- Order History (Clean Table) -->
+<!-- Order History (Modern Card-Based Design) -->
 <div id="orders-section" class="bg-surface-container-lowest rounded-3xl border border-outline-variant shadow-sm overflow-hidden scroll-mt-24">
-<div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-gradient-to-r from-surface-container-low to-transparent">
-<h3 class="text-base font-bold text-primary flex items-center gap-2">
-<span class="material-symbols-outlined text-secondary-container">shopping_bag</span>
-سفارشات و فاکتورهای من
-</h3>
-<span class="text-xs font-bold text-on-surface-variant bg-white px-3 py-1 rounded-full border border-outline-variant/40 persian-number"><?= count($orders) ?> سفارش ثبت شده</span>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-right text-sm">
-<thead>
-<tr class="bg-surface-container-low text-on-surface-variant font-bold border-b border-outline-variant">
-<th class="px-6 py-4">شناسه سفارش</th>
-<th class="px-6 py-4">تاریخ</th>
-<th class="px-6 py-4">وضعیت</th>
-<th class="px-6 py-4">مبلغ کل</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-outline-variant persian-number font-medium">
-<?php if(empty($orders)): ?>
-<tr>
-    <td colspan="4" class="px-6 py-8 text-center text-on-surface-variant font-bold">هیچ سفارشی یافت نشد.</td>
-</tr>
-<?php else: ?>
-    <?php foreach($orders as $order): ?>
-    <tr class="hover:bg-primary-container/5 transition-colors">
-    <td class="px-6 py-5 font-bold text-primary">
-        #PC-<?php echo $order['id']; ?>
-        <?php if (!empty($order['items'])): ?>
-            <div class="mt-3 space-y-2">
-                <?php foreach($order['items'] as $item): ?>
-                    <?php 
-                        $is_pharma = (str_contains($item['category'] ?? '', 'دارو') || str_contains($item['category'] ?? '', 'مکمل') || !empty($item['pharmacy_tag']));
-                        $item_img = !empty($item['image_url']) ? htmlspecialchars($item['image_url']) : 'assets/images/toy-mouse.jpg';
-                    ?>
-                    <div class="flex items-center gap-3 bg-surface-container-low p-2 rounded-xl border border-outline-variant/30 font-normal">
-                        <a href="product_details.php?id=<?= $item['product_id'] ?>" class="w-11 h-11 rounded-lg overflow-hidden bg-white shrink-0 border border-outline-variant/40 block hover:opacity-80 transition-opacity" title="مشاهده کالا">
-                            <img src="<?= $item_img ?>" class="w-full h-full object-cover" alt="<?= htmlspecialchars($item['product_name_snapshot']) ?>">
-                        </a>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                                <?php if($is_pharma): ?>
-                                    <span class="bg-primary-container/10 text-primary px-1.5 py-0.5 rounded text-[10px] font-bold">💊 داروخانه تخصصی</span>
-                                <?php else: ?>
-                                    <span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[10px] font-bold">🛍️ پت‌شاپ</span>
-                                <?php endif; ?>
-                                
-                                <?php if(!empty($item['is_autoship'])): ?>
-                                    <span class="bg-secondary-container/15 text-secondary-container px-1.5 py-0.5 rounded text-[10px] font-bold">🔄 تحویل خودکار</span>
-                                <?php endif; ?>
-                            </div>
-                            <a href="product_details.php?id=<?= $item['product_id'] ?>" class="text-xs font-bold text-on-surface hover:text-primary transition-colors truncate block">
-                                <?= htmlspecialchars($item['product_name_snapshot']) ?>
-                            </a>
-                            <div class="mt-1 flex items-center justify-between gap-2 flex-wrap">
-                                <div class="text-[11px] text-on-surface-variant">
-                                    <?= $item['quantity'] ?> عدد × <?= number_format($item['price_at_purchase']) ?> تومان
-                                </div>
-                                <button type="button" onclick="openRatingModal('product', <?= $item['product_id'] ?>, '<?= addslashes($item['product_name_snapshot']) ?>')" class="text-[11px] font-bold text-secondary-container hover:underline flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[14px]">star</span>
-                                    ثبت نظر و امتیاز (+۵ امتیاز)
-                                </button>
-                            </div>
+    <div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-gradient-to-r from-surface-container-low to-transparent">
+        <h3 class="text-base font-bold text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary-container">shopping_bag</span>
+            سفارشات و فاکتورهای من
+        </h3>
+        <span class="text-xs font-bold text-on-surface-variant bg-white px-3 py-1 rounded-full border border-outline-variant/40 persian-number"><?= count($orders) ?> سفارش ثبت شده</span>
+    </div>
+
+    <div class="p-6 space-y-6">
+        <?php if(empty($orders)): ?>
+            <div class="text-center py-12 text-on-surface-variant space-y-3">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-surface-container flex items-center justify-center text-on-surface-variant/60">
+                    <span class="material-symbols-outlined text-3xl">remove_shopping_cart</span>
+                </div>
+                <p class="font-bold text-sm">شما تاکنون هیچ سفارشی ثبت نکرده‌اید.</p>
+                <a href="pharmacy.php" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-container transition-colors shadow-sm">
+                    <span class="material-symbols-outlined text-sm">local_pharmacy</span>
+                    مشاهده داروخانه و پت‌شاپ
+                </a>
+            </div>
+        <?php else: ?>
+            <?php foreach($orders as $order): ?>
+                <?php 
+                $status_bg = 'bg-blue-50 text-blue-800 border-blue-200';
+                $status_dot = 'bg-blue-600';
+                $status_label = 'در حال پردازش';
+                
+                switch($order['status']) {
+                    case 'pending_payment': 
+                        $status_bg = 'bg-amber-50 text-amber-800 border-amber-200'; 
+                        $status_dot = 'bg-amber-500';
+                        $status_label = 'در انتظار پرداخت'; 
+                        break;
+                    case 'processing': 
+                        $status_bg = 'bg-blue-50 text-blue-800 border-blue-200'; 
+                        $status_dot = 'bg-blue-600';
+                        $status_label = 'در حال پردازش در انبار'; 
+                        break;
+                    case 'shipped': 
+                        $status_bg = 'bg-indigo-50 text-indigo-800 border-indigo-200'; 
+                        $status_dot = 'bg-indigo-600';
+                        $status_label = 'تحویل به پیک و پست'; 
+                        break;
+                    case 'delivered': 
+                        $status_bg = 'bg-emerald-50 text-emerald-800 border-emerald-200'; 
+                        $status_dot = 'bg-emerald-600';
+                        $status_label = 'تحویل داده شده'; 
+                        break;
+                    case 'cancelled': 
+                        $status_bg = 'bg-red-50 text-red-800 border-red-200'; 
+                        $status_dot = 'bg-red-600';
+                        $status_label = 'لغو شده'; 
+                        break;
+                }
+                ?>
+                <!-- Single Order Card -->
+                <div class="border border-outline-variant/60 rounded-2xl p-5 bg-white hover:border-primary/40 transition-all space-y-4 shadow-sm hover:shadow-md">
+                    <!-- Order Top Meta Bar -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-outline-variant/30">
+                        <div class="flex flex-wrap items-center gap-2.5 text-xs">
+                            <span class="font-bold text-primary font-mono text-sm">#PC-<?= $order['id'] ?></span>
+                            <span class="text-outline-variant">•</span>
+                            <span class="text-on-surface-variant persian-number flex items-center gap-1 font-mono">
+                                <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                <?= $fmtDateText->format(new DateTime($order['created_at'])) ?>
+                            </span>
+                            <?php if (!empty($order['gateway_ref_id'])): ?>
+                                <span class="text-outline-variant">•</span>
+                                <span class="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-mono text-[11px] border border-slate-200" title="شماره پیگیری پرداخت">
+                                    کد رهگیری: <?= htmlspecialchars($order['gateway_ref_id']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="flex items-center gap-3 self-end sm:self-auto">
+                            <!-- Status Badge -->
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border <?= $status_bg ?>">
+                                <span class="w-2 h-2 rounded-full <?= $status_dot ?> animate-pulse"></span>
+                                <?= $status_label ?>
+                            </span>
+                            
+                            <!-- Cancel Button if applicable -->
+                            <?php if(in_array($order['status'], ['pending_payment', 'processing'])): ?>
+                                <form action="actions/profile_action.php" method="POST" class="inline m-0" onsubmit="return confirm('آیا از لغو این سفارش اطمینان دارید؟');">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="action" value="cancel_order">
+                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                    <button type="submit" class="text-error hover:bg-error/10 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors">
+                                        لغو سفارش
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            </div>
+
+                    <!-- Items Grid inside Order -->
+                    <?php if (!empty($order['items'])): ?>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <?php foreach($order['items'] as $item): ?>
+                                <?php 
+                                    $is_pharma = (str_contains($item['category'] ?? '', 'دارو') || str_contains($item['category'] ?? '', 'مکمل') || !empty($item['pharmacy_tag']));
+                                    $item_img = !empty($item['image_url']) ? htmlspecialchars($item['image_url']) : 'assets/images/toy-mouse.jpg';
+                                ?>
+                                <div class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low/40 border border-outline-variant/30 hover:bg-surface-container-low transition-colors">
+                                    <a href="product_details.php?id=<?= $item['product_id'] ?>" class="w-14 h-14 rounded-xl overflow-hidden bg-white shrink-0 border border-outline-variant/40 block hover:opacity-90 transition-opacity">
+                                        <img src="<?= $item_img ?>" class="w-full h-full object-cover" alt="<?= htmlspecialchars($item['product_name_snapshot']) ?>">
+                                    </a>
+                                    
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                            <?php if($is_pharma): ?>
+                                                <span class="bg-secondary-container/15 text-secondary-container px-1.5 py-0.5 rounded text-[10px] font-bold">💊 دارویی</span>
+                                            <?php else: ?>
+                                                <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px] font-bold">🛍️ پت‌شاپ</span>
+                                            <?php endif; ?>
+                                            
+                                            <?php if(!empty($item['is_autoship'])): ?>
+                                                <span class="bg-status-active/15 text-status-active px-1.5 py-0.5 rounded text-[10px] font-bold">🔄 تحویل دوره‌ای</span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <a href="product_details.php?id=<?= $item['product_id'] ?>" class="text-xs font-bold text-primary hover:text-primary-container transition-colors truncate block">
+                                            <?= htmlspecialchars($item['product_name_snapshot']) ?>
+                                        </a>
+
+                                        <div class="mt-1 flex items-center justify-between gap-2 flex-wrap text-xs">
+                                            <span class="text-on-surface-variant font-mono text-[11px]">
+                                                <?= $item['quantity'] ?> عدد × <?= number_format($item['price_at_purchase']) ?> تومان
+                                            </span>
+                                            <button type="button" onclick="openRatingModal('product', <?= $item['product_id'] ?>, '<?= addslashes($item['product_name_snapshot']) ?>')" class="text-[11px] font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-[14px]">star</span>
+                                                امتیاز به کالا
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Order Footer with Total Amount -->
+                    <div class="flex items-center justify-between pt-3 border-t border-outline-variant/20 text-xs">
+                        <span class="text-on-surface-variant">مبلغ کل فاکتور:</span>
+                        <span class="font-bold text-sm text-primary font-mono">
+                            <span class="text-base text-emerald-700"><?= number_format($order['total_amount']) ?></span> تومان
+                        </span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         <?php endif; ?>
-    </td>
-    <td class="px-6 py-5 text-on-surface-variant">
-        <?php 
-        echo $fmtDate->format(new DateTime($order['created_at'])); 
-        ?>
-    </td>
-    <td class="px-6 py-5">
-        <?php 
-        $status_bg = 'bg-surface-container-high';
-        $status_text = 'text-on-surface';
-        $status_label = $order['status'];
-        
-        switch($order['status']) {
-            case 'pending_payment': $status_bg = 'bg-orange-100'; $status_text = 'text-orange-800'; $status_label = 'در انتظار پرداخت'; break;
-            case 'processing': $status_bg = 'bg-blue-100'; $status_text = 'text-blue-800'; $status_label = 'در حال پردازش'; break;
-            case 'shipped': $status_bg = 'bg-indigo-100'; $status_text = 'text-indigo-800'; $status_label = 'ارسال شده'; break;
-            case 'delivered': $status_bg = 'bg-status-active/10'; $status_text = 'text-status-active'; $status_label = 'تحویل شده'; break;
-            case 'cancelled': $status_bg = 'bg-error/10'; $status_text = 'text-error'; $status_label = 'لغو شده'; break;
-        }
-        ?>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full <?php echo $status_bg; ?> <?php echo $status_text; ?> text-xs font-bold">
-            <?php echo $status_label; ?>
-        </span>
-    </td>
-    <td class="px-6 py-5 font-bold text-on-surface flex items-center gap-3 justify-end">
-        <?php echo number_format($order['total_amount']); ?> تومان
-        <?php if(in_array($order['status'], ['pending_payment', 'processing'])): ?>
-            <form action="actions/profile_action.php" method="POST" class="inline m-0" onsubmit="return confirm('آیا از لغو این سفارش اطمینان دارید؟');">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="cancel_order">
-                <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
-                <button type="submit" class="text-error bg-error/10 hover:bg-error/20 p-1.5 rounded-md text-[10px] font-bold" title="لغو سفارش">
-                    لغو
-                </button>
-            </form>
-        <?php endif; ?>
-    </td>
-    </tr>
-    <?php endforeach; ?>
-<?php endif; ?>
-</tbody>
-</table>
-</div>
+    </div>
 </div>
 </div>
 <!-- Left Column: Subscriptions & Records -->
