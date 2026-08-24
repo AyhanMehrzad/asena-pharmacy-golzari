@@ -15,11 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 csrf_verify();
 
-$doctor_id = (int)($_POST['doctor_id'] ?? 0);
-$date      = trim($_POST['appointment_date'] ?? '');
-$time      = trim($_POST['appointment_time'] ?? '');
-$pet_type  = trim($_POST['pet_type'] ?? '');
-$pet_race  = trim($_POST['pet_race'] ?? '');
+$doctor_id     = (int)($_POST['doctor_id'] ?? 0);
+$date          = trim($_POST['appointment_date'] ?? '');
+$time          = trim($_POST['appointment_time'] ?? '');
+$pet_type      = trim($_POST['pet_type'] ?? '');
+$pet_race      = trim($_POST['pet_race'] ?? '');
+$visit_purpose = trim($_POST['visit_purpose'] ?? 'معاینه و چکاپ سلامت');
+$pet_notes     = trim($_POST['pet_notes'] ?? '');
 
 // ── Validate inputs ────────────────────────────────────────────────────────────
 if ($doctor_id <= 0 || empty($date) || empty($time) || empty($pet_type)) {
@@ -84,12 +86,12 @@ try {
         exit;
     }
 
-    // ── Insert appointment — NO loyalty points yet (awarded after payment) ─────
+    // ── Insert appointment with visit_purpose and pet_notes ───────────────────
     $stmt = $pdo->prepare(
-        "INSERT INTO appointments (user_id, doctor_id, appointment_date, appointment_time, pet_type, pet_race, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'pending')"
+        "INSERT INTO appointments (user_id, doctor_id, appointment_date, appointment_time, pet_type, pet_race, visit_purpose, pet_notes, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')"
     );
-    $stmt->execute([$_SESSION['user_id'], $doctor_id, $date, $time, $pet_type, $pet_race]);
+    $stmt->execute([$_SESSION['user_id'], $doctor_id, $date, $time, $pet_type, $pet_race, $visit_purpose, $pet_notes]);
     $appointment_id = $pdo->lastInsertId();
 
     // ── Store booking pending order in session for payment flow ───────────────

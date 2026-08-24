@@ -129,6 +129,8 @@ $booked_slots_json = json_encode($booked_slots);
                          data-image="<?php echo htmlspecialchars($doctor['image_url'] ?: 'assets/images/presentation-dog.jpg'); ?>"
                          data-price="<?php echo $doctor['price']; ?>"
                          data-schedule="<?php echo htmlspecialchars($doctor['schedule_info'] ?? '{}'); ?>"
+                         data-services="<?php echo htmlspecialchars($doctor['services_json'] ?? '[]'); ?>"
+                         data-tags="<?php echo htmlspecialchars($doctor['tags'] ?? ''); ?>"
                          onclick="selectDoctor(this)">
                         
                         <div class="relative mb-4 overflow-hidden rounded-xl">
@@ -144,6 +146,15 @@ $booked_slots_json = json_encode($booked_slots);
                         <div class="space-y-1.5">
                             <h3 class="text-xl font-bold text-slate-800"><?php echo htmlspecialchars($doctor['name']); ?></h3>
                             <p class="text-sm font-medium text-indigo-600 bg-indigo-50 inline-block px-2 py-0.5 rounded-md"><?php echo htmlspecialchars($doctor['specialty']); ?></p>
+                            
+                            <?php if(!empty($doctor['tags'])): ?>
+                            <div class="flex flex-wrap gap-1 mt-1.5">
+                                <?php foreach(array_slice(explode(',', $doctor['tags']), 0, 3) as $tg): ?>
+                                    <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">#<?php echo trim(htmlspecialchars($tg)); ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
+
                             <div class="flex items-center gap-1 text-amber-500 mt-2">
                                 <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
                                 <span class="text-sm font-bold text-slate-700"><?php echo $doctor['rating']; ?></span>
@@ -181,15 +192,15 @@ $booked_slots_json = json_encode($booked_slots);
                 </div>
             </section>
 
-            <!-- Pet Information Section -->
+            <!-- Pet Information & Purpose Section -->
             <section class="space-y-6 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/50">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-title-lg font-title-lg text-primary flex items-center gap-2">
                         <span class="material-symbols-outlined">pets</span>
-                        اطلاعات بیمار (حیوان خانگی)
+                        اطلاعات بیمار و علت مراجعه
                     </h2>
                 </div>
-                <p class="text-body-md text-on-surface-variant mb-4">لطفاً مشخص کنید این نوبت برای چه حیوانی رزرو می‌شود.</p>
+                <p class="text-body-md text-on-surface-variant mb-4">لطفاً مشخصات حیوان و علت مراجعه به پزشک را مشخص کنید.</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <?php if(count($user_pets) > 0): ?>
@@ -224,6 +235,34 @@ $booked_slots_json = json_encode($booked_slots);
                         <label class="text-label-md font-bold text-on-surface-variant">نژاد (اختیاری)</label>
                         <input type="text" name="pet_race" id="pet_race" value="" placeholder="مثال: پرشین، ژرمن و..."
                                class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-white text-sm text-on-surface transition-colors" />
+                    </div>
+
+                    <!-- Purpose of Visit -->
+                    <div class="col-span-1 md:col-span-2 space-y-2">
+                        <label class="text-label-md font-bold text-on-surface-variant flex items-center gap-1">
+                            <span class="material-symbols-outlined text-primary text-sm">medical_services</span>
+                            علت و هدف مراجعه (سرویس مورد نظر)
+                        </label>
+                        <div class="relative">
+                            <select name="visit_purpose" id="visit_purpose" class="w-full h-12 px-4 appearance-none rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-white text-sm text-on-surface transition-colors pr-4 pl-10">
+                                <option value="معاینه عمومی و چکاپ دوره ای">معاینه عمومی و چکاپ دوره ای</option>
+                                <option value="واکسیناسیون و انگل‌زدایی جامع">واکسیناسیون و انگل‌زدایی جامع</option>
+                                <option value="دندانپزشکی و جرم‌گیری تخصصی">دندانپزشکی و جرم‌گیری تخصصی</option>
+                                <option value="مشاوره و جراحی‌های تخصصی">مشاوره و جراحی‌های تخصصی</option>
+                                <option value="مشاوره تغذیه، رشد و رژیم درمانی">مشاوره تغذیه، رشد و رژیم درمانی</option>
+                                <option value="کاشت میکروچیپ و صدور شناسنامه بین‌المللی">کاشت میکروچیپ و صدور شناسنامه بین‌المللی</option>
+                            </select>
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
+                        </div>
+                    </div>
+
+                    <!-- Initial Pet Symptoms / Notes -->
+                    <div class="col-span-1 md:col-span-2 space-y-2">
+                        <label class="text-label-md font-bold text-on-surface-variant flex items-center gap-1">
+                            <span class="material-symbols-outlined text-primary text-sm">edit_note</span>
+                            توضیحات و شرح حال اولیه پت (اختیاری)
+                        </label>
+                        <textarea name="pet_notes" id="pet_notes" rows="2" placeholder="اگر حیوان خانگی شما علائم خاصی دارد یا نکته‌ای برای پزشک دارید بنویسید..." class="w-full p-3 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-white text-sm text-on-surface transition-colors resize-none outline-none"></textarea>
                     </div>
                 </div>
             </section>
@@ -347,6 +386,23 @@ $booked_slots_json = json_encode($booked_slots);
         document.getElementById('input_time').value = "";
         document.getElementById('summary-date').textContent = "انتخاب نشده";
         document.getElementById('summary-time').textContent = "انتخاب نشده";
+        
+        // Parse Services & Populate visit_purpose dropdown
+        const purposeSelect = document.getElementById('visit_purpose');
+        if (purposeSelect) {
+            try {
+                const services = JSON.parse(card.dataset.services || "[]");
+                if (Array.isArray(services) && services.length > 0) {
+                    purposeSelect.innerHTML = '';
+                    services.forEach(srv => {
+                        const opt = document.createElement('option');
+                        opt.value = srv.name || srv.title || srv;
+                        opt.textContent = `${srv.name || srv.title || srv} ${srv.duration ? '(' + srv.duration + ')' : ''}`;
+                        purposeSelect.appendChild(opt);
+                    });
+                }
+            } catch(e) {}
+        }
         
         renderDates();
         updateStepper();
