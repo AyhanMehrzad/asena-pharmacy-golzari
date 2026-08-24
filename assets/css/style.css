@@ -175,3 +175,20 @@ input:checked + .autoship-slider:before {
     scrollbar-width: none;
 }
 
+/* Mobile & Touch Device Optimizations for iOS & Android */
+html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+button, a, input, select, textarea {
+    touch-action: manipulation;
+}
+
+/* Safe area support for iOS (iPhone Notch & Home Indicator) */
+body {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+}

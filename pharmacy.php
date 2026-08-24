@@ -568,34 +568,68 @@ function buildUrl($updates) {
             <?php if(count($products) > 0): ?>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 <?php foreach($products as $product): ?>
-                <div class="bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col relative border border-outline-variant/10">
-                    <div class="aspect-square bg-surface-container-lowest rounded-2xl mb-6 overflow-hidden relative">
-                        <img src="<?php echo htmlspecialchars($product['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                        <div class="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/70 to-transparent flex justify-center z-20">
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>)" class="bg-primary text-white w-full py-3 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors">
-                                <span class="material-symbols-outlined">add_shopping_cart</span>
+                <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 group flex flex-col relative border border-outline-variant/10">
+                    
+                    <!-- Badges Top Left -->
+                    <div class="absolute top-5 left-5 flex flex-col gap-1.5 z-10">
+                        <?php if($product['discount_price']): ?>
+                        <div class="bg-secondary-container text-on-secondary-container text-[11px] px-2.5 py-0.5 rounded-full font-bold shadow-sm">تخفیف ویژه</div>
+                        <?php endif; ?>
+                        
+                        <?php if(!empty($product['is_autoship'])): ?>
+                        <div class="bg-primary-container text-white text-[11px] px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[12px]">autorenew</span>
+                            Autoship
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Product Image Container -->
+                    <div class="aspect-square bg-surface-container-lowest rounded-2xl mb-4 sm:mb-6 overflow-hidden relative">
+                        <a href="product_details.php?id=<?php echo $product['id']; ?>" class="block w-full h-full">
+                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        </a>
+                        
+                        <!-- Desktop Hover Overlay Only (lg:flex) -->
+                        <div class="hidden lg:flex absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/70 to-transparent justify-center z-20">
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>)" class="bg-primary text-white w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors cursor-pointer text-xs">
+                                <span class="material-symbols-outlined text-base">add_shopping_cart</span>
                                 افزودن به سبد دارو
                             </button>
                         </div>
                     </div>
 
+                    <!-- Info -->
                     <div class="flex-1 flex flex-col">
                         <div class="flex items-center justify-between text-xs text-on-surface-variant mb-1">
-                            <span class="text-primary font-bold"><?php echo htmlspecialchars($product['brand'] ?? 'داروخانه آسنا'); ?></span>
-                            <span class="text-status-warning font-bold flex items-center gap-1">⭐ <?php echo $product['rating_cache'] ?? 4.8; ?></span>
+                            <span class="text-primary font-bold text-[11px]"><?php echo htmlspecialchars($product['brand'] ?? 'داروخانه آسنا'); ?></span>
+                            <span class="text-status-warning font-bold flex items-center gap-0.5 text-xs">
+                                <span class="material-symbols-outlined text-[14px] text-amber-500">star</span>
+                                <?php echo $product['rating_cache'] ?? 4.8; ?>
+                            </span>
                         </div>
-                        <a href="product_details.php?id=<?php echo $product['id']; ?>">
-                            <h3 class="text-title-lg font-bold text-on-surface mb-3 line-clamp-2 hover:text-primary transition-colors"><?php echo htmlspecialchars($product['name']); ?></h3>
+                        <a href="product_details.php?id=<?php echo $product['id']; ?>" class="block mb-2">
+                            <h3 class="text-sm sm:text-base font-bold text-on-surface line-clamp-2 hover:text-primary transition-colors leading-snug"><?php echo htmlspecialchars($product['name']); ?></h3>
                         </a>
-                        <div class="mt-auto flex justify-between items-end pt-2">
+
+                        <!-- Card Footer with Price & Permanent Touch-Friendly Button -->
+                        <div class="mt-auto flex items-center justify-between pt-3 border-t border-outline-variant/20 gap-2">
                             <div class="flex flex-col">
                                 <?php if($product['discount_price']): ?>
-                                <span class="text-xs text-on-surface-variant line-through"><?php echo number_format($product['price']); ?> ت</span>
-                                <span class="text-title-lg font-bold text-primary"><?php echo number_format($product['discount_price']); ?> تومان</span>
+                                <span class="text-[10px] sm:text-xs text-on-surface-variant line-through font-mono"><?php echo number_format($product['price']); ?> ت</span>
+                                <span class="text-sm sm:text-base font-bold text-primary font-mono"><?php echo number_format($product['discount_price']); ?> <span class="text-[10px] font-normal">تومان</span></span>
                                 <?php else: ?>
-                                <span class="text-title-lg font-bold text-primary"><?php echo number_format($product['price']); ?> تومان</span>
+                                <span class="text-sm sm:text-base font-bold text-primary font-mono"><?php echo number_format($product['price']); ?> <span class="text-[10px] font-normal">تومان</span></span>
                                 <?php endif; ?>
                             </div>
+
+                            <!-- Dedicated Touch & Mobile Button (No hover required!) -->
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>)" 
+                                    class="bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
+                                    title="افزودن به سبد دارو">
+                                <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
+                                <span class="text-xs">خرید</span>
+                            </button>
                         </div>
                     </div>
                 </div>
