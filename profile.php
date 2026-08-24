@@ -397,6 +397,43 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
             <?php echo $sub['next_delivery_date'] ? $fmtDateText->format(new DateTime($sub['next_delivery_date'])) : 'نامشخص'; ?>
         </td>
     </tr>
+    <?php if ($sub['status'] === 'active'): ?>
+    <!-- User Self-Service Action Bar (Reschedule / Postpone / Cancel) -->
+    <tr class="bg-surface-container-low/30 border-b border-outline-variant/20">
+        <td colspan="5" class="px-6 py-3">
+            <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                <span class="font-bold text-on-surface-variant">مدیریت نوبت تحویل:</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Reschedule Form -->
+                    <form action="actions/subscription_action.php" method="POST" class="inline-flex items-center gap-1 m-0">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="reschedule_delivery">
+                        <input type="hidden" name="subscription_id" value="<?php echo $sub['id']; ?>">
+                        <input type="date" name="new_date" min="<?php echo date('Y-m-d'); ?>" required class="p-1 px-2 rounded-lg border border-outline-variant text-xs outline-none bg-white">
+                        <button type="submit" class="bg-primary text-white px-2.5 py-1 rounded-lg font-bold hover:bg-primary-container transition-all">تغییر تاریخ</button>
+                    </form>
+                    
+                    <!-- Skip / Postpone -->
+                    <form action="actions/subscription_action.php" method="POST" class="inline m-0" onsubmit="return confirm('آیا از به تعویق انداختن این نوبت ارسال به مدت ۳۰ روز اطمینان دارید؟');">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="skip_delivery">
+                        <input type="hidden" name="subscription_id" value="<?php echo $sub['id']; ?>">
+                        <input type="hidden" name="skip_days" value="30">
+                        <button type="submit" class="bg-surface-container-high hover:bg-surface-container-highest text-primary px-3 py-1 rounded-lg font-bold transition-all border border-outline-variant/40">به تعویق انداختن (+۳۰ روز)</button>
+                    </form>
+
+                    <!-- Cancel Anytime -->
+                    <form action="actions/subscription_action.php" method="POST" class="inline m-0" onsubmit="return confirm('آیا از لغو این اشتراک اطمینان دارید؟');">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="cancel_subscription">
+                        <input type="hidden" name="subscription_id" value="<?php echo $sub['id']; ?>">
+                        <button type="submit" class="text-error hover:bg-error/10 px-2.5 py-1 rounded-lg font-bold transition-colors">لغو اشتراک</button>
+                    </form>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <?php endif; ?>
     <?php if (!empty($sub['deliveries'])): ?>
     <tr class="bg-surface-container-lowest border-b border-outline-variant/30">
         <td colspan="5" class="p-4">
