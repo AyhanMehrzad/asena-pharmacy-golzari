@@ -66,6 +66,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             ]);
             recalculate_bayesian_rating($pdo, 'product', $pid);
         }
+    } elseif ($action === 'toggle_autoship') {
+        $pid = (int)$_POST['product_id'];
+        $stmt = $pdo->prepare("UPDATE products SET is_autoship = 1 - is_autoship WHERE id = ?");
+        $stmt->execute([$pid]);
+        if (isset($_POST['ajax'])) {
+            $stmt = $pdo->prepare("SELECT is_autoship, autoship_discount FROM products WHERE id = ?");
+            $stmt->execute([$pid]);
+            $updated = $stmt->fetch(PDO::FETCH_ASSOC);
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success', 'is_autoship' => $updated['is_autoship']]);
+            exit;
+        }
+        header("Location: inventory.php");
+        exit;
     } elseif ($action === 'delete') {
         $stmt = $pdo->prepare("DELETE FROM products WHERE id=?");
         $stmt->execute([(int)$_POST['product_id']]);
@@ -323,13 +337,22 @@ $pharmacy_tag_names = [
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <?php if(!empty($product['is_autoship'])): ?>
-                                        <span class="px-2 py-0.5 rounded bg-status-active/10 text-status-active text-[11px] font-bold">
-                                            <?= $product['autoship_discount'] ?? 10 ?>٪ تخفیف
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="text-[11px] text-on-surface-variant">غیرفعال</span>
-                                    <?php endif; ?>
+                                    <form action="inventory.php" method="POST" class="m-0 inline-block">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="toggle_autoship">
+                                        <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                                        <?php if(!empty($product['is_autoship'])): ?>
+                                            <button type="submit" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[11px] font-bold inline-flex items-center gap-1 hover:bg-emerald-200 transition-colors cursor-pointer" title="کلیک برای غیرفعال‌سازی تحویل خودکار دوره‌ای">
+                                                <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                                                فعال (<?= $product['autoship_discount'] ?? 10 ?>٪)
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="submit" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-secondary-container hover:text-white text-on-surface-variant text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer" title="کلیک برای فعال‌سازی تحویل خودکار دوره‌ای (Autoship)">
+                                                <span class="material-symbols-outlined text-[13px]">add_circle</span>
+                                                + فعال‌سازی
+                                            </button>
+                                        <?php endif; ?>
+                                    </form>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">

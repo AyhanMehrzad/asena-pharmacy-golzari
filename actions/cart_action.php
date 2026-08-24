@@ -36,10 +36,12 @@ if ($product_id > 0) {
             if ($product_row) {
                 $_SESSION['cart'][$product_id] = ($_SESSION['cart'][$product_id] ?? 0) + 1;
                 
-                // If type specified or product is autoship-selected
-                if ($type === 'autoship' || (!empty($_POST['is_autoship']) && $product_row['is_autoship'])) {
+                // If type is explicitly autoship OR the product is tagged as is_autoship in DB
+                if ($type === 'autoship' || !empty($product_row['is_autoship']) || !empty($_POST['is_autoship'])) {
                     $_SESSION['cart_types'][$product_id] = 'autoship';
-                    $_SESSION['cart_frequency'][$product_id] = $frequency;
+                    if (empty($_SESSION['cart_frequency'][$product_id])) {
+                        $_SESSION['cart_frequency'][$product_id] = !empty($frequency) ? $frequency : '1_month';
+                    }
                 } elseif (!isset($_SESSION['cart_types'][$product_id])) {
                     $_SESSION['cart_types'][$product_id] = 'standard';
                 }

@@ -374,7 +374,7 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                             ?>
                             <span class="text-sm font-bold text-secondary-container"><?php echo number_format($auto_price); ?> تومان</span>
                         </div>
-                        <button type="button" onclick="addToCart(this, <?php echo $auto_item['id']; ?>)" class="bg-secondary-container text-white p-2 rounded-xl hover:bg-[#ea580c] transition-colors" title="افزودن با اشتراک">
+                        <button type="button" onclick="addToCart(this, <?php echo $auto_item['id']; ?>, 'autoship')" class="bg-secondary-container text-white p-2 rounded-xl hover:bg-[#ea580c] transition-colors cursor-pointer" title="افزودن با اشتراک دوره‌ای (Autoship)">
                             <span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
                         </button>
                     </div>
@@ -724,9 +724,9 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                         
                         <!-- Desktop Only Animated Add to Cart Overlay -->
                         <div class="hidden lg:flex absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/70 to-transparent justify-center z-20">
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>)" class="bg-primary text-white w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors text-xs cursor-pointer">
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" class="bg-primary text-white w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors text-xs cursor-pointer">
                                 <span class="material-symbols-outlined text-base">add_shopping_cart</span>
-                                افزودن به سبد خرید
+                                <?php echo !empty($product['is_autoship']) ? 'خرید اشتراکی Autoship' : 'افزودن به سبد خرید'; ?>
                             </button>
                         </div>
                     </div>
@@ -774,11 +774,11 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                             </div>
 
                             <!-- Dedicated Touch-Friendly Button for Android & iOS (Mobile Only, lg:hidden) -->
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>)" 
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" 
                                     class="lg:hidden bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
                                     title="افزودن به سبد خرید">
                                 <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
-                                <span class="text-xs">خرید</span>
+                                <span class="text-xs"><?php echo !empty($product['is_autoship']) ? 'Autoship' : 'خرید'; ?></span>
                             </button>
                         </div>
                     </div>
@@ -973,7 +973,7 @@ function toggleAutoshipParam(isChecked) {
 }
 
 // Add to Cart with AJAX
-function addToCart(btn, productId) {
+function addToCart(btn, productId, type = 'standard') {
     if(window.event) window.event.preventDefault();
     
     const originalText = btn.innerHTML;
@@ -985,7 +985,7 @@ function addToCart(btn, productId) {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'action=add&ajax=1&csrf_token=<?php echo csrf_token(); ?>&product_id=' + productId
+        body: 'action=add&ajax=1&csrf_token=<?php echo csrf_token(); ?>&product_id=' + productId + '&type=' + type
     })
     .then(response => response.json())
     .then(data => {
