@@ -204,13 +204,35 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
     </button>
 </div>
 <?php if ($success): ?>
-    <div class="bg-status-active/10 text-status-active p-4 rounded-xl flex items-center gap-3 border border-status-active/20">
-        <span class="material-symbols-outlined">check_circle</span>
-        <span class="font-bold text-sm"><?php echo htmlspecialchars($success); ?></span>
+    <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white p-6 sm:p-8 rounded-3xl shadow-xl shadow-emerald-700/20 relative overflow-hidden animate-fade-in border border-white/20 mb-8">
+        <div class="absolute -left-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white flex-shrink-0 shadow-inner border border-white/30">
+                    <span class="material-symbols-outlined text-3xl text-emerald-100">verified</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-emerald-400/30 text-emerald-100 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300/30">تراکنش بانکی موفق</span>
+                        <span class="text-xs text-emerald-100 font-medium">🎉 سفارش شما با موفقیت ثبت شد</span>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-bold leading-snug"><?php echo htmlspecialchars($success); ?></h3>
+                </div>
+            </div>
+            <div class="flex items-center gap-2.5 self-end md:self-center">
+                <a href="#orders-section" class="bg-white text-emerald-800 hover:bg-emerald-50 px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-1.5 active:scale-95">
+                    <span class="material-symbols-outlined text-base">receipt_long</span>
+                    مشاهده فاکتور
+                </a>
+                <a href="pharmacy.php" class="bg-white/15 hover:bg-white/25 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all border border-white/20 active:scale-95">
+                    داروخانه
+                </a>
+            </div>
+        </div>
     </div>
 <?php endif; ?>
 <?php if ($error): ?>
-    <a href="profile_settings.php" class="block bg-error/10 text-error p-4 rounded-xl flex items-center gap-3 border border-error/20 hover:bg-error/20 transition-colors cursor-pointer group">
+    <a href="profile_settings.php" class="block bg-error/10 text-error p-4 rounded-2xl flex items-center gap-3 border border-error/20 hover:bg-error/20 transition-colors cursor-pointer group mb-6">
         <span class="material-symbols-outlined group-hover:scale-110 transition-transform">error</span>
         <span class="font-bold text-sm flex-1"><?php echo htmlspecialchars($error); ?></span>
         <span class="material-symbols-outlined">chevron_left</span>
@@ -483,13 +505,13 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
 </div>
 </div>
 <!-- Order History (Clean Table) -->
-<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
-<h3 class="text-lg font-bold text-primary flex items-center gap-2">
-<span class="material-symbols-outlined">shopping_bag</span>
-                            آخرین سفارشات
-                        </h3>
-<button class="text-sm font-bold text-primary-container hover:underline">تاریخچه کامل</button>
+<div id="orders-section" class="bg-surface-container-lowest rounded-3xl border border-outline-variant shadow-sm overflow-hidden scroll-mt-24">
+<div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-gradient-to-r from-surface-container-low to-transparent">
+<h3 class="text-base font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container">shopping_bag</span>
+سفارشات و فاکتورهای من
+</h3>
+<span class="text-xs font-bold text-on-surface-variant bg-white px-3 py-1 rounded-full border border-outline-variant/40 persian-number"><?= count($orders) ?> سفارش ثبت شده</span>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-right text-sm">
