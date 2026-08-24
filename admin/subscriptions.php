@@ -71,8 +71,9 @@ $search = trim($_GET['search'] ?? '');
 
 $todayStr = date('Y-m-d');
 $tomorrowStr = date('Y-m-d', strtotime('+1 day'));
+$weekEndStr = date('Y-m-d', strtotime('+7 days'));
 
-// Count Metrics
+// Accurate Metrics
 $todayCountStmt = $pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) = ? AND status = 'active'");
 $todayCountStmt->execute([$todayStr]);
 $todayCount = (int)$todayCountStmt->fetchColumn();
@@ -81,11 +82,19 @@ $tomorrowCountStmt = $pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHER
 $tomorrowCountStmt->execute([$tomorrowStr]);
 $tomorrowCount = (int)$tomorrowCountStmt->fetchColumn();
 
-$overdueCountStmt = $pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) < ? AND status = 'active'");
-$overdueCountStmt->execute([$todayStr]);
-$overdueCount = (int)$overdueCountStmt->fetchColumn();
+// Specific Issues Metrics: User Not-Received reports + Overdue Dispatches
+$notReceivedCount = (int)$pdo->query("SELECT COUNT(DISTINCT subscription_id) FROM subscription_deliveries WHERE status = 'not_received'")->fetchColumn();
 
-$weekEndStr = date('Y-m-d', strtotime('+7 days'));
+$overdueDispatchCount = (int)$pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) < ? AND status = 'active'")->execute([$todayStr]) ? $pdo->query("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) < '$todayStr' AND status = 'active'")->fetchColumn() : 0;
+
+$totalIssuesCount = (int)$pdo->query("
+    SELECT COUNT(DISTINCT o.id) 
+    FROM user_subscriptions o 
+    LEFT JOIN subscription_deliveries d ON d.subscription_id = o.id 
+    WHERE (d.status = 'not_received') 
+       OR (o.status = 'active' AND DATE(o.next_delivery_date) < '$todayStr')
+")->fetchColumn();
+
 $weekCountStmt = $pdo->prepare("SELECT COUNT(*) FROM user_subscriptions WHERE DATE(next_delivery_date) BETWEEN ? AND ? AND status = 'active'");
 $weekCountStmt->execute([$todayStr, $weekEndStr]);
 $weekCount = (int)$weekCountStmt->fetchColumn();
@@ -125,9 +134,12 @@ if ($filter === 'today') {
 } elseif ($filter === 'tomorrow') {
     $whereClauses[] = "DATE(o.next_delivery_date) = ?";
     $params[] = $tomorrowStr;
-} elseif ($filter === 'overdue') {
-    $whereClauses[] = "DATE(o.next_delivery_date) < ? AND o.status = 'active'";
-    $params[] = $todayStr;
+} elseif ($filter === 'issues' || $filter === 'overdue') {
+    $whereClauses[] = "(
+        (o.status = 'active' AND DATE(o.next_delivery_date) < '$todayStr') 
+        OR 
+        ((SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'not_received') > 0)
+    )";
 } elseif ($filter === 'week') {
     $whereClauses[] = "DATE(o.next_delivery_date) BETWEEN ? AND ?";
     $params[] = $todayStr;
@@ -149,16 +161,19 @@ if (!empty($search)) {
 $whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
 
 $query = "
-    SELECT o.*, u.name as user_name, u.phone as user_phone, u.address as user_address
+    SELECT o.*, u.name as user_name, u.phone as user_phone, u.address as user_address,
+           (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'not_received') as not_received_count,
+           (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'shipped') as shipped_count
     FROM user_subscriptions o 
     JOIN users u ON o.user_id = u.id 
     $whereSql 
     ORDER BY 
         CASE 
-            WHEN o.status = 'active' AND DATE(o.next_delivery_date) < '$todayStr' THEN 1
-            WHEN o.status = 'active' AND DATE(o.next_delivery_date) = '$todayStr' THEN 2
-            WHEN o.status = 'active' AND DATE(o.next_delivery_date) = '$tomorrowStr' THEN 3
-            ELSE 4
+            WHEN (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'not_received') > 0 THEN 1
+            WHEN o.status = 'active' AND DATE(o.next_delivery_date) < '$todayStr' THEN 2
+            WHEN o.status = 'active' AND DATE(o.next_delivery_date) = '$todayStr' THEN 3
+            WHEN o.status = 'active' AND DATE(o.next_delivery_date) = '$tomorrowStr' THEN 4
+            ELSE 5
         END,
         o.next_delivery_date ASC, 
         o.created_at DESC 
@@ -203,17 +218,17 @@ function translate_status($status) {
                 تقویم و مدیریت نوبت‌های ارسال
             </h2>
             <p class="text-on-surface-variant font-body-md mt-1 text-xs sm:text-sm">
-                برنامه‌ریزی، آماده‌سازی بسته‌ها و ثبت تحویل سفارشات دوره‌ای و اشتراک‌های فعال
+                برنامه‌ریزی نوبت‌های تحویل، مدیریت گزارش‌های عدم دریافت کاربر و تخصیص بسته‌ها
             </p>
         </div>
         <div class="flex items-center gap-3">
+            <a href="inventory.php?tab=autoship" class="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:bg-primary-container transition-all">
+                <span class="material-symbols-outlined text-lg">inventory</span>
+                انبار اختصاصی اشتراک‌ها
+            </a>
             <a href="export_orders.php" class="flex items-center gap-2 bg-secondary-container text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:bg-secondary transition-all">
                 <span class="material-symbols-outlined text-lg">download</span>
                 خروجی لیست ارسال
-            </a>
-            <a href="orders.php" class="flex items-center gap-2 bg-surface-container-high text-primary px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-primary hover:text-white transition-all">
-                <span class="material-symbols-outlined text-lg">shopping_bag</span>
-                همه سفارشات
             </a>
         </div>
     </header>
@@ -242,18 +257,18 @@ function translate_status($status) {
             </div>
         </a>
 
-        <!-- Overdue Action Required -->
-        <a href="?filter=overdue" class="p-6 rounded-2xl shadow-sm border transition-all flex items-center gap-4 group cursor-pointer <?= $filter === 'overdue' ? 'bg-error text-white border-error shadow-lg ring-2 ring-error/20' : 'bg-white border-outline-variant/30 hover:border-error/50' ?>">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center <?= $filter === 'overdue' ? 'bg-white/20 text-white' : 'bg-error/10 text-error group-hover:scale-110 transition-transform' ?>">
-                <span class="material-symbols-outlined text-2xl">warning</span>
+        <!-- Action Required / Issues -->
+        <a href="?filter=issues" class="p-6 rounded-2xl shadow-sm border transition-all flex items-center gap-4 group cursor-pointer <?= in_array($filter, ['issues', 'overdue']) ? 'bg-error text-white border-error shadow-lg ring-2 ring-error/20' : 'bg-white border-outline-variant/30 hover:border-error/50' ?>">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center <?= in_array($filter, ['issues', 'overdue']) ? 'bg-white/20 text-white' : 'bg-error/10 text-error group-hover:scale-110 transition-transform' ?>">
+                <span class="material-symbols-outlined text-2xl">report_problem</span>
             </div>
             <div>
-                <p class="text-xs font-bold <?= $filter === 'overdue' ? 'text-white/80' : 'text-on-surface-variant' ?>">معوق / نیازمند اقدام</p>
-                <p class="text-2xl font-bold <?= $filter === 'overdue' ? 'text-white' : 'text-error' ?> persian-number"><?= number_format($overdueCount) ?> <span class="text-xs font-normal">مورد</span></p>
+                <p class="text-xs font-bold <?= in_array($filter, ['issues', 'overdue']) ? 'text-white/80' : 'text-on-surface-variant' ?>">عدم دریافت / معوق</p>
+                <p class="text-2xl font-bold <?= in_array($filter, ['issues', 'overdue']) ? 'text-white' : 'text-error' ?> persian-number"><?= number_format($totalIssuesCount) ?> <span class="text-xs font-normal">مورد نیازمند اقدام</span></p>
             </div>
         </a>
 
-        <!-- Total Active Subscriptions -->
+        <!-- Total 7 Days Outlook -->
         <a href="?filter=week" class="p-6 rounded-2xl shadow-sm border transition-all flex items-center gap-4 group cursor-pointer <?= $filter === 'week' ? 'bg-primary text-white border-primary shadow-lg ring-2 ring-primary/20' : 'bg-white border-outline-variant/30 hover:border-primary/50' ?>">
             <div class="w-12 h-12 rounded-xl flex items-center justify-center <?= $filter === 'week' ? 'bg-white/20 text-white' : 'bg-tertiary-fixed flex text-tertiary group-hover:scale-110 transition-transform' ?>">
                 <span class="material-symbols-outlined text-2xl">calendar_month</span>
@@ -325,9 +340,10 @@ function translate_status($status) {
                     <span>فردا</span>
                     <span class="px-1.5 py-0.2 rounded-full text-[10px] <?= $filter === 'tomorrow' ? 'bg-white text-primary' : 'bg-primary text-white' ?>"><?= $tomorrowCount ?></span>
                 </a>
-                <a href="?filter=overdue" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 <?= $filter === 'overdue' ? 'bg-error text-white shadow-md' : 'bg-error/10 hover:bg-error/20 text-error' ?>">
-                    <span>معوق / فوری</span>
-                    <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-error text-white"><?= $overdueCount ?></span>
+                <a href="?filter=issues" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 <?= in_array($filter, ['issues', 'overdue']) ? 'bg-error text-white shadow-md' : 'bg-error/10 hover:bg-error/20 text-error' ?>">
+                    <span class="material-symbols-outlined text-[14px]">warning</span>
+                    <span>عدم دریافت / معوق</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-error text-white"><?= $totalIssuesCount ?></span>
                 </a>
                 <a href="?filter=week" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap <?= $filter === 'week' ? 'bg-primary text-white shadow-md' : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant' ?>">
                     ۷ روز آینده (<?= $weekCount ?>)
@@ -363,8 +379,8 @@ function translate_status($status) {
                         <th class="px-6 py-4 font-bold">شناسه و پلن</th>
                         <th class="px-6 py-4 font-bold">مشتری و آدرس ارسال</th>
                         <th class="px-6 py-4 font-bold">مبلغ دوره</th>
-                        <th class="px-6 py-4 font-bold">وضعیت</th>
-                        <th class="px-6 py-4 font-bold">زمان ارسال بعدی</th>
+                        <th class="px-6 py-4 font-bold">وضعیت اشتراک</th>
+                        <th class="px-6 py-4 font-bold">وضعیت نوبت تحویل و گزارش‌ها</th>
                         <th class="px-6 py-4 font-bold text-center">اقدام سریع تحویل</th>
                     </tr>
                 </thead>
@@ -384,6 +400,7 @@ function translate_status($status) {
                             $is_active = ($subscription['status'] === 'active');
                             $nextDate = $subscription['next_delivery_date'];
                             
+                            $hasNotReceivedReport = ((int)$subscription['not_received_count'] > 0);
                             $isDueToday = ($nextDate === $todayStr);
                             $isDueTomorrow = ($nextDate === $tomorrowStr);
                             $isOverdue = ($nextDate && $nextDate < $todayStr && $is_active);
@@ -396,13 +413,13 @@ function translate_status($status) {
                                 $targetTime = strtotime($nextDate);
                                 $days_remaining = round(($targetTime - $nowTime) / 86400);
 
-                                // Dispatch button only enabled 2 days or less before scheduled time
+                                // Dispatch button enabled 2 days or less before scheduled time
                                 if ($days_remaining <= 2) {
                                     $can_dispatch = true;
                                 }
                             }
                         ?>
-                        <tr class="hover:bg-surface-container-low/60 transition-colors group">
+                        <tr class="hover:bg-surface-container-low/60 transition-colors group <?= $hasNotReceivedReport ? 'bg-error/5 border-r-4 border-r-error' : '' ?>">
                             <!-- ID & Plan -->
                             <td class="px-6 py-4">
                                 <a href="subscription_details.php?id=<?= $subscription['id'] ?>" class="font-bold text-primary hover:underline block text-sm mb-1">
@@ -440,31 +457,37 @@ function translate_status($status) {
                                 </span>
                             </td>
 
-                            <!-- Next Delivery Date & Badge -->
+                            <!-- Next Delivery Date & Action Tag -->
                             <td class="px-6 py-4">
                                 <?php if($subscription['next_delivery_date']): ?>
-                                    <p class="font-bold persian-number text-sm text-primary">
+                                    <p class="font-bold persian-number text-sm text-primary mb-1">
                                         <?= $fmtDateOnly->format(new DateTime($subscription['next_delivery_date'])) ?>
                                     </p>
-                                    <div class="mt-1">
-                                        <?php if($isDueToday): ?>
+                                    <div>
+                                        <?php if($hasNotReceivedReport): ?>
+                                            <span class="inline-flex items-center gap-1 bg-error text-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm animate-pulse">
+                                                <span class="material-symbols-outlined text-[12px]">report_problem</span>
+                                                گزارش عدم دریافت مشتری 🚨
+                                            </span>
+                                        <?php elseif($isDueToday): ?>
                                             <span class="inline-flex items-center gap-1 bg-secondary-container text-white px-2 py-0.5 rounded text-[10px] font-bold animate-pulse">
                                                 <span class="material-symbols-outlined text-[12px]">schedule</span>
-                                                نوبت ارسال امروز
+                                                نوبت ارسال امروز 🚀
                                             </span>
                                         <?php elseif($isDueTomorrow): ?>
                                             <span class="inline-flex items-center gap-1 bg-primary text-white px-2 py-0.5 rounded text-[10px] font-bold">
                                                 <span class="material-symbols-outlined text-[12px]">event</span>
-                                                فردا
+                                                نوبت ارسال فردا 🚚
                                             </span>
                                         <?php elseif($isOverdue): ?>
-                                            <span class="inline-flex items-center gap-1 bg-error text-white px-2 py-0.5 rounded text-[10px] font-bold">
-                                                <span class="material-symbols-outlined text-[12px]">warning</span>
-                                                معوق - اقدام فوری
+                                            <span class="inline-flex items-center gap-1 bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">
+                                                <span class="material-symbols-outlined text-[12px]">schedule</span>
+                                                نوبت معوق (تاخیر در ارسال) ⏰
                                             </span>
                                         <?php else: ?>
-                                            <span class="text-on-surface-variant text-[11px]">
+                                            <span class="text-on-surface-variant text-[11px] font-medium">
                                                 <?= $fmtDayName->format(new DateTime($subscription['next_delivery_date'])) ?>
+                                                <span class="text-primary font-bold">(<?= $days_remaining ?> روز مانده)</span>
                                             </span>
                                         <?php endif; ?>
                                     </div>

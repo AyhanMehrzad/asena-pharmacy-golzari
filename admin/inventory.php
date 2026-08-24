@@ -182,28 +182,67 @@ $pharmacy_tag_names = [
         </a>
     </div>
 
+    <!-- Explanation Banner for Subscription/Autoship Tab -->
+    <?php if ($tab === 'autoship'): ?>
+    <div class="bg-gradient-to-r from-primary/10 via-secondary-container/10 to-primary/5 p-6 rounded-3xl border border-primary/20 mb-8 shadow-sm">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-secondary-container text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                    <span class="material-symbols-outlined text-2xl">all_inclusive</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-primary text-base mb-1">انبار اختصاصی و سهمیه‌بندی اشتراک‌ها (Subscription Inventory Allocation)</h4>
+                    <p class="text-xs text-on-surface-variant leading-relaxed max-w-3xl">
+                        برای جلوگیری از ناموجود شدن اقلام مشتریان دارای <strong>اشتراک و تحویل دوره‌ای (Autoship)</strong>، موجودی کل این کالاها به دو بخش <strong>«سهمیه رزرو شده اشتراک‌ها»</strong> و <strong>«موجودی آزاد فروشگاه عادی»</strong> تفکیک شده است.
+                    </p>
+                </div>
+            </div>
+            <a href="subscriptions.php" class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-container text-white text-xs font-bold transition-all shadow-sm shrink-0 flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-base">calendar_month</span>
+                مشاهده نوبت‌های ارسال
+            </a>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Inventory List -->
     <div class="bg-white rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-right">
-                <thead class="bg-surface-container-low border-b border-outline-variant/50">
+                <thead class="bg-surface-container-low border-b border-outline-variant/50 text-xs text-primary">
+                    <?php if ($tab === 'autoship'): ?>
                     <tr>
-                        <th class="px-6 py-4 text-sm font-bold text-primary">جزئیات کالا</th>
-                        <th class="px-6 py-4 text-sm font-bold text-primary">دسته‌بندی و حوزه</th>
-                        <th class="px-6 py-4 text-sm font-bold text-primary">گونه هدف</th>
-                        <th class="px-6 py-4 text-sm font-bold text-primary">قیمت (تومان)</th>
-                        <th class="px-6 py-4 text-sm font-bold text-primary">Autoship</th>
-                        <th class="px-6 py-4 text-sm font-bold text-primary">موجودی</th>
-                        <th class="px-6 py-4 text-sm font-bold text-primary">عملیات</th>
+                        <th class="px-6 py-4 font-bold">جزئیات کالا / داروی اشتراکی</th>
+                        <th class="px-6 py-4 font-bold">دسته‌بندی و گونه</th>
+                        <th class="px-6 py-4 font-bold">موجودی کل انبار</th>
+                        <th class="px-6 py-4 font-bold">تخفیف اشتراک</th>
+                        <th class="px-6 py-4 font-bold">سهمیه رزرو اشتراک‌ها</th>
+                        <th class="px-6 py-4 font-bold">موجودی آزاد فروش عادی</th>
+                        <th class="px-6 py-4 font-bold">وضعیت تامین سهمیه</th>
+                        <th class="px-6 py-4 font-bold">عملیات</th>
                     </tr>
+                    <?php else: ?>
+                    <tr>
+                        <th class="px-6 py-4 font-bold">جزئیات کالا</th>
+                        <th class="px-6 py-4 font-bold">دسته‌بندی و حوزه</th>
+                        <th class="px-6 py-4 font-bold">گونه هدف</th>
+                        <th class="px-6 py-4 font-bold">قیمت (تومان)</th>
+                        <th class="px-6 py-4 font-bold">Autoship</th>
+                        <th class="px-6 py-4 font-bold">موجودی</th>
+                        <th class="px-6 py-4 font-bold">عملیات</th>
+                    </tr>
+                    <?php endif; ?>
                 </thead>
                 <tbody class="divide-y divide-outline-variant/20">
                     <?php if(empty($products)): ?>
-                        <tr><td colspan="7" class="px-6 py-8 text-center text-on-surface-variant">هیچ کالایی در این دسته‌بندی یافت نشد.</td></tr>
+                        <tr><td colspan="<?= $tab === 'autoship' ? '8' : '7' ?>" class="px-6 py-8 text-center text-on-surface-variant">هیچ کالایی در این دسته‌بندی یافت نشد.</td></tr>
                     <?php else: ?>
                         <?php foreach ($products as $product): ?>
                         <?php 
                             $is_pharma = (str_contains($product['category'] ?? '', 'دارو') || str_contains($product['category'] ?? '', 'مکمل') || !empty($product['pharmacy_tag']));
+                            $total_stock = (int)$product['stock'];
+                            $reserved_stock = max(1, min($total_stock, (int)ceil($total_stock * 0.25))); // 25% allocated for active subscribers
+                            $free_stock = max(0, $total_stock - $reserved_stock);
                         ?>
                         <tr class="hover:bg-surface-container-lowest transition-colors group">
                             <td class="px-6 py-4">
@@ -227,40 +266,87 @@ $pharmacy_tag_names = [
                                     <span class="text-xs text-on-surface-variant"><?= htmlspecialchars($product['category']) ?></span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="text-xs font-bold text-on-surface"><?= $animal_names[$product['target_animal'] ?? 'all'] ?? 'عمومی' ?></span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col items-start">
-                                    <p class="font-bold text-sm"><?= number_format($product['price']) ?></p>
-                                    <?php if($product['discount_price']): ?>
-                                        <p class="text-[10px] text-error line-through"><?= number_format($product['discount_price']) ?></p>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <?php if(!empty($product['is_autoship'])): ?>
+
+                            <?php if ($tab === 'autoship'): ?>
+                                <!-- Autoship Dedicated Columns -->
+                                <td class="px-6 py-4 font-bold text-sm persian-number">
+                                    <span class="px-2.5 py-1 rounded-lg bg-surface-container font-bold text-primary">
+                                        <?= $total_stock ?> عدد
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
                                     <span class="px-2 py-0.5 rounded bg-status-active/10 text-status-active text-[11px] font-bold">
                                         <?= $product['autoship_discount'] ?? 10 ?>٪ تخفیف
                                     </span>
-                                <?php else: ?>
-                                    <span class="text-[11px] text-on-surface-variant">غیرفعال</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <?php if ($product['stock'] <= 0): ?>
-                                        <span class="w-2 h-2 rounded-full bg-error"></span>
-                                        <p class="text-xs font-bold text-error">ناموجود</p>
-                                    <?php elseif ($product['stock'] < 5): ?>
-                                        <span class="w-2 h-2 rounded-full bg-status-warning"></span>
-                                        <p class="text-xs font-bold text-status-warning"><?= $product['stock'] ?> (کم)</p>
+                                </td>
+                                <td class="px-6 py-4 font-bold text-xs text-secondary-container">
+                                    <span class="inline-flex items-center gap-1 bg-secondary-container/10 px-2 py-1 rounded-lg border border-secondary-container/20">
+                                        <span class="material-symbols-outlined text-xs">all_inclusive</span>
+                                        <?= $reserved_stock ?> عدد رزرو
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 font-bold text-xs text-on-surface">
+                                    <span class="inline-flex items-center gap-1 bg-primary/5 text-primary px-2 py-1 rounded-lg">
+                                        <span class="material-symbols-outlined text-xs">storefront</span>
+                                        <?= $free_stock ?> عدد آزاد
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <?php if ($total_stock <= 0): ?>
+                                        <span class="px-2.5 py-1 rounded-lg bg-error/10 text-error text-[11px] font-bold inline-flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-xs">cancel</span>
+                                            اتمام موجودی اشتراک
+                                        </span>
+                                    <?php elseif ($total_stock < 5): ?>
+                                        <span class="px-2.5 py-1 rounded-lg bg-status-warning/15 text-status-warning text-[11px] font-bold inline-flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-xs">warning</span>
+                                            هشدار کسری سهمیه
+                                        </span>
                                     <?php else: ?>
-                                        <span class="w-2 h-2 rounded-full bg-status-active"></span>
-                                        <p class="text-xs font-bold text-status-active"><?= $product['stock'] ?> عدد</p>
+                                        <span class="px-2.5 py-1 rounded-lg bg-status-active/10 text-status-active text-[11px] font-bold inline-flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-xs">verified</span>
+                                            سهمیه تامین شده
+                                        </span>
                                     <?php endif; ?>
-                                </div>
-                            </td>
+                                </td>
+                            <?php else: ?>
+                                <!-- Standard Columns -->
+                                <td class="px-6 py-4">
+                                    <span class="text-xs font-bold text-on-surface"><?= $animal_names[$product['target_animal'] ?? 'all'] ?? 'عمومی' ?></span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col items-start">
+                                        <p class="font-bold text-sm"><?= number_format($product['price']) ?></p>
+                                        <?php if($product['discount_price']): ?>
+                                            <p class="text-[10px] text-error line-through"><?= number_format($product['discount_price']) ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <?php if(!empty($product['is_autoship'])): ?>
+                                        <span class="px-2 py-0.5 rounded bg-status-active/10 text-status-active text-[11px] font-bold">
+                                            <?= $product['autoship_discount'] ?? 10 ?>٪ تخفیف
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-[11px] text-on-surface-variant">غیرفعال</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <?php if ($product['stock'] <= 0): ?>
+                                            <span class="w-2 h-2 rounded-full bg-error"></span>
+                                            <p class="text-xs font-bold text-error">ناموجود</p>
+                                        <?php elseif ($product['stock'] < 5): ?>
+                                            <span class="w-2 h-2 rounded-full bg-status-warning"></span>
+                                            <p class="text-xs font-bold text-status-warning"><?= $product['stock'] ?> (کم)</p>
+                                        <?php else: ?>
+                                            <span class="w-2 h-2 rounded-full bg-status-active"></span>
+                                            <p class="text-xs font-bold text-status-active"><?= $product['stock'] ?> عدد</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            <?php endif; ?>
+
                             <td class="px-6 py-4">
                                 <div class="flex gap-2">
                                     <button type="button" onclick="editProduct(this)" data-product="<?= htmlspecialchars(json_encode($product, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer" title="ویرایش">
