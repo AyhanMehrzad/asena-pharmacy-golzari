@@ -58,12 +58,45 @@ class SmsService {
         return false;
     }
 
+    const BODY_ID_RESCHEDULE = '12345'; // تغییر زمان نوبت (فورس ماژور)
+
     public function sendOtp($phone, $code) {
         return $this->sendPatternRequest($phone, self::BODY_ID_OTP, [$code]);
     }
     
     public function sendBookingConfirmation($phone, $date, $time) {
         return $this->sendPatternRequest($phone, self::BODY_ID_BOOKING, [$date, $time]);
+    }
+
+    public function sendAppointmentReschedule($phone, $doctorName, $petName, $newDate, $newTime, $reason = '') {
+        // Sends pattern SMS, or direct SMS fallback
+        $text = "کاربر گرامی آسنا، زمان نوبت ویزیت پت شما ($petName) با دکتر $doctorName به علت «" . ($reason ?: 'موارد فورس‌ماژور و هماهنگی مجدد مطب') . "» به تاریخ $newDate ساعت $newTime تغییر یافت.";
+        
+        $patternSent = $this->sendPatternRequest($phone, self::BODY_ID_RESCHEDULE, [$doctorName, $petName, $newDate, $newTime]);
+        if (!$patternSent) {
+            $this->sendDirectSms($phone, $text);
+        }
+        return true;
+    }
+
+    public function sendDirectSms($phone, $text) {
+        $data = [
+            'username' => $this->username,
+            'password' => $this->password,
+            'from'     => $this->from,
+            'to'       => $phone,
+            'text'     => $text,
+            'isflash'  => false
+        ];
+        $url = "https://rest.payamak-panel.com/api/SendSMS/SendSMS";
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return $response;
     }
     
     public function sendShippingUpdate($phone, $orderId) {

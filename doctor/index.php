@@ -82,6 +82,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
         }
     }
+    elseif ($action === 'reschedule_appointment') {
+        $apptId = (int)$_POST['appointment_id'];
+        $newDate = trim($_POST['new_date'] ?? '');
+        $newTime = trim($_POST['new_time'] ?? '');
+        $reason = trim($_POST['reschedule_reason'] ?? 'تغییر زمان به علت موارد فورس‌ماژور و هماهنگی مطب');
+        $sendSms = isset($_POST['send_sms']);
+
+        if ($apptId > 0 && !empty($newDate) && !empty($newTime)) {
+            // Check conflict
+            $conflictStmt = $pdo->prepare("SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND id != ? AND status NOT IN ('cancelled')");
+            $conflictStmt->execute([$doctorId, $newDate, $newTime, $apptId]);
+            if ($conflictStmt->fetch()) {
+                $error = "این زمان قبلاً توسط نوبت دیگری رزرو شده است. لطفاً ساعت یا تاریخ دیگری را انتخاب فرمایید.";
+            } else {
+                $updStmt = $pdo->prepare("UPDATE appointments SET appointment_date = ?, appointment_time = ?, reschedule_reason = ?, rescheduled_at = NOW(), status = 'approved' WHERE id = ? AND doctor_id = ?");
+                if ($updStmt->execute([$newDate, $newTime, $reason, $apptId, $doctorId])) {
+                    // Fetch user phone & pet name
+                    $uStmt = $pdo->prepare("SELECT a.pet_name, a.pet_type, u.phone, u.name as user_name FROM appointments a JOIN users u ON a.user_id = u.id WHERE a.id = ?");
+                    $uStmt->execute([$apptId]);
+                    $patientInfo = $uStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    $smsNotice = "";
+                    if ($sendSms && $patientInfo && !empty($patientInfo['phone'])) {
+                        require_once '../includes/SmsService.php';
+                        $sms = new SmsService();
+                        $petName = $patientInfo['pet_name'] ?: $patientInfo['pet_type'] ?: 'حیوان خانگی';
+                        $jalaliNewDate = (new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter::FULL, IntlDateFormatter::NONE, 'Asia/Tehran', IntlDateFormatter::TRADITIONAL, 'yyyy/MM/dd'))->format(new DateTime($newDate));
+                        $sms->sendAppointmentReschedule($patientInfo['phone'], $doctorName, $petName, $jalaliNewDate, $newTime, $reason);
+                        $smsNotice = " و پیامک اطلاع‌رسانی به شماره {$patientInfo['phone']} ارسال گردید.";
+                    }
+                    $success = "زمان نوبت با موفقیت به تاریخ $newDate ساعت $newTime تغییر یافت" . $smsNotice;
+                } else {
+                    $error = "خطا در تغییر زمان نوبت.";
+                }
+            }
+        } else {
+            $error = "لطفاً تاریخ و ساعت جدید را به درستی وارد نمایید.";
+        }
+    }
     elseif ($action === 'save_medical_record') {
         $apptId = (int)$_POST['appointment_id'];
         $diagnosis = trim($_POST['doctor_diagnosis'] ?? '');
@@ -941,6 +980,54 @@ if (empty($myServices)) {
                 </div>
             </form>
 
+            <!-- Section 5: Reschedule Appointment (Force Majeure & Emergency) -->
+            <div class="bg-amber-50/70 border border-amber-200 p-5 rounded-2xl space-y-3">
+                <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleRescheduleForm()">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-amber-600 text-lg">update</span>
+                        <h4 class="font-bold text-xs text-amber-950">تغییر زمان نوبت (موارد اضطراری و فورس‌ماژور پزشک)</h4>
+                    </div>
+                    <span id="reschedule-toggle-icon" class="material-symbols-outlined text-amber-700 text-base transition-transform">expand_more</span>
+                </div>
+
+                <form id="reschedule-form" method="POST" class="hidden pt-3 border-t border-amber-200/60 space-y-4">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="reschedule_appointment">
+                    <input type="hidden" name="appointment_id" id="dos_reschedule_appt_id" value="">
+
+                    <p class="text-[11px] text-amber-900 leading-relaxed">
+                        در صورت وقوع عمل جراحی اورژانسی یا موارد فورس‌ماژور، می‌توانید تاریخ و ساعت نوبت را تغییر دهید. سیستم به صورت خودکار پیامک اطلاع‌رسانی با تاریخ و ساعت جدید برای صاحب پت ارسال می‌کند.
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">📅 تاریخ جدید نوبت</label>
+                            <input type="date" name="new_date" id="dos_reschedule_new_date" required class="w-full p-2.5 rounded-xl border border-amber-300 text-xs bg-white outline-none focus:ring-2 focus:ring-amber-500" dir="ltr">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">⏰ ساعت جدید نوبت</label>
+                            <input type="time" name="new_time" id="dos_reschedule_new_time" required class="w-full p-2.5 rounded-xl border border-amber-300 text-xs bg-white outline-none focus:ring-2 focus:ring-amber-500" dir="ltr">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">علت تغییر نوبت (در پیامک به کاربر ارسال می‌شود)</label>
+                        <input type="text" name="reschedule_reason" id="dos_reschedule_reason" value="موارد فورس‌ماژور و جراحی اورژانسی در کلینیک" placeholder="مثال: تداخل با عمل جراحی اورژانسی" class="w-full p-2.5 rounded-xl border border-amber-300 text-xs bg-white outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-950">
+                            <input type="checkbox" name="send_sms" value="1" checked class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
+                            📱 ارسال خودکار پیامک اطلاع‌رسانی تغییر ساعت به بیمار
+                        </label>
+                        <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">send</span>
+                            تغییر زمان نوبت و ارسال SMS
+                        </button>
+                    </div>
+                </form>
+            </div>
+
         </div>
     </div>
 </div>
@@ -1017,6 +1104,12 @@ function openSmartPatientDossier(element) {
     document.getElementById('dos_doctor_prescription').value = appt.doctor_prescription || '';
     document.getElementById('dos_form_status').value = appt.status || 'completed';
 
+    // Set Reschedule Form Defaults
+    document.getElementById('dos_reschedule_appt_id').value = appt.id;
+    document.getElementById('dos_reschedule_new_date').value = appt.appointment_date || '';
+    document.getElementById('dos_reschedule_new_time').value = (appt.appointment_time || '09:00').substr(0, 5);
+    document.getElementById('dos_reschedule_reason').value = appt.reschedule_reason || 'موارد فورس‌ماژور و جراحی اورژانسی در کلینیک';
+
     // Render Historical Documents
     const docsContainer = document.getElementById('dos_documents_container');
     docsContainer.innerHTML = '';
@@ -1062,6 +1155,18 @@ function closeSmartPatientDossier() {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
     document.getElementById('quick-doc-upload-form').classList.add('hidden');
+    document.getElementById('reschedule-form').classList.add('hidden');
+    const icon = document.getElementById('reschedule-toggle-icon');
+    if (icon) icon.style.transform = 'rotate(0deg)';
+}
+
+function toggleRescheduleForm() {
+    const form = document.getElementById('reschedule-form');
+    const icon = document.getElementById('reschedule-toggle-icon');
+    form.classList.toggle('hidden');
+    if (icon) {
+        icon.style.transform = form.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
 }
 
 function toggleQuickUploadForm() {
