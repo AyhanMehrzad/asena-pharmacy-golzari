@@ -134,4 +134,20 @@ All pharmacy and pet shop transactions must remain strictly synchronized across 
 2. **Dynamic On-Page SEO**:
    - Programmatic `<title>` and `<meta name="description">` based on active species and clinical tags.
 
+## 7. Multi-Surface Rating & Review Standards (Bayesian Model)
+
+### 7.1 Mathematical Bayesian Weighted Averaging
+*   All product and doctor ratings use the prior-damped Bayesian formula:
+    $$\text{Score} = \frac{(5 \times \text{baseline\_rating}) + \sum \text{user\_ratings}}{5 + n}$$
+*   **Cold-Start Transparency**: When review count $n = 0$, the UI explicitly identifies the score as an expert baseline (`امتیاز کارشناسی`) rather than fabricated user reviews. As real reviews accumulate, the real customer score seamlessly takes precedence.
+
+### 7.2 Non-Intrusive UX & Loyalty Incentives
+*   **"Task, Then Ask"**: Review prompts must only appear post-fulfillment in `profile.php` or post-consultation in `booking.php`.
+*   **Loyalty Points Integration**: Each verified user review automatically credits `+5` loyalty points to the user's wallet via `actions/rewards_action.php`.
+
+### 7.3 Admin Panel Controls
+*   Admin Add/Edit product and doctor forms include a `baseline_rating` input field (Default: `4.5` - `5.0`).
+*   Admin reviews management dashboard allows moderating comments and verifying buyer statuses.
+
+
 

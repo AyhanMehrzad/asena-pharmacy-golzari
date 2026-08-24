@@ -34,9 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
         }
         
+        $baseline_rating = !empty($_POST['baseline_rating']) ? (float)$_POST['baseline_rating'] : 4.9;
         if ($user) {
-            $stmt = $pdo->prepare("INSERT INTO doctors (user_id, name, specialty, price, rating, review_count, image_url) VALUES (?, ?, ?, ?, 5.0, 0, ?)");
-            if ($stmt->execute([$user_id, $user['name'], $specialty, $price, $image_url])) {
+            $stmt = $pdo->prepare("INSERT INTO doctors (user_id, name, specialty, price, rating, review_count, image_url, baseline_rating) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
+            if ($stmt->execute([$user_id, $user['name'], $specialty, $price, $baseline_rating, $image_url, $baseline_rating])) {
+                $doc_new_id = $pdo->lastInsertId();
+                recalculate_bayesian_rating($pdo, 'doctor', $doc_new_id);
                 $success = "پزشک جدید با موفقیت اضافه شد.";
             } else {
                 $error = "خطا در افزودن پزشک.";
@@ -48,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $doc_id = (int)$_POST['doctor_id'];
         $specialty = trim(strip_tags($_POST['specialty']));
         $price = (int)$_POST['price'];
+        $baseline_rating = !empty($_POST['baseline_rating']) ? (float)$_POST['baseline_rating'] : 4.9;
         
         $image_url = null;
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
@@ -62,12 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         
         if ($image_url) {
-            $stmt = $pdo->prepare("UPDATE doctors SET specialty = ?, price = ?, image_url = ? WHERE id = ?");
-            $res = $stmt->execute([$specialty, $price, $image_url, $doc_id]);
+            $stmt = $pdo->prepare("UPDATE doctors SET specialty = ?, price = ?, image_url = ?, baseline_rating = ? WHERE id = ?");
+            $res = $stmt->execute([$specialty, $price, $image_url, $baseline_rating, $doc_id]);
         } else {
-            $stmt = $pdo->prepare("UPDATE doctors SET specialty = ?, price = ? WHERE id = ?");
-            $res = $stmt->execute([$specialty, $price, $doc_id]);
+            $stmt = $pdo->prepare("UPDATE doctors SET specialty = ?, price = ?, baseline_rating = ? WHERE id = ?");
+            $res = $stmt->execute([$specialty, $price, $baseline_rating, $doc_id]);
         }
+        recalculate_bayesian_rating($pdo, 'doctor', $doc_id);
         
         if ($res) {
             $success = "اطلاعات پزشک بروزرسانی شد.";

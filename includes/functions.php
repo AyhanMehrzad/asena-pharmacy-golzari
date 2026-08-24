@@ -92,3 +92,45 @@ function check_rate_limit(PDO $pdo, string $ip, string $username = ''): ?string 
     return null;
 }
 
+/**
+ * Bayesian Weighted Average Calculator for Products and Doctors
+ * Prior damping weight C = 5
+ */
+function recalculate_bayesian_rating(PDO $pdo, string $target_type, int $target_id): array {
+    $c = 5; // prior confidence weight
+    if ($target_type === 'product') {
+        $stmt = $pdo->prepare("SELECT IFNULL(baseline_rating, 4.8) FROM products WHERE id = ?");
+        $stmt->execute([$target_id]);
+        $baseline = (float)($stmt->fetchColumn() ?: 4.8);
+
+        $revStmt = $pdo->prepare("SELECT COUNT(*) as cnt, IFNULL(SUM(rating), 0) as total_sum FROM reviews WHERE target_type = 'product' AND target_id = ? AND status = 'approved'");
+        $revStmt->execute([$target_id]);
+        $res = $revStmt->fetch(PDO::FETCH_ASSOC);
+        $n = (int)$res['cnt'];
+        $sum = (float)$res['total_sum'];
+
+        $bayesian_score = round((($c * $baseline) + $sum) / ($c + $n), 1);
+
+        $upd = $pdo->prepare("UPDATE products SET rating_cache = ?, review_count_cache = ? WHERE id = ?");
+        $upd->execute([$bayesian_score, $n, $target_id]);
+        return ['rating' => $bayesian_score, 'review_count' => $n, 'baseline' => $baseline];
+    } elseif ($target_type === 'doctor') {
+        $stmt = $pdo->prepare("SELECT IFNULL(baseline_rating, 4.9) FROM doctors WHERE id = ?");
+        $stmt->execute([$target_id]);
+        $baseline = (float)($stmt->fetchColumn() ?: 4.9);
+
+        $revStmt = $pdo->prepare("SELECT COUNT(*) as cnt, IFNULL(SUM(rating), 0) as total_sum FROM reviews WHERE target_type = 'doctor' AND target_id = ? AND status = 'approved'");
+        $revStmt->execute([$target_id]);
+        $res = $revStmt->fetch(PDO::FETCH_ASSOC);
+        $n = (int)$res['cnt'];
+        $sum = (float)$res['total_sum'];
+
+        $bayesian_score = round((($c * $baseline) + $sum) / ($c + $n), 1);
+
+        $upd = $pdo->prepare("UPDATE doctors SET rating = ?, review_count = ? WHERE id = ?");
+        $upd->execute([$bayesian_score, $n, $target_id]);
+        return ['rating' => $bayesian_score, 'review_count' => $n, 'baseline' => $baseline];
+    }
+    return ['rating' => 4.8, 'review_count' => 0, 'baseline' => 4.8];
+}
+

@@ -312,9 +312,13 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
         </div>
         <?php if ($apt['status'] == 'approved'): ?>
             <button class="w-full bg-primary-container text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all mb-2">
-            <span class="material-symbols-outlined text-lg">videocam</span>
-                                            ورود به اتاق مشاوره
-                                        </button>
+                <span class="material-symbols-outlined text-lg">videocam</span>
+                ورود به اتاق مشاوره
+            </button>
+            <button type="button" onclick="openRatingModal('doctor', <?= $apt['doctor_id'] ?>, 'دکتر <?= addslashes($apt['doctor_name']) ?>')" class="w-full bg-secondary-container/10 border border-secondary-container/30 text-secondary-container py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-secondary-container hover:text-white transition-all mb-2">
+                <span class="material-symbols-outlined text-base">star</span>
+                ثبت نظر و امتیاز به پزشک (+۵ امتیاز)
+            </button>
         <?php else: ?>
             <div class="mb-2">
                 <button onclick="document.getElementById('clinic_addr_<?= $apt['id'] ?>').classList.toggle('hidden')" class="w-full border-2 border-primary-container text-primary-container py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-container hover:text-white transition-all">
@@ -494,8 +498,14 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
                             <a href="product_details.php?id=<?= $item['product_id'] ?>" class="text-xs font-bold text-on-surface hover:text-primary transition-colors truncate block">
                                 <?= htmlspecialchars($item['product_name_snapshot']) ?>
                             </a>
-                            <div class="text-[11px] text-on-surface-variant">
-                                <?= $item['quantity'] ?> عدد × <?= number_format($item['price_at_purchase']) ?> تومان
+                            <div class="mt-1 flex items-center justify-between gap-2 flex-wrap">
+                                <div class="text-[11px] text-on-surface-variant">
+                                    <?= $item['quantity'] ?> عدد × <?= number_format($item['price_at_purchase']) ?> تومان
+                                </div>
+                                <button type="button" onclick="openRatingModal('product', <?= $item['product_id'] ?>, '<?= addslashes($item['product_name_snapshot']) ?>')" class="text-[11px] font-bold text-secondary-container hover:underline flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">star</span>
+                                    ثبت نظر و امتیاز (+۵ امتیاز)
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -799,7 +809,121 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
         پشتیبانی آنلاین آسنا
     </span>
 </a>
+<!-- Rating & Review Micro-Modal (Non-intrusive) -->
+<div id="ratingModal" class="fixed inset-0 bg-black/60 z-50 hidden backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
+        <button onclick="closeRatingModal()" class="absolute top-6 left-6 text-on-surface-variant hover:text-error transition-colors">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-12 h-12 rounded-2xl bg-secondary-container/10 text-secondary-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">rate_review</span>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-primary line-clamp-1" id="ratingModalTitle">ثبت نظر و امتیاز</h3>
+                <p class="text-xs text-status-active font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">verified</span>
+                    خریدار تاییدشده • ۵ امتیاز وفاداری هدیه
+                </p>
+            </div>
+        </div>
+
+        <form id="ratingForm" onsubmit="submitRating(event)" class="space-y-4">
+            <input type="hidden" id="ratingTargetType" name="target_type" value="product">
+            <input type="hidden" id="ratingTargetId" name="target_id" value="0">
+            <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+
+            <!-- Interactive 5-Star Selector -->
+            <div>
+                <label class="block text-xs font-bold text-on-surface mb-2">امتیاز شما به این مورد:</label>
+                <div class="flex items-center justify-center gap-2 py-2 text-status-warning" id="starSelector">
+                    <?php for($i=1; $i<=5; $i++): ?>
+                    <button type="button" onclick="setRatingStars(<?php echo $i; ?>)" class="star-btn transition-transform hover:scale-125 focus:outline-none cursor-pointer" data-val="<?php echo $i; ?>">
+                        <span class="material-symbols-outlined text-3xl select-none" id="star-icon-<?php echo $i; ?>">star</span>
+                    </button>
+                    <?php endfor; ?>
+                </div>
+                <input type="hidden" id="ratingScore" name="rating" value="5">
+                <p class="text-center text-xs text-on-surface-variant font-bold mt-1" id="ratingScoreText">عالی (۵ ستاره)</p>
+            </div>
+
+            <!-- Comment Box -->
+            <div>
+                <label class="block text-xs font-bold text-on-surface mb-2">تجربه یا نظر شما (اختیاری):</label>
+                <textarea name="comment" id="ratingComment" rows="3" placeholder="کیفیت، اثربخشی، بسته‌بندی یا نحوه پاسخگویی..." class="w-full text-xs p-3 border border-outline-variant rounded-xl outline-none focus:border-primary focus:ring-1 focus:ring-primary"></textarea>
+            </div>
+
+            <button type="submit" id="ratingSubmitBtn" class="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-container transition-all flex items-center justify-center gap-2">
+                <span>ثبت امتیاز و دریافت ۵ امتیاز هدیه</span>
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
+    function openRatingModal(type, id, title) {
+        document.getElementById('ratingTargetType').value = type;
+        document.getElementById('ratingTargetId').value = id;
+        document.getElementById('ratingModalTitle').textContent = 'امتیاز به ' + title;
+        setRatingStars(5);
+        document.getElementById('ratingComment').value = '';
+        document.getElementById('ratingModal').classList.remove('hidden');
+    }
+
+    function closeRatingModal() {
+        document.getElementById('ratingModal').classList.add('hidden');
+    }
+
+    function setRatingStars(score) {
+        document.getElementById('ratingScore').value = score;
+        const labels = { 1: 'خیلی ضعیف (۱ ستاره)', 2: 'ضعیف (۲ ستاره)', 3: 'متوسط (۳ ستاره)', 4: 'خوب (۴ ستاره)', 5: 'عالی (۵ ستاره)' };
+        document.getElementById('ratingScoreText').textContent = labels[score] || (score + ' ستاره');
+        
+        for (let i = 1; i <= 5; i++) {
+            const icon = document.getElementById('star-icon-' + i);
+            if (i <= score) {
+                icon.textContent = 'star';
+                icon.classList.add('text-status-warning');
+                icon.classList.remove('text-outline-variant');
+            } else {
+                icon.textContent = 'star';
+                icon.classList.remove('text-status-warning');
+                icon.classList.add('text-outline-variant');
+            }
+        }
+    }
+
+    async function submitRating(e) {
+        e.preventDefault();
+        const btn = document.getElementById('ratingSubmitBtn');
+        const form = document.getElementById('ratingForm');
+        const formData = new FormData(form);
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> در حال ثبت...';
+        
+        try {
+            const resp = await fetch('actions/review_action.php', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.status === 'success') {
+                alert(data.message);
+                closeRatingModal();
+                location.reload();
+            } else {
+                alert(data.message || 'خطا در ثبت امتیاز');
+            }
+        } catch (err) {
+            alert('خطا در برقراری ارتباط با سرور.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>ثبت امتیاز و دریافت ۵ امتیاز هدیه</span>';
+        }
+    }
+
     function openEditPetModal(id, name, type, race, gender, age) {
         document.getElementById('edit_pet_id').value = id;
         document.getElementById('edit_pet_name').value = name;

@@ -26,38 +26,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $autoship_discount = (int)($_POST['autoship_discount'] ?? 10);
 
     if ($action === 'add') {
+        $baseline_rating = !empty($_POST['baseline_rating']) ? (float)$_POST['baseline_rating'] : 4.8;
         if ($has_animal_col && $has_tag_col && $has_autoship_col) {
-            $stmt = $pdo->prepare("INSERT INTO products (name, category, price, discount_price, image_url, description, stock, brand, target_animal, pharmacy_tag, is_autoship, autoship_discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO products (name, category, price, discount_price, image_url, description, stock, brand, target_animal, pharmacy_tag, is_autoship, autoship_discount, baseline_rating, rating_cache) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 trim($_POST['name']), trim($_POST['category']), (int)$_POST['price'], 
                 empty($_POST['discount_price']) ? null : (int)$_POST['discount_price'], trim($_POST['image_url']), 
                 trim($_POST['description']), (int)($_POST['stock'] ?: 10), trim($_POST['brand']),
-                $target_animal, $pharmacy_tag, $is_autoship, $autoship_discount
+                $target_animal, $pharmacy_tag, $is_autoship, $autoship_discount, $baseline_rating, $baseline_rating
             ]);
+            $new_pid = $pdo->lastInsertId();
+            recalculate_bayesian_rating($pdo, 'product', $new_pid);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO products (name, category, price, discount_price, image_url, description, stock, brand) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO products (name, category, price, discount_price, image_url, description, stock, brand, baseline_rating, rating_cache) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 trim($_POST['name']), trim($_POST['category']), (int)$_POST['price'], 
                 empty($_POST['discount_price']) ? null : (int)$_POST['discount_price'], trim($_POST['image_url']), 
-                trim($_POST['description']), (int)($_POST['stock'] ?: 10), trim($_POST['brand'])
+                trim($_POST['description']), (int)($_POST['stock'] ?: 10), trim($_POST['brand']), $baseline_rating, $baseline_rating
             ]);
         }
     } elseif ($action === 'edit') {
+        $pid = (int)$_POST['product_id'];
+        $baseline_rating = !empty($_POST['baseline_rating']) ? (float)$_POST['baseline_rating'] : 4.8;
         if ($has_animal_col && $has_tag_col && $has_autoship_col) {
-            $stmt = $pdo->prepare("UPDATE products SET name=?, category=?, price=?, discount_price=?, image_url=?, description=?, stock=?, brand=?, target_animal=?, pharmacy_tag=?, is_autoship=?, autoship_discount=? WHERE id=?");
+            $stmt = $pdo->prepare("UPDATE products SET name=?, category=?, price=?, discount_price=?, image_url=?, description=?, stock=?, brand=?, target_animal=?, pharmacy_tag=?, is_autoship=?, autoship_discount=?, baseline_rating=? WHERE id=?");
             $stmt->execute([
                 trim($_POST['name']), trim($_POST['category']), (int)$_POST['price'], 
                 empty($_POST['discount_price']) ? null : (int)$_POST['discount_price'], trim($_POST['image_url']), 
                 trim($_POST['description']), (int)($_POST['stock'] ?: 10), trim($_POST['brand']),
-                $target_animal, $pharmacy_tag, $is_autoship, $autoship_discount, (int)$_POST['product_id']
+                $target_animal, $pharmacy_tag, $is_autoship, $autoship_discount, $baseline_rating, $pid
             ]);
+            recalculate_bayesian_rating($pdo, 'product', $pid);
         } else {
-            $stmt = $pdo->prepare("UPDATE products SET name=?, category=?, price=?, discount_price=?, image_url=?, description=?, stock=?, brand=? WHERE id=?");
+            $stmt = $pdo->prepare("UPDATE products SET name=?, category=?, price=?, discount_price=?, image_url=?, description=?, stock=?, brand=?, baseline_rating=? WHERE id=?");
             $stmt->execute([
                 trim($_POST['name']), trim($_POST['category']), (int)$_POST['price'], 
                 empty($_POST['discount_price']) ? null : (int)$_POST['discount_price'], trim($_POST['image_url']), 
-                trim($_POST['description']), (int)($_POST['stock'] ?: 10), trim($_POST['brand']), (int)$_POST['product_id']
+                trim($_POST['description']), (int)($_POST['stock'] ?: 10), trim($_POST['brand']), $baseline_rating, $pid
             ]);
+            recalculate_bayesian_rating($pdo, 'product', $pid);
         }
     } elseif ($action === 'delete') {
         $stmt = $pdo->prepare("DELETE FROM products WHERE id=?");
@@ -348,8 +355,8 @@ $pharmacy_tag_names = [
                         <input type="number" name="price" id="productPrice" required min="0" class="w-full rounded-xl border border-outline-variant p-2.5 text-sm outline-none focus:border-primary">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-on-surface-variant">قیمت ویژه تخفیف‌دار (تومان)</label>
-                        <input type="number" name="discount_price" id="productDiscountPrice" min="0" class="w-full rounded-xl border border-outline-variant p-2.5 text-sm outline-none focus:border-primary">
+                        <label class="text-xs font-bold text-on-surface-variant">امتیاز اولیه کارشناسی (Baseline Quality)</label>
+                        <input type="number" step="0.1" min="1" max="5" name="baseline_rating" id="productBaselineRating" value="4.8" class="w-full rounded-xl border border-outline-variant p-2.5 text-sm outline-none focus:border-primary">
                     </div>
                 </div>
 
@@ -406,6 +413,7 @@ function openModal(mode, product = null) {
         document.getElementById('productStock').value = product.stock;
         document.getElementById('productPrice').value = product.price;
         document.getElementById('productDiscountPrice').value = product.discount_price || '';
+        document.getElementById('productBaselineRating').value = product.baseline_rating || 4.8;
         document.getElementById('productImageUrl').value = product.image_url || '';
         document.getElementById('productDescription').value = product.description || '';
         document.getElementById('productIsAutoship').checked = (product.is_autoship == 1);
@@ -415,6 +423,7 @@ function openModal(mode, product = null) {
         form.reset();
         document.getElementById('form_action').value = 'add';
         document.getElementById('form_product_id').value = '';
+        document.getElementById('productBaselineRating').value = '4.8';
         document.getElementById('productAnimal').value = 'all';
         document.getElementById('productIsAutoship').checked = false;
         document.getElementById('productAutoshipDiscount').value = 10;

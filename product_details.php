@@ -23,18 +23,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (!isset($_SESSION['user_id'])) {
         $error = "برای ثبت نظر باید وارد حساب کاربری شوید.";
     } else {
-        $rating = (int)$_POST['rating'];
-        $comment = trim($_POST['comment']);
+        $rating = (int)($_POST['rating'] ?? 5);
+        $comment = trim($_POST['comment'] ?? '');
         
         if ($rating >= 1 && $rating <= 5) {
-            $stmt = $pdo->prepare("INSERT INTO reviews (user_id, target_type, target_id, rating, comment, status) VALUES (?, 'product', ?, ?, ?, 'approved')");
-            $stmt->execute([$_SESSION['user_id'], $product_id, $rating, $comment]);
-            $success = "نظر شما با موفقیت ثبت شد.";
+            // Check verified purchase
+            $vStmt = $pdo->prepare("SELECT COUNT(*) FROM order_items oi JOIN orders o ON oi.order_id = o.id WHERE o.user_id = ? AND oi.product_id = ?");
+            $vStmt->execute([$_SESSION['user_id'], $product_id]);
+            $is_verified = ($vStmt->fetchColumn() > 0) ? 1 : 0;
+
+            // Check existing review
+            $chkStmt = $pdo->prepare("SELECT id FROM reviews WHERE user_id = ? AND target_type = 'product' AND target_id = ?");
+            $chkStmt->execute([$_SESSION['user_id'], $product_id]);
+            $existing_id = $chkStmt->fetchColumn();
+
+            if ($existing_id) {
+                $upd = $pdo->prepare("UPDATE reviews SET rating = ?, comment = ?, is_verified_buyer = ?, status = 'approved', created_at = NOW() WHERE id = ?");
+                $upd->execute([$rating, $comment, $is_verified, $existing_id]);
+            } else {
+                $ins = $pdo->prepare("INSERT INTO reviews (user_id, target_type, target_id, rating, comment, is_verified_buyer, status, created_at) VALUES (?, 'product', ?, ?, ?, ?, 'approved', NOW())");
+                $ins->execute([$_SESSION['user_id'], $product_id, $rating, $comment, $is_verified]);
+                
+                if ($is_verified) {
+                    $pdo->prepare("UPDATE users SET loyalty_points = loyalty_points + 5 WHERE id = ?")->execute([$_SESSION['user_id']]);
+                }
+            }
+
+            // Recalculate Bayesian Rating
+            recalculate_bayesian_rating($pdo, 'product', $product_id);
+            $success = "نظر شما با موفقیت ثبت شد." . ($is_verified ? " (+۵ امتیاز وفاداری به کیف پول شما افزوده شد)" : "");
         }
     }
 }
 
-// Get reviews
+// Get reviews with verified buyer status
 $stmt = $pdo->prepare("
     SELECT r.*, u.name as user_name 
     FROM reviews r 
@@ -45,13 +67,10 @@ $stmt = $pdo->prepare("
 $stmt->execute([$product_id]);
 $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Calculate average rating
-$avg_rating = $product['rating_cache'] ?? 4.8;
-if (count($reviews) > 0) {
-    $sum = 0;
-    foreach ($reviews as $rev) $sum += $rev['rating'];
-    $avg_rating = round($sum / count($reviews), 1);
-}
+// Bayesian Score & Count
+$stats = recalculate_bayesian_rating($pdo, 'product', $product_id);
+$avg_rating = $stats['rating'];
+$review_count = $stats['review_count'];
 
 // Fetch Related / Recommended Products
 $target_animal = $product['target_animal'] ?? 'all';
@@ -274,9 +293,18 @@ $autoship_price = round($base_price * (100 - $autoship_discount) / 100);
                 <span class="material-symbols-outlined text-secondary-container">reviews</span>
                 دیدگاه‌ها و تجربیات مصرف‌کنندگان
             </h2>
-            <div class="flex items-center gap-2 text-status-warning font-bold text-sm">
-                <span class="material-symbols-outlined text-[20px] star-rating-filled">star</span>
-                <span><?php echo $avg_rating; ?> از ۵</span>
+            <div class="flex flex-col items-end">
+                <div class="flex items-center gap-2 text-status-warning font-bold text-sm">
+                    <span class="material-symbols-outlined text-[20px] star-rating-filled">star</span>
+                    <span><?php echo $avg_rating; ?> از ۵</span>
+                </div>
+                <span class="text-[11px] text-on-surface-variant">
+                    <?php if($review_count > 0): ?>
+                        (بر اساس <?php echo $review_count; ?> نظر خریداران)
+                    <?php else: ?>
+                        (امتیاز کارشناسی آسنا)
+                    <?php endif; ?>
+                </span>
             </div>
         </div>
 

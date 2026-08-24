@@ -147,7 +147,13 @@ $booked_slots_json = json_encode($booked_slots);
                             <div class="flex items-center gap-1 text-amber-500 mt-2">
                                 <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
                                 <span class="text-sm font-bold text-slate-700"><?php echo $doctor['rating']; ?></span>
-                                <span class="text-xs text-slate-400 mr-1">(<?php echo $doctor['review_count']; ?> نظر)</span>
+                                <span class="text-xs text-slate-400 mr-1">
+                                    <?php if($doctor['review_count'] > 0): ?>
+                                        (<?php echo $doctor['review_count']; ?> نظر مراجعین)
+                                    <?php else: ?>
+                                        (امتیاز تخصصی آسنا)
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </div>
                         <button type="button" class="w-full mt-5 border-2 border-indigo-100 bg-indigo-50/50 text-indigo-700 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-600 hover:border-indigo-600 hover:text-white transition-all shadow-sm select-btn">انتخاب پزشک</button>
