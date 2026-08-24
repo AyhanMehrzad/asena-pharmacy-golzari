@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="pharmaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#002d72"/>
+      <stop offset="100%" stop-color="#001538"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="400" height="400" rx="32" fill="url(#pharmaGrad)"/>
+  <circle cx="200" cy="200" r="130" fill="#ffffff" fill-opacity="0.06"/>
+  <circle cx="200" cy="200" r="100" fill="#ffffff" fill-opacity="0.08"/>
+  <!-- Pharmacy Cross & Pill -->
+  <g filter="url(#shadow)">
+    <!-- Pill Capsule -->
+    <path d="M150 160 L230 240 A30 30 0 0 1 190 280 L110 200 A30 30 0 0 1 150 160 Z" fill="#ffffff" rx="20"/>
+    <path d="M190 120 L270 200 A30 30 0 0 1 230 240 L150 160 A30 30 0 0 1 190 120 Z" fill="url(#accentGrad)" rx="20"/>
+    <!-- Medical Cross -->
+    <rect x="188" y="270" width="24" height="60" rx="6" fill="#ffffff" fill-opacity="0.9"/>
+    <rect x="170" y="288" width="60" height="24" rx="6" fill="#ffffff" fill-opacity="0.9"/>
+    <!-- Veterinary Paw -->
+    <ellipse cx="200" cy="100" rx="14" ry="18" fill="#ffffff" fill-opacity="0.9"/>
+    <circle cx="170" cy="85" r="9" fill="#ffffff" fill-opacity="0.9"/>
+    <circle cx="230" cy="85" r="9" fill="#ffffff" fill-opacity="0.9"/>
+    <circle cx="150" cy="110" r="8" fill="#ffffff" fill-opacity="0.9"/>
+    <circle cx="250" cy="110" r="8" fill="#ffffff" fill-opacity="0.9"/>
+  </g>
+</svg>

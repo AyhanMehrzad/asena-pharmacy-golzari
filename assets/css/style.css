@@ -1,0 +1,177 @@
+/* Custom Styles for PetCare Iran */
+
+/* Premium button hover effects */
+.btn-premium {
+    transition: all 0.3s ease;
+}
+.btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Animations */
+@keyframes bounce {
+    0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
+    50% { transform: translateY(0); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+}
+.animate-bounce {
+    animation: bounce 2s infinite;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.animate-fadeInUp {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Gradients for medals */
+.medal-gold { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); }
+.medal-silver { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%); }
+.medal-bronze { background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%); }
+
+/* Overlays */
+.overlay-shade {
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0) 100%);
+}
+
+/* New Homepage Styles */
+.glass-card {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 24px -1px rgba(0, 45, 114, 0.03);
+}
+
+.workstation-module {
+    background: #ffffff;
+    border: 1px solid #eeeeee;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workstation-module:hover {
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
+    border-color: var(--primary-container, #002d72);
+}
+
+.paw-pattern {
+    background-image: radial-gradient(#002d72 0.5px, transparent 0.5px);
+    background-size: 32px 32px;
+    opacity: 0.04;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.blurred-orb {
+    position: absolute;
+    filter: blur(120px);
+    z-index: -1;
+    opacity: 0.12;
+    border-radius: 9999px;
+}
+
+.mask-fade-l {
+    mask-image: linear-gradient(to right, transparent, black 40%);
+}
+
+/* --- Animal Selector Carousel & Pharmacy UI --- */
+.animal-circle-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.animal-circle-item:hover {
+    transform: translateY(-4px);
+}
+.animal-circle-item.active .animal-circle-ring {
+    border-color: #002d72;
+    box-shadow: 0 0 0 4px rgba(0, 45, 114, 0.15), 0 10px 20px -5px rgba(0, 45, 114, 0.25);
+    background-color: #f0f4ff;
+}
+.animal-circle-item.active .animal-circle-label {
+    color: #001a48;
+    font-weight: 700;
+}
+
+/* Autoship Interactive Toggle Switch */
+.autoship-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+.autoship-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.autoship-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: .3s;
+    border-radius: 9999px;
+}
+.autoship-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+input:checked + .autoship-slider {
+    background-color: #fd8100;
+}
+input:checked + .autoship-slider:before {
+    transform: translateX(22px);
+}
+
+/* Rating Stars */
+.star-rating-filled {
+    color: #f59e0b;
+    font-variation-settings: 'FILL' 1;
+}
+.star-rating-empty {
+    color: #cbd5e1;
+    font-variation-settings: 'FILL' 0;
+}
+
+/* Hot Offers Pulse Animation */
+@keyframes offerGlow {
+    0%, 100% { box-shadow: 0 0 15px rgba(253, 129, 0, 0.3); }
+    50% { box-shadow: 0 0 25px rgba(253, 129, 0, 0.6); }
+}
+.hot-offer-card {
+    animation: offerGlow 3s infinite ease-in-out;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+

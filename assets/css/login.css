@@ -1,0 +1,4 @@
+        body { font-family: 'Geist', sans-serif; background-color: #ffffff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .auth-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .input-group:focus-within label { color: #002d72; font-weight: 600; }
