@@ -563,14 +563,14 @@ $top_donors = $donor_stmt->fetchAll(PDO::FETCH_ASSOC);
                         
                         <!-- Quick add to cart overlay -->
                         <div class="absolute inset-x-0 bottom-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/60 to-transparent flex justify-center z-20">
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" class="bg-primary text-white w-full py-2 rounded-xl text-xs font-bold flex justify-center items-center gap-1 hover:bg-primary-container">
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, 'standard')" class="bg-primary text-white w-full py-2 rounded-xl text-xs font-bold flex justify-center items-center gap-1 hover:bg-primary-container">
                                 <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
-                                <?php echo !empty($product['is_autoship']) ? 'خرید Autoship' : 'افزودن'; ?>
+                                افزودن به سبد
                             </button>
                         </div>
                         
                         <!-- Mobile Quick Add to Cart -->
-                        <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" class="lg:hidden absolute bottom-3 left-3 z-30 w-9 h-9 bg-primary/90 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform border border-white/20">
+                        <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, 'standard')" class="lg:hidden absolute bottom-3 left-3 z-30 w-9 h-9 bg-primary/90 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform border border-white/20">
                             <span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
                         </button>
                     </div>

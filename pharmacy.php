@@ -592,9 +592,9 @@ function buildUrl($updates) {
                         
                         <!-- Desktop Hover Overlay Only (lg:flex) -->
                         <div class="hidden lg:flex absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/70 to-transparent justify-center z-20">
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" class="bg-primary text-white w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors cursor-pointer text-xs">
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, 'standard')" class="bg-primary text-white w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors cursor-pointer text-xs">
                                 <span class="material-symbols-outlined text-base">add_shopping_cart</span>
-                                <?php echo !empty($product['is_autoship']) ? 'خرید اشتراکی Autoship' : 'افزودن به سبد دارو'; ?>
+                                افزودن به سبد دارو
                             </button>
                         </div>
                     </div>
@@ -624,11 +624,11 @@ function buildUrl($updates) {
                             </div>
 
                             <!-- Dedicated Touch & Mobile Button (ONLY for mobile/touch, hidden on desktop: lg:hidden) -->
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" 
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, 'standard')" 
                                     class="lg:hidden bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
-                                    title="افزودن به سبد">
+                                    title="افزودن به سبد دارو">
                                 <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
-                                <span class="text-xs"><?php echo !empty($product['is_autoship']) ? 'Autoship' : 'خرید'; ?></span>
+                                <span class="text-xs">خرید</span>
                             </button>
                         </div>
                     </div>

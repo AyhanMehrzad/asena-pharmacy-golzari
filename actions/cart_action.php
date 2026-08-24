@@ -36,8 +36,8 @@ if ($product_id > 0) {
             if ($product_row) {
                 $_SESSION['cart'][$product_id] = ($_SESSION['cart'][$product_id] ?? 0) + 1;
                 
-                // If type is explicitly autoship OR the product is tagged as is_autoship in DB
-                if ($type === 'autoship' || !empty($product_row['is_autoship']) || !empty($_POST['is_autoship'])) {
+                // Only place in autoship tab if explicitly requested as autoship (e.g. user selected recurring in product details or box builder)
+                if ($type === 'autoship' && !empty($product_row['is_autoship'])) {
                     $_SESSION['cart_types'][$product_id] = 'autoship';
                     if (empty($_SESSION['cart_frequency'][$product_id])) {
                         $_SESSION['cart_frequency'][$product_id] = !empty($frequency) ? $frequency : '1_month';

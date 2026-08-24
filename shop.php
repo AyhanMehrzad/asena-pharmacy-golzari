@@ -724,9 +724,9 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                         
                         <!-- Desktop Only Animated Add to Cart Overlay -->
                         <div class="hidden lg:flex absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/70 to-transparent justify-center z-20">
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" class="bg-primary text-white w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors text-xs cursor-pointer">
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, 'standard')" class="bg-primary text-white w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-colors text-xs cursor-pointer">
                                 <span class="material-symbols-outlined text-base">add_shopping_cart</span>
-                                <?php echo !empty($product['is_autoship']) ? 'خرید اشتراکی Autoship' : 'افزودن به سبد خرید'; ?>
+                                افزودن به سبد خرید
                             </button>
                         </div>
                     </div>
@@ -774,11 +774,11 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                             </div>
 
                             <!-- Dedicated Touch-Friendly Button for Android & iOS (Mobile Only, lg:hidden) -->
-                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, '<?php echo !empty($product['is_autoship']) ? 'autoship' : 'standard'; ?>')" 
+                            <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>, 'standard')" 
                                     class="lg:hidden bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
                                     title="افزودن به سبد خرید">
                                 <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
-                                <span class="text-xs"><?php echo !empty($product['is_autoship']) ? 'Autoship' : 'خرید'; ?></span>
+                                <span class="text-xs">خرید</span>
                             </button>
                         </div>
                     </div>
