@@ -623,9 +623,9 @@ function buildUrl($updates) {
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Dedicated Touch & Mobile Button (No hover required!) -->
+                            <!-- Dedicated Touch & Mobile Button (ONLY for mobile/touch, hidden on desktop: lg:hidden) -->
                             <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>)" 
-                                    class="bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
+                                    class="lg:hidden bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
                                     title="افزودن به سبد دارو">
                                 <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
                                 <span class="text-xs">خرید</span>

@@ -773,9 +773,9 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Dedicated Touch-Friendly Button for Android & iOS -->
+                            <!-- Dedicated Touch-Friendly Button for Android & iOS (Mobile Only, lg:hidden) -->
                             <button type="button" onclick="addToCart(this, <?php echo $product['id']; ?>)" 
-                                    class="bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
+                                    class="lg:hidden bg-primary hover:bg-primary-container text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
                                     title="افزودن به سبد خرید">
                                 <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span>
                                 <span class="text-xs">خرید</span>
