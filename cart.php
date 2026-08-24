@@ -192,11 +192,12 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                                     </form>
                                 </div>
 
-                                <!-- 1-Click Autoship Conversion Bar -->
+                                <?php if(!empty($prod['is_autoship'])): ?>
+                                <!-- 1-Click Autoship Conversion Bar (Only for products tagged as Autoship) -->
                                 <div class="my-3 p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/60 flex flex-wrap items-center justify-between gap-2">
                                     <div class="flex items-center gap-1.5 text-xs text-orange-900 font-medium">
                                         <span class="material-symbols-outlined text-secondary-container text-base">savings</span>
-                                        <span>تخفیف مداوم ۱۵٪ با ارسال منظم دوره‌ای</span>
+                                        <span>تخفیف مداوم <?= !empty($prod['autoship_discount']) ? (int)$prod['autoship_discount'] : 15 ?>٪ با ارسال منظم دوره‌ای</span>
                                     </div>
                                     <form action="actions/cart_action.php" method="POST" class="m-0">
                                         <?= csrf_field() ?>
@@ -209,6 +210,7 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                                         </button>
                                     </form>
                                 </div>
+                                <?php endif; ?>
                                 
                                 <div class="flex justify-between items-center w-full pt-1">
                                     <!-- Quantity Stepper -->

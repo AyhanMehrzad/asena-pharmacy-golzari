@@ -50,10 +50,19 @@ if ($product_id > 0) {
 
         case 'toggle_type':
             $current_type = $_SESSION['cart_types'][$product_id] ?? 'standard';
-            $new_type = ($current_type === 'autoship') ? 'standard' : 'autoship';
-            $_SESSION['cart_types'][$product_id] = $new_type;
-            if ($new_type === 'autoship' && empty($_SESSION['cart_frequency'][$product_id])) {
-                $_SESSION['cart_frequency'][$product_id] = '1_month';
+            if ($current_type === 'autoship') {
+                $_SESSION['cart_types'][$product_id] = 'standard';
+            } else {
+                // Verify product is permitted for autoship in database
+                $stmt = $pdo->prepare("SELECT is_autoship FROM products WHERE id = ?");
+                $stmt->execute([$product_id]);
+                $is_auto = (int)$stmt->fetchColumn();
+                if ($is_auto == 1) {
+                    $_SESSION['cart_types'][$product_id] = 'autoship';
+                    if (empty($_SESSION['cart_frequency'][$product_id])) {
+                        $_SESSION['cart_frequency'][$product_id] = '1_month';
+                    }
+                }
             }
             break;
 
