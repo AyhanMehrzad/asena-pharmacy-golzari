@@ -45,6 +45,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        if ($action === 'resolve_incident' && isset($_POST['delivery_id'])) {
+            $delivery_id = (int)$_POST['delivery_id'];
+            $resolution_type = $_POST['resolution_type'] ?? 'delivered';
+            $admin_note = trim($_POST['admin_note'] ?? 'مشکل با هماهنگی مشتری حل شد');
+
+            if ($resolution_type === 'resend') {
+                $upd = $pdo->prepare("UPDATE subscription_deliveries SET status = 'shipped' WHERE id = ? AND subscription_id = ?");
+                $upd->execute([$delivery_id, $subscription_id]);
+                $logMsg = "بسته جایگزین مجدداً ارسال شد: $admin_note";
+            } else {
+                $upd = $pdo->prepare("UPDATE subscription_deliveries SET status = 'delivered' WHERE id = ? AND subscription_id = ?");
+                $upd->execute([$delivery_id, $subscription_id]);
+                $logMsg = "تحویل بسته به مشتری تایید و گزارش عدم دریافت رفع گردید: $admin_note";
+            }
+
+            try {
+                $insLog = $pdo->prepare("INSERT INTO subscription_logs (subscription_id, action, note) VALUES (?, 'incident_resolved', ?)");
+                $insLog->execute([$subscription_id, $logMsg]);
+            } catch (Exception $e) {}
+
+            $success = "گزارش عدم دریافت با موفقیت حل و فصل و وضعیت مرسوله به‌روزرسانی شد.";
+        }
+        
         if ($action === 'cancel_subscription') {
             $stmt = $pdo->prepare("UPDATE user_subscriptions SET status = 'cancelled' WHERE id = ?");
             $stmt->execute([$subscription_id]);
@@ -230,7 +253,17 @@ function translate_delivery_status($status) {
                                 <?php elseif ($del['status'] === 'shipped'): ?>
                                     <span class="text-xs text-on-surface-variant">منتظر تایید کاربر</span>
                                 <?php elseif ($del['status'] === 'delivered'): ?>
-                                    <span class="text-xs text-status-active font-bold">توسط کاربر دریافت شد</span>
+                                    <span class="text-xs text-status-active font-bold flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                                        تحویل تایید شد
+                                    </span>
+                                <?php elseif ($del['status'] === 'not_received'): ?>
+                                    <button type="button" 
+                                            onclick="openResolveModal(<?= $del['id'] ?>, <?= $del['delivery_month'] ?>)"
+                                            class="bg-error hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1 transition-all cursor-pointer">
+                                        <span class="material-symbols-outlined text-sm">task_alt</span>
+                                        حل مشکل عدم دریافت
+                                    </button>
                                 <?php else: ?>
                                     <span class="text-xs text-on-surface-variant">-</span>
                                 <?php endif; ?>
@@ -246,5 +279,68 @@ function translate_delivery_status($status) {
         </div>
     </div>
 </div>
+
+<!-- Incident Resolution Modal -->
+<div id="resolveModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-outline-variant/20 flex justify-between items-center bg-error/10 text-error">
+            <h3 class="font-bold flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined">report_problem</span>
+                حل مشکل گزارش عدم دریافت مرسوله
+            </h3>
+            <button onclick="closeResolveModal()" class="text-on-surface-variant hover:text-error transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form method="POST" class="p-6 space-y-4">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="resolve_incident">
+            <input type="hidden" name="delivery_id" id="resolveDeliveryId" value="">
+
+            <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 text-xs space-y-1">
+                <p><span class="text-on-surface-variant">مشتری:</span> <strong class="text-primary"><?= htmlspecialchars($subscription['user_name']) ?></strong></p>
+                <p><span class="text-on-surface-variant">مرسوله:</span> <strong class="text-on-surface" id="resolveMonthText">-</strong></p>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-on-surface">اقدام انجام شده جهت رفع مشکل:</label>
+                <select name="resolution_type" class="w-full p-2.5 rounded-xl border border-outline-variant text-xs outline-none focus:border-primary">
+                    <option value="delivered">✅ تحویل تایید شد (هماهنگی تلفنی با مشتری/پیک)</option>
+                    <option value="resend">📦 ارسال مجدد بسته جایگزین (تغییر به در مسیر ارسال)</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-on-surface">یادداشت و نتیجه پیگیری ادمین:</label>
+                <textarea name="admin_note" rows="2" placeholder="مثال: با مشتری تلفنی صحبت شد و بسته توسط پیک مجدداً تحویل گردید." class="w-full p-2.5 rounded-xl border border-outline-variant text-xs outline-none focus:border-primary resize-none"></textarea>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button type="button" onclick="closeResolveModal()" class="px-4 py-2.5 rounded-xl font-bold text-xs text-on-surface-variant hover:bg-surface-container transition-colors">انصراف</button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-xs bg-status-active hover:opacity-90 text-white shadow-sm transition-all flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-base">task_alt</span>
+                    ثبت رفع مشکل
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openResolveModal(deliveryId, monthNum) {
+    document.getElementById('resolveDeliveryId').value = deliveryId;
+    document.getElementById('resolveMonthText').textContent = 'ماه ' + monthNum;
+    
+    const modal = document.getElementById('resolveModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeResolveModal() {
+    const modal = document.getElementById('resolveModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
 
 <?php require_once 'includes/admin_footer.php'; ?>

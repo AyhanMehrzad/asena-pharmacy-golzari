@@ -8,50 +8,77 @@ $currentPage = 'user_subscriptions';
 $flash_success = '';
 $flash_error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'quick_dispatch') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     csrf_verify();
-    $sub_id = (int)$_POST['subscription_id'];
-    $advance_days = (int)($_POST['advance_days'] ?? 30);
-    $tracking_note = trim($_POST['tracking_note'] ?? 'تحویل به پیک / شرکت پست');
+    $action = $_POST['action'];
 
-    if ($sub_id > 0) {
-        $subStmt = $pdo->prepare("SELECT * FROM user_subscriptions WHERE id = ?");
-        $subStmt->execute([$sub_id]);
-        $sub = $subStmt->fetch(PDO::FETCH_ASSOC);
+    if ($action === 'quick_dispatch') {
+        $sub_id = (int)$_POST['subscription_id'];
+        $advance_days = (int)($_POST['advance_days'] ?? 30);
+        $tracking_note = trim($_POST['tracking_note'] ?? 'تحویل به پیک / شرکت پست');
 
-        if ($sub && $sub['status'] === 'active') {
-            $current_next = $sub['next_delivery_date'] ?: date('Y-m-d');
-            $diff_days = round((strtotime($current_next) - strtotime(date('Y-m-d'))) / 86400);
+        if ($sub_id > 0) {
+            $subStmt = $pdo->prepare("SELECT * FROM user_subscriptions WHERE id = ?");
+            $subStmt->execute([$sub_id]);
+            $sub = $subStmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($diff_days > 2) {
-                $flash_error = "ثبت ارسال غیرفعال است. ارسال مرسوله فقط از ۲ روز مانده به موعد تحویل فعال می‌شود (موعد ارسال: $current_next - $diff_days روز باقی مانده).";
+            if ($sub && $sub['status'] === 'active') {
+                $current_next = $sub['next_delivery_date'] ?: date('Y-m-d');
+                $diff_days = round((strtotime($current_next) - strtotime(date('Y-m-d'))) / 86400);
+
+                if ($diff_days > 2) {
+                    $flash_error = "ثبت ارسال غیرفعال است. ارسال مرسوله فقط از ۲ روز مانده به موعد تحویل فعال می‌شود (موعد ارسال: $current_next - $diff_days روز باقی مانده).";
+                } else {
+                    $new_next = date('Y-m-d', strtotime("+$advance_days days", strtotime($current_next)));
+
+                    // 1. Record delivery in subscription_deliveries
+                    try {
+                        $countDelStmt = $pdo->prepare("SELECT COUNT(*) FROM subscription_deliveries WHERE subscription_id = ?");
+                        $countDelStmt->execute([$sub_id]);
+                        $delivery_month = (int)$countDelStmt->fetchColumn() + 1;
+
+                        $insDel = $pdo->prepare("INSERT INTO subscription_deliveries (subscription_id, delivery_month, scheduled_date, status) VALUES (?, ?, ?, 'shipped')");
+                        $insDel->execute([$sub_id, $delivery_month, $current_next]);
+                    } catch (Exception $e) {}
+
+                    // 2. Update next delivery date
+                    $updSub = $pdo->prepare("UPDATE user_subscriptions SET next_delivery_date = ? WHERE id = ?");
+                    $updSub->execute([$new_next, $sub_id]);
+
+                    // 3. Log action
+                    try {
+                        $insLog = $pdo->prepare("INSERT INTO subscription_logs (subscription_id, action, note) VALUES (?, 'dispatch', ?)");
+                        $insLog->execute([$sub_id, "مرسوله ارسال شد. نوبت بعدی برای $new_next تنظیم شد. ($tracking_note)"]);
+                    } catch (Exception $e) {}
+
+                    $flash_success = "ارسال مرسوله اشتراک #SUB-$sub_id با موفقیت ثبت شد و نوبت بعدی برای $new_next زمان‌بندی گردید.";
+                }
             } else {
-                $new_next = date('Y-m-d', strtotime("+$advance_days days", strtotime($current_next)));
-
-                // 1. Record delivery in subscription_deliveries
-                try {
-                    $countDelStmt = $pdo->prepare("SELECT COUNT(*) FROM subscription_deliveries WHERE subscription_id = ?");
-                    $countDelStmt->execute([$sub_id]);
-                    $delivery_month = (int)$countDelStmt->fetchColumn() + 1;
-
-                    $insDel = $pdo->prepare("INSERT INTO subscription_deliveries (subscription_id, delivery_month, scheduled_date, status) VALUES (?, ?, ?, 'shipped')");
-                    $insDel->execute([$sub_id, $delivery_month, $current_next]);
-                } catch (Exception $e) {}
-
-                // 2. Update next delivery date
-                $updSub = $pdo->prepare("UPDATE user_subscriptions SET next_delivery_date = ? WHERE id = ?");
-                $updSub->execute([$new_next, $sub_id]);
-
-                // 3. Log action
-                try {
-                    $insLog = $pdo->prepare("INSERT INTO subscription_logs (subscription_id, action, note) VALUES (?, 'dispatch', ?)");
-                    $insLog->execute([$sub_id, "مرسوله ارسال شد. نوبت بعدی برای $new_next تنظیم شد. ($tracking_note)"]);
-                } catch (Exception $e) {}
-
-                $flash_success = "ارسال مرسوله اشتراک #SUB-$sub_id با موفقیت ثبت شد و نوبت بعدی برای $new_next زمان‌بندی گردید.";
+                $flash_error = "اشتراک مورد نظر یافت نشد یا در وضعیت فعال نیست.";
             }
-        } else {
-            $flash_error = "اشتراک مورد نظر یافت نشد یا در وضعیت فعال نیست.";
+        }
+    } elseif ($action === 'resolve_incident') {
+        $sub_id = (int)$_POST['subscription_id'];
+        $resolution_type = $_POST['resolution_type'] ?? 'delivered';
+        $admin_note = trim($_POST['admin_note'] ?? 'مشکل با هماهنگی مشتری حل شد');
+
+        if ($sub_id > 0) {
+            if ($resolution_type === 'resend') {
+                $upd = $pdo->prepare("UPDATE subscription_deliveries SET status = 'shipped' WHERE subscription_id = ? AND status = 'not_received'");
+                $upd->execute([$sub_id]);
+                $logMsg = "بسته جایگزین مجدداً ارسال شد: $admin_note";
+            } else {
+                $upd = $pdo->prepare("UPDATE subscription_deliveries SET status = 'delivered' WHERE subscription_id = ? AND status = 'not_received'");
+                $upd->execute([$sub_id]);
+                $logMsg = "تحویل بسته به مشتری تایید و گزارش عدم دریافت رفع گردید: $admin_note";
+            }
+
+            try {
+                $insLog = $pdo->prepare("INSERT INTO subscription_logs (subscription_id, action, note) VALUES (?, 'incident_resolved', ?)");
+                $insLog->execute([$sub_id, $logMsg]);
+            } catch (Exception $e) {}
+
+            $flash_success = "گزارش عدم دریافت اشتراک #SUB-$sub_id با موفقیت حل و فصل و از وضعیت هشدار خارج شد.";
         }
     }
 }
@@ -496,10 +523,18 @@ function translate_status($status) {
                                 <?php endif; ?>
                             </td>
 
-                            <!-- Quick Dispatch Action Button -->
+                            <!-- Quick Dispatch & Incident Resolution Actions -->
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <?php if($is_active): ?>
+                                    <?php if($hasNotReceivedReport): ?>
+                                        <button type="button" 
+                                                onclick="openResolveModal(<?= $subscription['id'] ?>, '<?= addslashes($subscription['user_name']) ?>', '<?= addslashes($subscription['plan_name']) ?>')"
+                                                class="px-3.5 py-1.5 bg-error hover:bg-red-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                                                title="حل مشکل و رفع گزارش عدم دریافت">
+                                            <span class="material-symbols-outlined text-base">task_alt</span>
+                                            حل مشکل
+                                        </button>
+                                    <?php elseif($is_active): ?>
                                         <?php if($can_dispatch): ?>
                                             <button type="button" 
                                                     onclick="openDispatchModal(<?= $subscription['id'] ?>, '<?= addslashes($subscription['user_name']) ?>', '<?= addslashes($subscription['plan_name']) ?>', '<?= $subscription['next_delivery_date'] ?>')"
@@ -579,6 +614,52 @@ function translate_status($status) {
     </div>
 </div>
 
+<!-- Incident Resolution Modal -->
+<div id="resolveModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-outline-variant/20 flex justify-between items-center bg-error/10 text-error">
+            <h3 class="font-bold flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined">report_problem</span>
+                حل مشکل و رفع گزارش عدم دریافت
+            </h3>
+            <button onclick="closeResolveModal()" class="text-on-surface-variant hover:text-error transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form method="POST" class="p-6 space-y-4">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="resolve_incident">
+            <input type="hidden" name="subscription_id" id="resolveSubId" value="">
+
+            <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 text-xs space-y-1">
+                <p><span class="text-on-surface-variant">مشتری:</span> <strong class="text-primary" id="resolveCustomerName">-</strong></p>
+                <p><span class="text-on-surface-variant">پلن:</span> <strong class="text-on-surface" id="resolvePlanName">-</strong></p>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-on-surface">اقدام انجام شده جهت رفع مشکل:</label>
+                <select name="resolution_type" class="w-full p-2.5 rounded-xl border border-outline-variant text-xs outline-none focus:border-primary">
+                    <option value="delivered">✅ تحویل بسته تایید شد (هماهنگی با مشتری/پیک انجام شد)</option>
+                    <option value="resend">📦 ارسال مجدد بسته جایگزین (تغییر وضعیت به در مسیر ارسال)</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-on-surface">توضیحات و یادداشت پیگیری ادمین:</label>
+                <textarea name="admin_note" rows="2" placeholder="مثال: با مشتری تلفنی صحبت شد و بسته توسط پیک مجدداً تحویل گردید." class="w-full p-2.5 rounded-xl border border-outline-variant text-xs outline-none focus:border-primary resize-none"></textarea>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button type="button" onclick="closeResolveModal()" class="px-4 py-2.5 rounded-xl font-bold text-xs text-on-surface-variant hover:bg-surface-container transition-colors">انصراف</button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-xs bg-status-active hover:opacity-90 text-white shadow-sm transition-all flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-base">task_alt</span>
+                    ثبت رفع مشکل
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function openDispatchModal(subId, customerName, planName, curDate) {
     document.getElementById('dispatchSubId').value = subId;
@@ -593,6 +674,22 @@ function openDispatchModal(subId, customerName, planName, curDate) {
 
 function closeDispatchModal() {
     const modal = document.getElementById('dispatchModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function openResolveModal(subId, customerName, planName) {
+    document.getElementById('resolveSubId').value = subId;
+    document.getElementById('resolveCustomerName').textContent = customerName;
+    document.getElementById('resolvePlanName').textContent = planName;
+    
+    const modal = document.getElementById('resolveModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeResolveModal() {
+    const modal = document.getElementById('resolveModal');
     modal.classList.add('hidden');
     modal.classList.remove('flex');
 }
