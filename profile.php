@@ -138,29 +138,29 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
 </button>
 </div>
 <nav class="flex-1 flex flex-col gap-1">
-<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-white rounded-xl font-bold transition-all" href="profile.php">
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-white rounded-xl font-bold transition-all shadow-md" href="profile.php">
 <span class="material-symbols-outlined">dashboard</span>
 <span class="text-sm">پیشخوان</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="profile.php">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="#appointments-section">
 <span class="material-symbols-outlined">calendar_today</span>
 <span class="text-sm">نوبت‌های من</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="subscriptions.php">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="#subscriptions-section">
 <span class="material-symbols-outlined">event_repeat</span>
 <span class="text-sm">اشتراک‌های فعال</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="profile.php">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="#orders-section">
 <span class="material-symbols-outlined">history</span>
 <span class="text-sm">تاریخچه سفارشات</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="#pets-section">
+<span class="material-symbols-outlined">pets</span>
+<span class="text-sm">حیوانات من</span>
 </a>
 <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="wishlist.php">
 <span class="material-symbols-outlined">favorite</span>
 <span class="text-sm">علاقه‌مندی‌ها</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all" href="profile.php">
-<span class="material-symbols-outlined">medical_services</span>
-<span class="text-sm">سوابق پزشکی</span>
 </a>
 <?php if(isset($user['role']) && $user['role'] === 'admin'): ?>
 <a class="flex items-center gap-3 px-4 py-3 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all font-bold" href="admin/index.php">
@@ -372,13 +372,16 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
 </div>
 </div>
 <!-- My Subscriptions -->
-<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden mb-8">
-<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
-<h3 class="text-lg font-bold text-primary flex items-center gap-2">
-<span class="material-symbols-outlined">event_repeat</span>
-                            اشتراک‌های من
-                        </h3>
-<a href="subscriptions.php" class="text-sm font-bold text-primary-container hover:underline">خرید اشتراک جدید</a>
+<div id="subscriptions-section" class="bg-surface-container-lowest rounded-3xl border border-outline-variant shadow-sm overflow-hidden mb-8 scroll-mt-24">
+<div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-gradient-to-r from-secondary-container/10 via-primary-container/5 to-transparent">
+<h3 class="text-base font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container">event_repeat</span>
+برنامه‌های اشتراک هوشمند و Autoship
+</h3>
+<a href="subscriptions.php" class="text-xs font-bold text-secondary-container hover:underline bg-white px-3 py-1.5 rounded-xl border border-secondary-container/30 shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+خرید پلن جدید
+</a>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-right text-sm">
@@ -661,48 +664,65 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
 </div>
 <!-- Left Column: Subscriptions & Records -->
 <div class="lg:col-span-4 space-y-8">
-<!-- Subscriptions (Visual Autoship) -->
-<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-<h3 class="text-lg font-bold text-primary flex items-center gap-2">
-<span class="material-symbols-outlined">cached</span>
-                            اشتراک‌های فعال
-                        </h3>
-</div>
-<div class="p-6 space-y-4">
-<?php if(empty($subscriptions)): ?>
-    <p class="text-sm text-on-surface-variant text-center py-4">شما هیچ اشتراک فعالی ندارید.</p>
-<?php else: ?>
-    <?php foreach($subscriptions as $sub): ?>
-    <div class="p-4 border border-outline-variant rounded-2xl flex items-center gap-4 hover:border-primary-container transition-all group relative overflow-hidden bg-white shadow-sm">
-        <div class="absolute top-0 right-0 bg-secondary text-white px-3 py-0.5 text-[9px] font-bold rounded-bl-xl">فعال</div>
-        <div class="w-16 h-16 bg-primary-container/20 rounded-lg flex items-center justify-center border border-primary/20">
-            <span class="material-symbols-outlined text-primary text-3xl">local_mall</span>
-        </div>
-        <div class="flex-1">
-            <h4 class="text-sm font-bold text-on-surface"><?php echo htmlspecialchars($sub['plan_name']); ?></h4>
-            <p class="text-[11px] text-on-surface-variant persian-number mt-0.5"><?php echo number_format($sub['amount']); ?> تومان</p>
-            <div class="mt-2 flex items-center gap-1.5 text-status-active font-bold text-xs persian-number">
-                <span class="material-symbols-outlined text-[16px]">local_shipping</span>
-                تاریخ خرید: <?php echo $fmtDateText->format(new DateTime($sub['created_at'])); ?>
-            </div>
-        </div>
-    </div>
-    <?php endforeach; ?>
-<?php endif; ?>
-<button class="w-full border-2 border-dashed border-outline-variant text-on-surface-variant py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-white hover:border-primary-container hover:text-primary transition-all group">
-<span class="material-symbols-outlined group-hover:scale-110 transition-transform">add_circle</span>
-                            افزودن اشتراک جدید
-                        </button>
-</div>
-</div>
-<!-- Medical Records (Workstation style) -->
-<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden mb-8">
-<div class="px-6 py-4 border-b border-outline-variant bg-white flex items-center justify-between">
-<h3 class="text-lg font-bold text-primary flex items-center gap-2">
-<span class="material-symbols-outlined">pets</span>
-            حیوانات خانگی من
+<!-- Subscriptions (Visual Autoship Widget) -->
+<div class="bg-surface-container-lowest rounded-3xl border border-outline-variant shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-gradient-to-r from-surface-container-low to-transparent">
+        <h3 class="text-sm font-bold text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary-container">cached</span>
+            اشتراک‌های فعال
         </h3>
+        <span class="text-[11px] font-bold text-secondary-container bg-secondary-container/10 px-2 py-0.5 rounded-full border border-secondary-container/20 persian-number"><?= count($subscriptions) ?> فعال</span>
+    </div>
+    <div class="p-5 space-y-4">
+        <?php if(empty($subscriptions)): ?>
+            <div class="text-center py-4 space-y-3">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-secondary-container/10 text-secondary-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl">all_inclusive</span>
+                </div>
+                <p class="text-xs text-on-surface-variant leading-relaxed">
+                    با اشتراک‌های دوره‌ای، محصولات پت با <strong>۱۵٪ تخفیف مداوم</strong> و <strong>ارسال منظم</strong> تامین می‌شوند.
+                </p>
+                <a href="subscriptions.php" class="w-full inline-flex items-center justify-center gap-2 bg-secondary-container hover:bg-[#ea580c] text-white py-3 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-base">add_circle</span>
+                    خرید و فعال‌سازی اشتراک
+                </a>
+            </div>
+        <?php else: ?>
+            <?php foreach($subscriptions as $sub): ?>
+                <div class="p-3.5 border border-outline-variant/60 rounded-2xl flex items-center gap-3 hover:border-secondary-container/50 transition-all group bg-white shadow-sm">
+                    <div class="w-12 h-12 bg-secondary-container/15 text-secondary-container rounded-xl flex items-center justify-center shrink-0 border border-secondary-container/20">
+                        <span class="material-symbols-outlined text-2xl">all_inclusive</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1 mb-0.5">
+                            <h4 class="text-xs font-bold text-primary truncate"><?= htmlspecialchars($sub['plan_name']) ?></h4>
+                            <span class="bg-status-active/15 text-status-active text-[10px] font-bold px-2 py-0.2 rounded-full shrink-0">فعال</span>
+                        </div>
+                        <p class="text-[11px] text-on-surface-variant font-mono"><?= number_format($sub['amount']) ?> تومان</p>
+                        <div class="mt-1 flex items-center justify-between text-[10px]">
+                            <span class="text-secondary-container font-bold flex items-center gap-0.5">
+                                <span class="material-symbols-outlined text-xs">calendar_month</span>
+                                نوبت: <?= $sub['next_delivery_date'] ? $fmtDateText->format(new DateTime($sub['next_delivery_date'])) : 'به‌زودی' ?>
+                            </span>
+                            <a href="#subscriptions-section" class="text-primary hover:underline font-bold">مدیریت</a>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            <a href="subscriptions.php" class="w-full border border-dashed border-outline-variant hover:border-secondary-container text-on-surface-variant hover:text-secondary-container py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all bg-surface-container-low/30 hover:bg-white">
+                <span class="material-symbols-outlined text-sm">add_circle</span>
+                افزودن اشتراک جدید
+            </a>
+        <?php endif; ?>
+    </div>
+</div>
+<!-- Pets Section -->
+<div id="pets-section" class="bg-surface-container-lowest rounded-3xl border border-outline-variant shadow-sm overflow-hidden mb-8 scroll-mt-24">
+<div class="px-6 py-4 border-b border-outline-variant bg-white flex items-center justify-between">
+<h3 class="text-sm font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">pets</span>
+حیوانات خانگی من
+</h3>
 </div>
 <div class="p-6 space-y-4">
 <?php if(empty($pets)): ?>
