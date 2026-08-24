@@ -21,29 +21,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         if ($sub && $sub['status'] === 'active') {
             $current_next = $sub['next_delivery_date'] ?: date('Y-m-d');
-            $new_next = date('Y-m-d', strtotime("+$advance_days days", strtotime($current_next)));
+            $diff_days = round((strtotime($current_next) - strtotime(date('Y-m-d'))) / 86400);
 
-            // 1. Record delivery in subscription_deliveries
-            try {
-                $countDelStmt = $pdo->prepare("SELECT COUNT(*) FROM subscription_deliveries WHERE subscription_id = ?");
-                $countDelStmt->execute([$sub_id]);
-                $delivery_month = (int)$countDelStmt->fetchColumn() + 1;
+            if ($diff_days > 2) {
+                $flash_error = "ثبت ارسال غیرفعال است. ارسال مرسوله فقط از ۲ روز مانده به موعد تحویل فعال می‌شود (موعد ارسال: $current_next - $diff_days روز باقی مانده).";
+            } else {
+                $new_next = date('Y-m-d', strtotime("+$advance_days days", strtotime($current_next)));
 
-                $insDel = $pdo->prepare("INSERT INTO subscription_deliveries (subscription_id, delivery_month, scheduled_date, status) VALUES (?, ?, ?, 'shipped')");
-                $insDel->execute([$sub_id, $delivery_month, $current_next]);
-            } catch (Exception $e) {}
+                // 1. Record delivery in subscription_deliveries
+                try {
+                    $countDelStmt = $pdo->prepare("SELECT COUNT(*) FROM subscription_deliveries WHERE subscription_id = ?");
+                    $countDelStmt->execute([$sub_id]);
+                    $delivery_month = (int)$countDelStmt->fetchColumn() + 1;
 
-            // 2. Update next delivery date
-            $updSub = $pdo->prepare("UPDATE user_subscriptions SET next_delivery_date = ? WHERE id = ?");
-            $updSub->execute([$new_next, $sub_id]);
+                    $insDel = $pdo->prepare("INSERT INTO subscription_deliveries (subscription_id, delivery_month, scheduled_date, status) VALUES (?, ?, ?, 'shipped')");
+                    $insDel->execute([$sub_id, $delivery_month, $current_next]);
+                } catch (Exception $e) {}
 
-            // 3. Log action
-            try {
-                $insLog = $pdo->prepare("INSERT INTO subscription_logs (subscription_id, action, note) VALUES (?, 'dispatch', ?)");
-                $insLog->execute([$sub_id, "مرسوله ارسال شد. نوبت بعدی برای $new_next تنظیم شد. ($tracking_note)"]);
-            } catch (Exception $e) {}
+                // 2. Update next delivery date
+                $updSub = $pdo->prepare("UPDATE user_subscriptions SET next_delivery_date = ? WHERE id = ?");
+                $updSub->execute([$new_next, $sub_id]);
 
-            $flash_success = "ارسال مرسوله اشتراک #SUB-$sub_id با موفقیت ثبت شد و نوبت بعدی برای $new_next زمان‌بندی گردید.";
+                // 3. Log action
+                try {
+                    $insLog = $pdo->prepare("INSERT INTO subscription_logs (subscription_id, action, note) VALUES (?, 'dispatch', ?)");
+                    $insLog->execute([$sub_id, "مرسوله ارسال شد. نوبت بعدی برای $new_next تنظیم شد. ($tracking_note)"]);
+                } catch (Exception $e) {}
+
+                $flash_success = "ارسال مرسوله اشتراک #SUB-$sub_id با موفقیت ثبت شد و نوبت بعدی برای $new_next زمان‌بندی گردید.";
+            }
         } else {
             $flash_error = "اشتراک مورد نظر یافت نشد یا در وضعیت فعال نیست.";
         }
@@ -381,6 +387,20 @@ function translate_status($status) {
                             $isDueToday = ($nextDate === $todayStr);
                             $isDueTomorrow = ($nextDate === $tomorrowStr);
                             $isOverdue = ($nextDate && $nextDate < $todayStr && $is_active);
+
+                            $days_remaining = null;
+                            $can_dispatch = false;
+
+                            if ($nextDate) {
+                                $nowTime = strtotime($todayStr);
+                                $targetTime = strtotime($nextDate);
+                                $days_remaining = round(($targetTime - $nowTime) / 86400);
+
+                                // Dispatch button only enabled 2 days or less before scheduled time
+                                if ($days_remaining <= 2) {
+                                    $can_dispatch = true;
+                                }
+                            }
                         ?>
                         <tr class="hover:bg-surface-container-low/60 transition-colors group">
                             <!-- ID & Plan -->
@@ -457,13 +477,21 @@ function translate_status($status) {
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <?php if($is_active): ?>
-                                        <button type="button" 
-                                                onclick="openDispatchModal(<?= $subscription['id'] ?>, '<?= addslashes($subscription['user_name']) ?>', '<?= addslashes($subscription['plan_name']) ?>', '<?= $subscription['next_delivery_date'] ?>')"
-                                                class="px-3.5 py-1.5 bg-secondary-container hover:bg-secondary text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
-                                                title="ثبت تحویل بسته به پیک">
-                                            <span class="material-symbols-outlined text-base">moped</span>
-                                            ثبت ارسال
-                                        </button>
+                                        <?php if($can_dispatch): ?>
+                                            <button type="button" 
+                                                    onclick="openDispatchModal(<?= $subscription['id'] ?>, '<?= addslashes($subscription['user_name']) ?>', '<?= addslashes($subscription['plan_name']) ?>', '<?= $subscription['next_delivery_date'] ?>')"
+                                                    class="px-3.5 py-1.5 bg-secondary-container hover:bg-secondary text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                                                    title="ثبت تحویل بسته به پیک">
+                                                <span class="material-symbols-outlined text-base">moped</span>
+                                                ثبت ارسال
+                                            </button>
+                                        <?php else: ?>
+                                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-high text-on-surface-variant/80 text-[11px] font-bold border border-outline-variant/30 select-none cursor-not-allowed" 
+                                                 title="امکان ثبت ارسال فقط از ۲ روز مانده به موعد ارسال فعال می‌شود">
+                                                <span class="material-symbols-outlined text-sm text-on-surface-variant">lock_clock</span>
+                                                <span><?= $days_remaining ?> روز مانده</span>
+                                            </div>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                     <a href="subscription_details.php?id=<?= $subscription['id'] ?>" class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-xl transition-colors" title="مشاهده جزئیات">
                                         <span class="material-symbols-outlined text-lg">visibility</span>

@@ -17,18 +17,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($action === 'mark_shipped' && isset($_POST['delivery_id'])) {
             $delivery_id = (int)$_POST['delivery_id'];
-            $stmt = $pdo->prepare("UPDATE subscription_deliveries SET status = 'shipped' WHERE id = ? AND subscription_id = ?");
-            $stmt->execute([$delivery_id, $subscription_id]);
-            $success = "وضعیت مرسوله به «در مسیر ارسال» تغییر یافت.";
             
-            // Send SMS to user
-            require_once '../includes/SmsService.php';
-            $u_stmt = $pdo->prepare("SELECT u.phone FROM users u JOIN user_subscriptions s ON u.id = s.user_id WHERE s.id = ?");
-            $u_stmt->execute([$subscription_id]);
-            $u = $u_stmt->fetch(PDO::FETCH_ASSOC);
-            if ($u && !empty($u['phone'])) {
-                $sms = new SmsService();
-                $sms->sendSubscriptionSent($u['phone']);
+            // Check 2-day delivery constraint
+            $delStmt = $pdo->prepare("SELECT * FROM subscription_deliveries WHERE id = ? AND subscription_id = ?");
+            $delStmt->execute([$delivery_id, $subscription_id]);
+            $delData = $delStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($delData) {
+                $delDiff = $delData['scheduled_date'] ? round((strtotime($delData['scheduled_date']) - strtotime(date('Y-m-d'))) / 86400) : 0;
+                if ($delDiff > 2) {
+                    $error = "ثبت ارسال این دوره غیرفعال است. ارسال فقط از ۲ روز مانده به موعد مقرر امکان‌پذیر است ($delDiff روز باقی‌مانده).";
+                } else {
+                    $stmt = $pdo->prepare("UPDATE subscription_deliveries SET status = 'shipped' WHERE id = ? AND subscription_id = ?");
+                    $stmt->execute([$delivery_id, $subscription_id]);
+                    $success = "وضعیت مرسوله به «در مسیر ارسال» تغییر یافت.";
+                    
+                    // Send SMS to user
+                    require_once '../includes/SmsService.php';
+                    $u_stmt = $pdo->prepare("SELECT u.phone FROM users u JOIN user_subscriptions s ON u.id = s.user_id WHERE s.id = ?");
+                    $u_stmt->execute([$subscription_id]);
+                    $u = $u_stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($u && !empty($u['phone'])) {
+                        $sms = new SmsService();
+                        $sms->sendSubscriptionSent($u['phone']);
+                    }
+                }
             }
         }
         
@@ -193,15 +206,27 @@ function translate_delivery_status($status) {
                                 </span>
                             </td>
                             <td class="px-4 py-4">
+                                <?php 
+                                    $del_days = $del['scheduled_date'] ? round((strtotime($del['scheduled_date']) - strtotime(date('Y-m-d'))) / 86400) : 0;
+                                    $can_ship_del = ($del_days <= 2);
+                                ?>
                                 <?php if ($del['status'] === 'pending' && $subscription['status'] === 'active'): ?>
-                                <form method="POST" class="m-0" onsubmit="return confirm('آیا از ارسال مرسوله ماه <?= $del['delivery_month'] ?> اطمینان دارید؟ این عمل به کاربر اطلاع می‌دهد.');">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="action" value="mark_shipped">
-                                    <input type="hidden" name="delivery_id" value="<?= $del['id'] ?>">
-                                    <button type="submit" class="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
-                                        ثبت ارسال
-                                    </button>
-                                </form>
+                                    <?php if ($can_ship_del): ?>
+                                        <form method="POST" class="m-0" onsubmit="return confirm('آیا از ارسال مرسوله ماه <?= $del['delivery_month'] ?> اطمینان دارید؟ این عمل به کاربر اطلاع می‌دهد.');">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="action" value="mark_shipped">
+                                            <input type="hidden" name="delivery_id" value="<?= $del['id'] ?>">
+                                            <button type="submit" class="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-sm">moped</span>
+                                                ثبت ارسال
+                                            </button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-on-surface-variant/70 bg-surface-container px-2.5 py-1 rounded-lg border border-outline-variant/30 cursor-not-allowed select-none" title="ثبت ارسال فقط ۲ روز مانده به موعد ارسال فعال می‌شود">
+                                            <span class="material-symbols-outlined text-xs">lock_clock</span>
+                                            <?= $del_days ?> روز مانده (غیرفعال)
+                                        </span>
+                                    <?php endif; ?>
                                 <?php elseif ($del['status'] === 'shipped'): ?>
                                     <span class="text-xs text-on-surface-variant">منتظر تایید کاربر</span>
                                 <?php elseif ($del['status'] === 'delivered'): ?>
