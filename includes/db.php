@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $host = '127.0.0.1';
-$dbname = 'asena_premium';
+$dbname = 'asena_pharmacy_golzari';
 $user = 'root';
 $pass = '';
 
