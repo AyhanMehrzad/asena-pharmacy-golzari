@@ -89,10 +89,14 @@ $fmt = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter::FULL, 
             <h2 class="font-headline-lg text-headline-lg text-primary">مدیریت سفارشات</h2>
             <p class="text-on-surface-variant font-body-md mt-1">پیگیری سفارشات، پرداخت‌ها و ارسال‌ها</p>
         </div>
-        <div class="flex gap-4">
-            <a href="export_orders.php" class="flex items-center gap-2 bg-secondary-container text-on-secondary-container px-6 py-2 rounded-lg font-label-lg font-bold shadow-sm hover:opacity-90 transition-opacity">
-                <span class="material-symbols-outlined">download</span>
-                خروجی CSV (سفارشات امروز)
+        <div class="flex items-center gap-3">
+            <a href="subscriptions.php?filter=today" class="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl font-label-lg font-bold shadow-sm hover:bg-primary-container transition-all text-xs">
+                <span class="material-symbols-outlined text-base">local_shipping</span>
+                تقویم نوبت‌های ارسال
+            </a>
+            <a href="export_orders.php" class="flex items-center gap-2 bg-secondary-container text-white px-5 py-2 rounded-xl font-label-lg font-bold shadow-sm hover:opacity-90 transition-opacity text-xs">
+                <span class="material-symbols-outlined text-base">download</span>
+                خروجی CSV
             </a>
         </div>
     </header>
