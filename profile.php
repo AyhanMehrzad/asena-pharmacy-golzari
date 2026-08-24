@@ -475,13 +475,26 @@ $fmtDateText = new IntlDateFormatter('fa_IR@calendar=persian', IntlDateFormatter
                             <?php 
                             $statusText = '';
                             switch($del['status']) {
-                                case 'pending': $statusText = '<span class="text-status-warning bg-status-warning/10 px-2 py-0.5 rounded-full font-bold">در انتظار</span>'; break;
+                                case 'pending': $statusText = '<span class="text-status-warning bg-status-warning/10 px-2 py-0.5 rounded-full font-bold">آماده‌سازی نوبت</span>'; break;
+                                case 'processing': $statusText = '<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-bold">در حال پردازش انبار</span>'; break;
                                 case 'shipped': $statusText = '<span class="text-primary-fixed bg-primary-fixed-dim/20 px-2 py-0.5 rounded-full font-bold">ارسال شده</span>'; break;
-                                case 'delivered': $statusText = '<span class="text-status-active bg-status-active/10 px-2 py-0.5 rounded-full font-bold">دریافت شده</span>'; break;
+                                case 'delivered': $statusText = '<span class="text-status-active bg-status-active/10 px-2 py-0.5 rounded-full font-bold">تحویل داده شده</span>'; break;
                                 case 'not_received': $statusText = '<span class="text-error bg-error/10 px-2 py-0.5 rounded-full font-bold">گزارش عدم دریافت</span>'; break;
                             }
                             echo $statusText;
                             ?>
+
+                            <?php if (($del['payment_status'] ?? 'paid') === 'paid'): ?>
+                                <span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center gap-0.5">
+                                    <span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                    تسویه شده
+                                </span>
+                            <?php else: ?>
+                                <span class="text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center gap-0.5" title="پیش از موعد ارسال پیامک پرداخت ارسال می‌شود">
+                                    <span class="material-symbols-outlined text-[12px]">payments</span>
+                                    پرداخت ماهانه در موعد (پیامک یادآوری)
+                                </span>
+                            <?php endif; ?>
                         </div>
                         <?php if ($del['status'] === 'shipped'): ?>
                             <div class="flex items-center gap-2 bg-secondary-container/30 px-3 py-1.5 rounded-lg">

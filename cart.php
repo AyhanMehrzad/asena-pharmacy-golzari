@@ -56,10 +56,10 @@ if (!empty($cart_items)) {
 $std_final_price = $std_total_price - $std_total_discount;
 $auto_final_price = $auto_total_price - $auto_total_discount;
 
-// Auto select tab: If only autoship items exist, default to autoship tab
-$default_tab = (empty($standard_products) && !empty($autoship_products)) ? 'autoship' : 'standard';
-if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
-    $default_tab = $_GET['tab'];
+// Active tab determination with highest priority to URL param and session
+$default_tab = $_GET['tab'] ?? $_SESSION['active_cart_tab'] ?? ((empty($standard_products) && !empty($autoship_products)) ? 'autoship' : 'standard');
+if (!in_array($default_tab, ['standard', 'autoship'])) {
+    $default_tab = 'standard';
 }
 ?>
 
@@ -183,6 +183,7 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                     </div>
                                     <form action="actions/cart_action.php" method="POST" class="m-0">
                                         <?= csrf_field() ?>
+                                        <input type="hidden" name="active_tab" value="standard">
                                         <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                         <input type="hidden" name="action" value="remove">
                                         <button type="submit" class="text-error hover:bg-error/10 p-2 rounded-xl transition-colors cursor-pointer" title="حذف از سبد">
@@ -199,9 +200,10 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                     </div>
                                     <form action="actions/cart_action.php" method="POST" class="m-0">
                                         <?= csrf_field() ?>
+                                        <input type="hidden" name="active_tab" value="autoship">
                                         <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                         <input type="hidden" name="action" value="toggle_type">
-                                        <button type="submit" class="bg-secondary-container hover:bg-[#ea580c] text-white px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1 active:scale-95">
+                                        <button type="submit" class="bg-secondary-container hover:bg-[#ea580c] text-white px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1 active:scale-95 cursor-pointer">
                                             <span class="material-symbols-outlined text-sm">autorenew</span>
                                             تبدیل به تحویل خودکار (Autoship)
                                         </button>
@@ -213,6 +215,7 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                     <div class="flex items-center gap-3 bg-surface-container rounded-xl p-1.5 border border-outline-variant/30">
                                         <form action="actions/cart_action.php" method="POST" class="m-0">
                                             <?= csrf_field() ?>
+                                            <input type="hidden" name="active_tab" value="standard">
                                             <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                             <input type="hidden" name="action" value="decrease">
                                             <button type="submit" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-xs">remove</span></button>
@@ -222,6 +225,7 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                         
                                         <form action="actions/cart_action.php" method="POST" class="m-0">
                                             <?= csrf_field() ?>
+                                            <input type="hidden" name="active_tab" value="standard">
                                             <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                             <input type="hidden" name="action" value="increase">
                                             <button type="submit" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-xs">add</span></button>
@@ -275,12 +279,12 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                             </div>
                             
                             <?php if(isset($_SESSION['user_id'])): ?>
-                                <a href="payment.php" class="w-full bg-primary text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-all text-xs active:scale-95">
+                                <a href="payment.php?type=standard" class="w-full bg-primary text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-primary-container shadow-lg transition-all text-xs active:scale-95 cursor-pointer">
                                     <span>تکمیل خرید و پرداخت عادی</span>
                                     <span class="material-symbols-outlined text-sm">arrow_left_alt</span>
                                 </a>
                             <?php else: ?>
-                                <a href="login.php" class="w-full bg-secondary-container text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-[#ea580c] shadow-lg transition-all text-xs active:scale-95">
+                                <a href="login.php" class="w-full bg-secondary-container text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-[#ea580c] shadow-lg transition-all text-xs active:scale-95 cursor-pointer">
                                     <span>برای پرداخت وارد شوید</span>
                                     <span class="material-symbols-outlined text-sm">person</span>
                                 </a>
@@ -348,6 +352,7 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                     </div>
                                     <form action="actions/cart_action.php" method="POST" class="m-0">
                                         <?= csrf_field() ?>
+                                        <input type="hidden" name="active_tab" value="autoship">
                                         <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                         <input type="hidden" name="action" value="remove">
                                         <button type="submit" class="text-error hover:bg-error/10 p-2 rounded-xl transition-colors cursor-pointer" title="حذف از اشتراک">
@@ -360,11 +365,12 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                 <div class="my-3 p-3 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div class="flex items-center gap-2">
                                         <span class="material-symbols-outlined text-secondary-container text-sm">schedule</span>
-                                        <span class="text-xs font-bold text-on-surface">دوره تکرار ارسال:</span>
+                                        <span class="text-xs font-bold text-on-surface">دوره تکرار ارسال این کالا:</span>
                                     </div>
                                     
                                     <form action="actions/cart_action.php" method="POST" class="m-0 flex items-center gap-2">
                                         <?= csrf_field() ?>
+                                        <input type="hidden" name="active_tab" value="autoship">
                                         <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                         <input type="hidden" name="action" value="set_frequency">
                                         <select name="frequency" onchange="this.form.submit()" class="bg-white border border-outline-variant rounded-xl px-3 py-1.5 text-xs font-bold text-primary outline-none focus:border-secondary-container cursor-pointer shadow-sm">
@@ -381,6 +387,7 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                     <div class="flex items-center gap-3 bg-surface-container rounded-xl p-1.5 border border-outline-variant/30">
                                         <form action="actions/cart_action.php" method="POST" class="m-0">
                                             <?= csrf_field() ?>
+                                            <input type="hidden" name="active_tab" value="autoship">
                                             <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                             <input type="hidden" name="action" value="decrease">
                                             <button type="submit" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-secondary-container transition-colors cursor-pointer"><span class="material-symbols-outlined text-xs">remove</span></button>
@@ -390,6 +397,7 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                         
                                         <form action="actions/cart_action.php" method="POST" class="m-0">
                                             <?= csrf_field() ?>
+                                            <input type="hidden" name="active_tab" value="autoship">
                                             <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                             <input type="hidden" name="action" value="increase">
                                             <button type="submit" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-secondary-container transition-colors cursor-pointer"><span class="material-symbols-outlined text-xs">add</span></button>
@@ -399,6 +407,7 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                                     <!-- Switch Back to One-Time Purchase Button -->
                                     <form action="actions/cart_action.php" method="POST" class="m-0">
                                         <?= csrf_field() ?>
+                                        <input type="hidden" name="active_tab" value="standard">
                                         <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                         <input type="hidden" name="action" value="toggle_type">
                                         <button type="submit" class="text-on-surface-variant hover:text-primary text-[11px] font-bold underline transition-colors cursor-pointer">
@@ -418,47 +427,138 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Autoship Summary Box -->
+                    <!-- ========================================================================= -->
+                    <!-- AUTOSHIP CONFIGURATION & CHECKOUT SUMMARY (Duration + Payment Model)       -->
+                    <!-- ========================================================================= -->
                     <div class="lg:w-1/3">
-                        <div class="bg-gradient-to-b from-orange-50/50 to-amber-50/30 rounded-3xl p-6 lg:p-8 sticky top-28 border-2 border-secondary-container/30 shadow-sm space-y-6">
-                            <h3 class="text-base font-bold text-secondary-container border-b border-secondary-container/20 pb-3 flex items-center gap-2">
-                                <span class="material-symbols-outlined text-secondary-container">autorenew</span>
-                                صورت‌حساب اشتراک خودکار
-                            </h3>
+                        <div class="bg-gradient-to-b from-orange-50/70 via-amber-50/40 to-white rounded-3xl p-6 lg:p-7 sticky top-28 border-2 border-secondary-container/40 shadow-xl space-y-5">
                             
-                            <div class="space-y-3 text-xs">
+                            <div class="border-b border-secondary-container/20 pb-3 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-secondary-container text-2xl">autorenew</span>
+                                    <h3 class="text-sm sm:text-base font-bold text-secondary-container">تنظیمات و صورت‌حساب اشتراک</h3>
+                                </div>
+                                <span class="text-[10px] font-bold bg-secondary-container text-white px-2 py-0.5 rounded-full">Autoship</span>
+                            </div>
+
+                            <!-- 1. Subscription Duration Commitment (3, 6, or 12 months) -->
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-primary flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm text-secondary-container">event_repeat</span>
+                                    <span>۱. مدت زمان کل دوره اشتراک:</span>
+                                </label>
+                                <p class="text-[11px] text-on-surface-variant">برای چند ماه می‌خواهید این اقلام منظم ارسال شوند؟</p>
+                                
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="duration-pill cursor-pointer">
+                                        <input type="radio" name="autoship_duration" value="3" checked onchange="updateAutoshipCalculations()" class="sr-only">
+                                        <div class="pill-box border-2 border-secondary-container bg-white text-primary p-2.5 rounded-xl text-center transition-all hover:border-secondary-container">
+                                            <span class="block text-xs font-bold">۳ ماهه</span>
+                                            <span class="block text-[10px] text-on-surface-variant">پایه</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duration-pill cursor-pointer">
+                                        <input type="radio" name="autoship_duration" value="6" onchange="updateAutoshipCalculations()" class="sr-only">
+                                        <div class="pill-box border-2 border-outline-variant/40 bg-white/60 text-primary p-2.5 rounded-xl text-center transition-all hover:border-secondary-container">
+                                            <span class="block text-xs font-bold text-secondary-container">۶ ماهه</span>
+                                            <span class="block text-[10px] text-emerald-700 font-bold">پیشنهادی</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="duration-pill cursor-pointer">
+                                        <input type="radio" name="autoship_duration" value="12" onchange="updateAutoshipCalculations()" class="sr-only">
+                                        <div class="pill-box border-2 border-outline-variant/40 bg-white/60 text-primary p-2.5 rounded-xl text-center transition-all hover:border-secondary-container">
+                                            <span class="block text-xs font-bold text-amber-600">۱۲ ماهه</span>
+                                            <span class="block text-[10px] text-amber-700 font-bold">VIP</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 2. Payment Model Preference (Pay Monthly vs Pay Full Upfront) -->
+                            <div class="space-y-2 pt-2 border-t border-secondary-container/20">
+                                <label class="text-xs font-bold text-primary flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm text-secondary-container">payments</span>
+                                    <span>۲. نحوه و مدل پرداخت:</span>
+                                </label>
+
+                                <!-- Option A: Pay Monthly -->
+                                <label class="flex items-start gap-2.5 p-3 rounded-2xl bg-white border-2 border-secondary-container shadow-sm cursor-pointer pay-model-label" id="label-pay-monthly">
+                                    <input type="radio" name="autoship_payment_model" value="monthly" checked onchange="updateAutoshipCalculations()" class="mt-1 text-secondary-container focus:ring-secondary-container">
+                                    <div class="text-xs">
+                                        <span class="font-bold text-on-surface block">💳 پرداخت ماهانه نوبت‌به‌نوبت</span>
+                                        <span class="text-[11px] text-on-surface-variant leading-relaxed block mt-0.5">
+                                            امروز فقط هزینه نوبت اول را پرداخت کنید. برای نوبت‌های بعدی، پیش از هر ارسال پیامک یادآوری و لینک پرداخت ارسال می‌شود.
+                                        </span>
+                                    </div>
+                                </label>
+
+                                <!-- Option B: Pay Full Upfront -->
+                                <label class="flex items-start gap-2.5 p-3 rounded-2xl bg-white border border-outline-variant/40 hover:border-secondary-container shadow-sm cursor-pointer pay-model-label" id="label-pay-upfront">
+                                    <input type="radio" name="autoship_payment_model" value="upfront" onchange="updateAutoshipCalculations()" class="mt-1 text-secondary-container focus:ring-secondary-container">
+                                    <div class="text-xs">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-bold text-on-surface">💎 پرداخت یک‌جا کل دوره</span>
+                                            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.2 rounded">۵٪ تخفیف مازاد</span>
+                                        </div>
+                                        <span class="text-[11px] text-on-surface-variant leading-relaxed block mt-0.5">
+                                            کل هزینه دوره را یک‌جا با ۵٪ تخفیف بیشتر پرداخت نمایید تا تمام نوبت‌ها سر موعد بدون نیاز به پرداخت مجدد ارسال شوند.
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- 3. Important Policy & Cancellation Notice Alert -->
+                            <div class="bg-amber-100/70 border border-amber-300/80 rounded-2xl p-3.5 text-xs text-amber-950 space-y-1">
+                                <div class="flex items-center gap-1.5 font-bold text-amber-900">
+                                    <span class="material-symbols-outlined text-sm text-amber-700">warning</span>
+                                    <span>شرایط تداوم و لغو اشتراک:</span>
+                                </div>
+                                <p class="text-[11px] leading-relaxed text-amber-900/90" id="paymentModelNoticeText">
+                                    در مدل پرداخت ماهانه، چند روز پیش از موعد ارسال هر نوبت، پیامک اطلاع‌رسانی ارسال خواهد شد. چنانچه هزینه نوبت جدید به موقع پرداخت نشود، اشتراک خودکار متوقف شده و بسته آن دوره ارسال نمی‌گردد.
+                                </p>
+                            </div>
+
+                            <!-- 4. Live Pricing Breakdown Table -->
+                            <div class="space-y-2 text-xs border-t border-secondary-container/20 pt-3">
                                 <div class="flex justify-between items-center text-on-surface-variant">
-                                    <span>قیمت بدون اشتراک (<?= count($autoship_products) ?> قلم)</span>
-                                    <span class="font-bold font-mono text-on-surface line-through"><?= number_format($auto_total_price) ?> تومان</span>
+                                    <span>مبلغ بدون اشتراک هر نوبت:</span>
+                                    <span class="font-bold font-mono text-on-surface line-through"><?= number_format($auto_total_price) ?> ت</span>
                                 </div>
                                 <div class="flex justify-between items-center text-emerald-800 bg-emerald-100 p-2 rounded-xl font-bold">
-                                    <span>تخفیف اشتراک خودکار (۱۵٪)</span>
-                                    <span class="font-mono">-<?= number_format($auto_total_discount) ?> تومان</span>
+                                    <span>تخفیف اشتراک خودکار (۱۵٪):</span>
+                                    <span class="font-mono">-<?= number_format($auto_total_discount) ?> ت</span>
                                 </div>
                                 <div class="flex justify-between items-center text-on-surface-variant">
-                                    <span>هزینه بسته‌بندی و ارسال دوره‌ای</span>
-                                    <span class="text-status-active font-bold">رایگان (طرح اشتراک)</span>
+                                    <span>مبلغ هر نوبت ارسال:</span>
+                                    <span class="font-bold font-mono text-primary" id="perDeliveryPriceText"><?= number_format($auto_final_price) ?> تومان</span>
                                 </div>
                                 <div class="flex justify-between items-center text-on-surface-variant">
-                                    <span>امتیاز وفاداری اهدایی</span>
-                                    <span class="text-amber-600 font-bold font-mono">+۵۰ امتیاز طلایی</span>
+                                    <span>هزینه بسته‌بندی و ارسال دوره‌ای:</span>
+                                    <span class="text-status-active font-bold">رایگان</span>
                                 </div>
                             </div>
                             
-                            <div class="border-t border-secondary-container/20 pt-4 flex justify-between items-center">
-                                <span class="text-xs font-bold text-on-surface">مبلغ هر نوبت ارسال</span>
+                            <!-- 5. Today's Payable Amount -->
+                            <div class="border-t-2 border-secondary-container/30 pt-3 flex justify-between items-center bg-secondary-container/10 p-3 rounded-2xl">
+                                <div>
+                                    <span class="text-xs font-bold text-primary block" id="payableLabelText">مبلغ پرداختی امروز (نوبت ۱):</span>
+                                    <span class="text-[10px] text-on-surface-variant" id="payableSubLabelText">نوبت‌های بعدی با پیامک یادآوری ارسال می‌شود</span>
+                                </div>
                                 <span class="text-lg font-bold text-secondary-container font-mono">
-                                    <span class="text-2xl text-secondary-container font-bold"><?= number_format($auto_final_price) ?></span> تومان
+                                    <span class="text-xl text-secondary-container font-bold" id="todayPayableAmountText"><?= number_format($auto_final_price) ?></span> تومان
                                 </span>
                             </div>
                             
+                            <!-- 6. Proceed to Payment Button -->
                             <?php if(isset($_SESSION['user_id'])): ?>
-                                <a href="payment.php?type=autoship" class="w-full bg-secondary-container hover:bg-[#ea580c] text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 shadow-lg transition-all text-xs active:scale-95">
+                                <a href="payment.php?type=autoship&duration=3&model=monthly" id="autoshipProceedLink" class="w-full bg-secondary-container hover:bg-[#ea580c] text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 shadow-lg transition-all text-xs active:scale-95 cursor-pointer">
                                     <span class="material-symbols-outlined text-base">check_circle</span>
-                                    <span>تایید و شروع اشتراک خودکار</span>
+                                    <span id="autoshipBtnText">تایید و پرداخت نوبت اول اشتراک</span>
                                 </a>
                             <?php else: ?>
-                                <a href="login.php" class="w-full bg-secondary-container text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-[#ea580c] shadow-lg transition-all text-xs active:scale-95">
+                                <a href="login.php" class="w-full bg-secondary-container text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-[#ea580c] shadow-lg transition-all text-xs active:scale-95 cursor-pointer">
                                     <span>برای فعال‌سازی اشتراک وارد شوید</span>
                                     <span class="material-symbols-outlined text-sm">person</span>
                                 </a>
@@ -473,6 +573,8 @@ if (isset($_GET['tab']) && in_array($_GET['tab'], ['standard', 'autoship'])) {
 </main>
 
 <script>
+const basePerDeliveryPrice = <?= (int)$auto_final_price ?>;
+
 function switchCartTab(tab) {
     const btnStd = document.getElementById('tab-btn-standard');
     const btnAuto = document.getElementById('tab-btn-autoship');
@@ -485,14 +587,90 @@ function switchCartTab(tab) {
         
         btnStd.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm transition-all cursor-pointer text-on-surface-variant hover:text-primary hover:bg-white/50';
         btnAuto.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm transition-all cursor-pointer relative bg-white text-secondary-container shadow-md';
+        
+        localStorage.setItem('cart_active_tab', 'autoship');
+        history.replaceState(null, '', '?tab=autoship');
     } else {
         panelAuto.classList.add('hidden');
         panelStd.classList.remove('hidden');
         
         btnAuto.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm transition-all cursor-pointer relative text-on-surface-variant hover:text-secondary-container hover:bg-white/50';
         btnStd.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm transition-all cursor-pointer bg-white text-primary shadow-md';
+        
+        localStorage.setItem('cart_active_tab', 'standard');
+        history.replaceState(null, '', '?tab=standard');
     }
 }
+
+function updateAutoshipCalculations() {
+    const durationInput = document.querySelector('input[name="autoship_duration"]:checked');
+    const modelInput = document.querySelector('input[name="autoship_payment_model"]:checked');
+    
+    const durationMonths = durationInput ? parseInt(durationInput.value) : 3;
+    const paymentModel = modelInput ? modelInput.value : 'monthly';
+    
+    // Update Duration UI Pills
+    document.querySelectorAll('.duration-pill').forEach(label => {
+        const inp = label.querySelector('input');
+        const box = label.querySelector('.pill-box');
+        if (inp.checked) {
+            box.className = 'pill-box border-2 border-secondary-container bg-white text-primary p-2.5 rounded-xl text-center transition-all shadow-sm';
+        } else {
+            box.className = 'pill-box border-2 border-outline-variant/40 bg-white/60 text-primary p-2.5 rounded-xl text-center transition-all hover:border-secondary-container';
+        }
+    });
+
+    // Update Payment Model UI Labels
+    const labelMonthly = document.getElementById('label-pay-monthly');
+    const labelUpfront = document.getElementById('label-pay-upfront');
+    if (paymentModel === 'monthly') {
+        labelMonthly.className = 'flex items-start gap-2.5 p-3 rounded-2xl bg-white border-2 border-secondary-container shadow-sm cursor-pointer pay-model-label';
+        labelUpfront.className = 'flex items-start gap-2.5 p-3 rounded-2xl bg-white border border-outline-variant/40 hover:border-secondary-container shadow-sm cursor-pointer pay-model-label';
+        
+        document.getElementById('paymentModelNoticeText').textContent = 
+            'در مدل پرداخت ماهانه، چند روز پیش از موعد ارسال هر نوبت، پیامک اطلاع‌رسانی ارسال خواهد شد. چنانچه هزینه نوبت جدید به موقع پرداخت نشود، اشتراک خودکار متوقف شده و بسته آن دوره ارسال نمی‌گردد.';
+        
+        document.getElementById('payableLabelText').textContent = 'مبلغ پرداختی امروز (نوبت ۱):';
+        document.getElementById('payableSubLabelText').textContent = `دوره ${durationMonths} ماهه • نوبت‌های بعد با پیامک یادآوری`;
+        document.getElementById('todayPayableAmountText').textContent = basePerDeliveryPrice.toLocaleString('fa-IR');
+        
+        const btnText = document.getElementById('autoshipBtnText');
+        if (btnText) btnText.textContent = 'تایید و پرداخت نوبت اول اشتراک';
+    } else {
+        labelUpfront.className = 'flex items-start gap-2.5 p-3 rounded-2xl bg-white border-2 border-secondary-container shadow-sm cursor-pointer pay-model-label';
+        labelMonthly.className = 'flex items-start gap-2.5 p-3 rounded-2xl bg-white border border-outline-variant/40 hover:border-secondary-container shadow-sm cursor-pointer pay-model-label';
+        
+        document.getElementById('paymentModelNoticeText').textContent = 
+            `با پرداخت یک‌جا کل دوره ${durationMonths} ماهه، از ۵٪ تخفیف مازاد بهره‌مند شده و تمام مرسولات به صورت خودکار بدون نیاز به هیچ پرداختی ارسال می‌گردند.`;
+        
+        // 5% extra discount on total
+        const fullTotal = Math.round((basePerDeliveryPrice * durationMonths) * 0.95);
+        
+        document.getElementById('payableLabelText').textContent = `مبلغ کل دوره (${durationMonths} نوبت کامل):`;
+        document.getElementById('payableSubLabelText').textContent = 'با احتساب ۵٪ تخفیف مضاعف پرداخت نقدی یک‌جا';
+        document.getElementById('todayPayableAmountText').textContent = fullTotal.toLocaleString('fa-IR');
+        
+        const btnText = document.getElementById('autoshipBtnText');
+        if (btnText) btnText.textContent = `پرداخت یک‌جا کل دوره ${durationMonths} ماهه`;
+    }
+
+    const proceedLink = document.getElementById('autoshipProceedLink');
+    if (proceedLink) {
+        proceedLink.href = `payment.php?type=autoship&duration=${durationMonths}&model=${paymentModel}`;
+    }
+}
+
+// Check initial tab from localStorage if URL has no tab param
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('tab')) {
+        const savedTab = localStorage.getItem('cart_active_tab');
+        if (savedTab === 'autoship' && <?= count($autoship_products) ?> > 0) {
+            switchCartTab('autoship');
+        }
+    }
+    updateAutoshipCalculations();
+});
 </script>
 
 <?php include 'includes/footer.php'; ?>

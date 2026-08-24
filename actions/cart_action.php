@@ -90,6 +90,17 @@ if ($product_id > 0) {
     }
 }
 
+// Determine active tab to persist
+$active_tab = $_POST['active_tab'] ?? '';
+if (empty($active_tab)) {
+    if ($action === 'set_frequency' || $type === 'autoship' || ($_SESSION['cart_types'][$product_id] ?? '') === 'autoship') {
+        $active_tab = 'autoship';
+    } else {
+        $active_tab = 'standard';
+    }
+}
+$_SESSION['active_cart_tab'] = $active_tab;
+
 if (isset($_POST['ajax']) && $_POST['ajax'] == 1) {
     header('Content-Type: application/json');
     $standard_count = 0;
@@ -107,11 +118,12 @@ if (isset($_POST['ajax']) && $_POST['ajax'] == 1) {
         'standard_count' => $standard_count,
         'autoship_count' => $autoship_count,
         'item_type' => $_SESSION['cart_types'][$product_id] ?? 'standard',
-        'item_frequency' => $_SESSION['cart_frequency'][$product_id] ?? '1_month'
+        'item_frequency' => $_SESSION['cart_frequency'][$product_id] ?? '1_month',
+        'active_tab' => $active_tab
     ]);
     exit;
 }
 
-// Safe redirect — strips external hosts to prevent open redirect
-$referer = $_SERVER['HTTP_REFERER'] ?? '../cart.php';
-safe_redirect($referer, '../cart.php');
+// Redirect back to cart with preserved active tab
+header('Location: ../cart.php?tab=' . urlencode($active_tab));
+exit;

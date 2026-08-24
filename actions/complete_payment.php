@@ -127,21 +127,38 @@ try {
             // If item was purchased via Autoship, auto-create recurring subscription schedule
             if (!empty($item['is_autoship'])) {
                 try {
+                    $dur_months = (int)($pending['duration_months'] ?? 3);
+                    if (!in_array($dur_months, [3, 6, 12])) $dur_months = 3;
+                    $pay_model = ($pending['payment_model'] ?? 'monthly') === 'upfront' ? 'upfront' : 'monthly';
+                    $freq = $item['frequency'] ?? '1_month';
+
+                    $plan_label = "اشتراک {$dur_months} ماهه: " . $item['product_name_snapshot'];
+                    $sub_amt = (int)$item['unit_price'] * $qty;
+
                     $autoSubStmt = $pdo->prepare(
-                        "INSERT INTO user_subscriptions (user_id, plan_name, amount, status, next_delivery_date)
-                         VALUES (?, ?, ?, 'active', DATE_ADD(CURRENT_DATE, INTERVAL 30 DAY))"
+                        "INSERT INTO user_subscriptions (user_id, plan_name, amount, status, next_delivery_date, duration_months, payment_model, delivery_frequency)
+                         VALUES (?, ?, ?, 'active', DATE_ADD(CURRENT_DATE, INTERVAL 30 DAY), ?, ?, ?)"
                     );
-                    $plan_label = "اشتراک خودکار: " . $item['product_name_snapshot'];
-                    $autoSubStmt->execute([$user_id, $plan_label, (int)$item['unit_price'] * $qty]);
+                    $autoSubStmt->execute([$user_id, $plan_label, $sub_amt, $dur_months, $pay_model, $freq]);
                     $new_sub_id = $pdo->lastInsertId();
 
-                    $autoDelStmt = $pdo->prepare("INSERT INTO subscription_deliveries (subscription_id, delivery_month, scheduled_date) VALUES (?, ?, ?)");
-                    for ($m = 1; $m <= 3; $m++) {
-                        $sched_date = date('Y-m-d', strtotime("+" . ($m * 30) . " days"));
-                        $autoDelStmt->execute([$new_sub_id, $m, $sched_date]);
+                    $autoDelStmt = $pdo->prepare(
+                        "INSERT INTO subscription_deliveries (subscription_id, delivery_month, scheduled_date, status, payment_status)
+                         VALUES (?, ?, ?, ?, ?)"
+                    );
+                    for ($m = 1; $m <= $dur_months; $m++) {
+                        $sched_date = date('Y-m-d', strtotime("+" . (($m - 1) * 30) . " days"));
+                        if ($m === 1) {
+                            $del_status = 'processing';
+                            $del_pay_status = 'paid';
+                        } else {
+                            $del_status = 'pending';
+                            $del_pay_status = ($pay_model === 'upfront') ? 'paid' : 'pending';
+                        }
+                        $autoDelStmt->execute([$new_sub_id, $m, $sched_date, $del_status, $del_pay_status]);
                     }
                 } catch (Exception $subEx) {
-                    // Fail-safe if subscription table has specific constraints
+                    error_log("Autoship scheduling error: " . $subEx->getMessage());
                 }
             }
         }
