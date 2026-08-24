@@ -13,19 +13,52 @@ csrf_verify();
 
 $action     = $_POST['action'] ?? '';
 $product_id = (int)($_POST['product_id'] ?? 0);
+$type       = $_POST['type'] ?? 'standard'; // 'standard' or 'autoship'
+$frequency  = $_POST['frequency'] ?? '1_month'; // '2_weeks', '1_month', '2_months', '3_months'
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
+}
+if (!isset($_SESSION['cart_types'])) {
+    $_SESSION['cart_types'] = [];
+}
+if (!isset($_SESSION['cart_frequency'])) {
+    $_SESSION['cart_frequency'] = [];
 }
 
 if ($product_id > 0) {
     switch ($action) {
         case 'add':
             // Verify product exists and is in stock before adding
-            $stmt = $pdo->prepare("SELECT id FROM products WHERE id = ? AND stock > 0");
+            $stmt = $pdo->prepare("SELECT id, is_autoship FROM products WHERE id = ? AND stock > 0");
             $stmt->execute([$product_id]);
-            if ($stmt->fetch()) {
+            $product_row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($product_row) {
                 $_SESSION['cart'][$product_id] = ($_SESSION['cart'][$product_id] ?? 0) + 1;
+                
+                // If type specified or product is autoship-selected
+                if ($type === 'autoship' || (!empty($_POST['is_autoship']) && $product_row['is_autoship'])) {
+                    $_SESSION['cart_types'][$product_id] = 'autoship';
+                    $_SESSION['cart_frequency'][$product_id] = $frequency;
+                } elseif (!isset($_SESSION['cart_types'][$product_id])) {
+                    $_SESSION['cart_types'][$product_id] = 'standard';
+                }
+            }
+            break;
+
+        case 'toggle_type':
+            $current_type = $_SESSION['cart_types'][$product_id] ?? 'standard';
+            $new_type = ($current_type === 'autoship') ? 'standard' : 'autoship';
+            $_SESSION['cart_types'][$product_id] = $new_type;
+            if ($new_type === 'autoship' && empty($_SESSION['cart_frequency'][$product_id])) {
+                $_SESSION['cart_frequency'][$product_id] = '1_month';
+            }
+            break;
+
+        case 'set_frequency':
+            if (in_array($frequency, ['2_weeks', '1_month', '2_months', '3_months'])) {
+                $_SESSION['cart_frequency'][$product_id] = $frequency;
+                $_SESSION['cart_types'][$product_id] = 'autoship';
             }
             break;
 
@@ -41,19 +74,39 @@ if ($product_id > 0) {
                     $_SESSION['cart'][$product_id]--;
                 } else {
                     unset($_SESSION['cart'][$product_id]);
+                    unset($_SESSION['cart_types'][$product_id]);
+                    unset($_SESSION['cart_frequency'][$product_id]);
                 }
             }
             break;
 
         case 'remove':
             unset($_SESSION['cart'][$product_id]);
+            unset($_SESSION['cart_types'][$product_id]);
+            unset($_SESSION['cart_frequency'][$product_id]);
             break;
     }
 }
 
 if (isset($_POST['ajax']) && $_POST['ajax'] == 1) {
     header('Content-Type: application/json');
-    echo json_encode(['status' => 'success', 'cart_count' => array_sum($_SESSION['cart'])]);
+    $standard_count = 0;
+    $autoship_count = 0;
+    foreach ($_SESSION['cart'] as $p_id => $qty) {
+        if (($_SESSION['cart_types'][$p_id] ?? 'standard') === 'autoship') {
+            $autoship_count += $qty;
+        } else {
+            $standard_count += $qty;
+        }
+    }
+    echo json_encode([
+        'status' => 'success', 
+        'cart_count' => array_sum($_SESSION['cart']),
+        'standard_count' => $standard_count,
+        'autoship_count' => $autoship_count,
+        'item_type' => $_SESSION['cart_types'][$product_id] ?? 'standard',
+        'item_frequency' => $_SESSION['cart_frequency'][$product_id] ?? '1_month'
+    ]);
     exit;
 }
 

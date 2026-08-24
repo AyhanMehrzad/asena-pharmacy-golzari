@@ -396,13 +396,22 @@ function addToCart(btn, productId) {
     const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span> در حال افزودن...';
     btn.disabled = true;
+
+    // Check purchase type (one_time or autoship)
+    const selectedRadio = document.querySelector('input[name="purchase_type"]:checked');
+    const purchaseType = selectedRadio ? selectedRadio.value : 'standard';
+    
+    let postBody = 'action=add&ajax=1&csrf_token=<?php echo csrf_token(); ?>&product_id=' + productId;
+    if (purchaseType === 'autoship') {
+        postBody += '&type=autoship&frequency=1_month';
+    }
     
     fetch('actions/cart_action.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'action=add&ajax=1&csrf_token=<?php echo csrf_token(); ?>&product_id=' + productId
+        body: postBody
     })
     .then(response => response.json())
     .then(data => {
@@ -427,6 +436,7 @@ function addToCart(btn, productId) {
         btn.disabled = false;
     });
 }
+
 </script>
 
 <?php include 'includes/footer.php'; ?>

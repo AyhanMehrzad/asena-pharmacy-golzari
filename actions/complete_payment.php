@@ -123,9 +123,30 @@ try {
                 $item['product_name_snapshot'],
             ]);
             $stockStmt->execute([$qty, $pid, $qty]);
+
+            // If item was purchased via Autoship, auto-create recurring subscription schedule
+            if (!empty($item['is_autoship'])) {
+                try {
+                    $autoSubStmt = $pdo->prepare(
+                        "INSERT INTO user_subscriptions (user_id, plan_name, amount, status, next_delivery_date)
+                         VALUES (?, ?, ?, 'active', DATE_ADD(CURRENT_DATE, INTERVAL 30 DAY))"
+                    );
+                    $plan_label = "اشتراک خودکار: " . $item['product_name_snapshot'];
+                    $autoSubStmt->execute([$user_id, $plan_label, (int)$item['unit_price'] * $qty]);
+                    $new_sub_id = $pdo->lastInsertId();
+
+                    $autoDelStmt = $pdo->prepare("INSERT INTO subscription_deliveries (subscription_id, delivery_month, scheduled_date) VALUES (?, ?, ?)");
+                    for ($m = 1; $m <= 3; $m++) {
+                        $sched_date = date('Y-m-d', strtotime("+" . ($m * 30) . " days"));
+                        $autoDelStmt->execute([$new_sub_id, $m, $sched_date]);
+                    }
+                } catch (Exception $subEx) {
+                    // Fail-safe if subscription table has specific constraints
+                }
+            }
         }
-        }
-    } // End of else block for regular orders
+    }
+} // End of else block for regular orders
 
     // 3. Loyalty points and booking approval
     if ($is_booking && !empty($pending['booking_id'])) {

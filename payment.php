@@ -24,6 +24,10 @@ if (empty($cart_items)) {
     exit;
 }
 
+$cart_types       = $_SESSION['cart_types'] ?? [];
+$cart_frequencies = $_SESSION['cart_frequency'] ?? [];
+$checkout_type    = $_GET['type'] ?? 'all'; // 'autoship', 'standard', or 'all'
+
 // ── Calculate real totals from DB ─────────────────────────────────────────────
 $ids          = array_keys($cart_items);
 $placeholders = implode(',', array_fill(0, count($ids), '?'));
@@ -36,9 +40,23 @@ $total_discount = 0;
 $pending_items  = [];
 
 foreach ($db_products as $prod) {
-    $qty             = (int)($cart_items[$prod['id']] ?? 0);
+    $p_id            = $prod['id'];
+    $item_type       = $cart_types[$p_id] ?? 'standard';
+    
+    // Filter if specific checkout requested
+    if ($checkout_type === 'autoship' && $item_type !== 'autoship') continue;
+    if ($checkout_type === 'standard' && $item_type === 'autoship') continue;
+
+    $qty             = (int)($cart_items[$p_id] ?? 0);
     $price           = (int)$prod['price'];
-    $effective_price = $prod['discount_price'] ? (int)$prod['discount_price'] : $price;
+    
+    if ($item_type === 'autoship') {
+        $auto_pct = !empty($prod['autoship_discount']) ? (int)$prod['autoship_discount'] : 15;
+        $effective_price = round($price * (1 - ($auto_pct / 100)));
+    } else {
+        $effective_price = $prod['discount_price'] ? (int)$prod['discount_price'] : $price;
+    }
+    
     $total_price    += $price * $qty;
     $total_discount += ($price - $effective_price) * $qty;
 
@@ -47,6 +65,8 @@ foreach ($db_products as $prod) {
         'product_name_snapshot' => $prod['name'],
         'qty'                   => $qty,
         'unit_price'            => $effective_price,
+        'is_autoship'           => ($item_type === 'autoship') ? 1 : 0,
+        'frequency'             => $cart_frequencies[$p_id] ?? '1_month'
     ];
 }
 
