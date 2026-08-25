@@ -1,10 +1,14 @@
 /**
- * ASENA Multi-Animal Liquid Fill Rising Paw Loader
+ * ASENA Multi-Animal Liquid Fill Rising Paw Loader (Artistically Enhanced)
  * Features:
- *  - 4 Unique Vector Paws: Cat Paw (گربه), Dog Paw (سگ), Chick Footprint (جوجه/پرنده), Cow Hoof (سم گاو)
+ *  - 4 Anatomically & Artistically Crafted Animal Footprint Models:
+ *      * 🐱 Cat Paw: Smooth organic kitten cushion + 4 rounded toe beans
+ *      * 🐶 Dog Paw: Bold triangular canine pad + 4 claw-topped oval beans
+ *      * 🐥 Chick Footprint: Smooth continuous baby bird footprint with 3 splayed forward toes, rear spur & rounded toe joints
+ *      * 🐮 Cow Cloven Hoof: Elegant twin crescent cloven hoof segments with natural cleft & upper dewclaws
  *  - Randomized selection on every page load
- *  - Rising liquid fill animation from bottom to top
- *  - Deterministic Model-Aware Colors:
+ *  - Rising liquid fill animation with matching linear progress indicator
+ *  - Deterministic Edition & Palette Matching:
  *      * Pharmacy Edition (data-edition="pharmacy"): Deep Teal (#0f766e) -> Emerald (#059669)
  *      * Standard Petshop (data-edition="standard"): Navy Blue (#002d72) -> Warm Orange (#ea580c)
  *      * Premium Enterprise (data-edition="premium"): Royal Navy (#002d72) -> Indigo Blue (#3d5ca2)
@@ -27,8 +31,8 @@
                 start: '#0f766e',
                 end: '#059669',
                 title: '#0f766e',
-                subtitle: 'آسنا | داروخانه تخصصی دامپزشکی',
-                glow: 'rgba(15, 118, 110, 0.25)'
+                subtitle: 'داروخانه تخصصی دامپزشکی آسنا',
+                glow: 'rgba(15, 118, 110, 0.22)'
             };
         }
         
@@ -38,8 +42,8 @@
                 start: '#002d72',
                 end: '#3d5ca2',
                 title: '#002d72',
-                subtitle: 'آسنا | سامانه سازمانی کلینیک و بیمارستان دامپزشکی',
-                glow: 'rgba(61, 92, 162, 0.25)'
+                subtitle: 'سامانه بیمارستان دامپزشکی آسنا',
+                glow: 'rgba(61, 92, 162, 0.22)'
             };
         }
 
@@ -49,8 +53,8 @@
                 start: '#002d72',
                 end: '#1d4ed8',
                 title: '#002d72',
-                subtitle: 'آسنا | سامانه پایه کلینیک و پت‌شاپ',
-                glow: 'rgba(0, 45, 114, 0.22)'
+                subtitle: 'سامانه پایه کلینیک و پت‌شاپ آسنا',
+                glow: 'rgba(0, 45, 114, 0.20)'
             };
         }
 
@@ -59,15 +63,15 @@
             start: '#002d72',
             end: '#ea580c',
             title: '#002d72',
-            subtitle: 'آسنا | کلینیک و پت‌شاپ تخصصی',
-            glow: 'rgba(234, 88, 12, 0.25)'
+            subtitle: 'کلینیک و پت‌شاپ تخصصی آسنا',
+            glow: 'rgba(234, 88, 12, 0.22)'
         };
     }
 
     const theme = getThemeColors();
     const gradId = 'pawLiquidGrad_' + Math.random().toString(36).substr(2, 9);
 
-    // 4 Distinct Animal SVG Vector Models
+    // 4 Artistically Crafted High-Definition Vector Footprint Models
     const animalModels = [
         {
             id: 'cat',
@@ -75,28 +79,33 @@
             emoji: '🐱',
             viewBox: '0 0 100 100',
             path: `
-                <!-- Cat Main Pad -->
-                <path d="M 50,48 C 36,48 24,60 28,74 C 31,84 40,88 50,88 C 60,88 69,84 72,74 C 76,60 64,48 50,48 Z" />
-                <!-- 4 Rounded Toe Beans -->
-                <ellipse cx="28" cy="40" rx="9" ry="12" transform="rotate(-18 28 40)" />
-                <ellipse cx="43" cy="30" rx="9" ry="13" transform="rotate(-6 43 30)" />
-                <ellipse cx="57" cy="30" rx="9" ry="13" transform="rotate(6 57 30)" />
-                <ellipse cx="72" cy="40" rx="9" ry="12" transform="rotate(18 72 40)" />
+                <!-- Cat Main Palm Cushion with Smooth Tri-Lobe Base -->
+                <path d="M 50,50 C 33,50 23,61 25,75 C 27,86 37,90 50,87 C 63,90 73,86 75,75 C 77,61 67,50 50,50 Z" />
+                <!-- 4 Soft Rounded Kitten Toe Beans -->
+                <ellipse cx="25" cy="40" rx="8" ry="12" transform="rotate(-22 25 40)" />
+                <ellipse cx="42" cy="27" rx="8.5" ry="13" transform="rotate(-7 42 27)" />
+                <ellipse cx="58" cy="27" rx="8.5" ry="13" transform="rotate(7 58 27)" />
+                <ellipse cx="75" cy="40" rx="8" ry="12" transform="rotate(22 75 40)" />
             `
         },
         {
             id: 'dog',
-            name: 'سگ وفادار',
+            name: 'سگ باوفا',
             emoji: '🐶',
             viewBox: '0 0 100 100',
             path: `
-                <!-- Dog Heart/Tri-lobed Main Pad -->
-                <path d="M 50,50 C 35,50 20,62 25,78 C 29,90 40,92 50,86 C 60,92 71,90 75,78 C 80,62 65,50 50,50 Z" />
-                <!-- 4 Canine Toes + Claws -->
-                <ellipse cx="24" cy="42" rx="9.5" ry="14" transform="rotate(-25 24 42)" />
-                <ellipse cx="42" cy="28" rx="10" ry="15" transform="rotate(-8 42 28)" />
-                <ellipse cx="58" cy="28" rx="10" ry="15" transform="rotate(8 58 28)" />
-                <ellipse cx="76" cy="42" rx="9.5" ry="14" transform="rotate(25 76 42)" />
+                <!-- Dog Robust Heart-Shaped Palm Cushion -->
+                <path d="M 50,52 C 35,52 20,63 24,79 C 28,91 40,93 50,87 C 60,93 72,91 76,79 C 80,63 65,52 50,52 Z" />
+                <!-- 4 Canine Toes with Claw Tips -->
+                <path d="M 23,32 C 16,36 15,48 21,54 C 27,60 35,54 33,42 C 32,34 27,30 23,32 Z" />
+                <path d="M 42,16 C 35,19 34,31 40,38 C 46,44 54,39 52,27 C 51,19 46,14 42,16 Z" />
+                <path d="M 58,16 C 65,19 66,31 60,38 C 54,44 46,39 48,27 C 49,19 54,14 58,16 Z" />
+                <path d="M 77,32 C 84,36 85,48 79,54 C 73,60 65,54 67,42 C 68,34 73,30 77,32 Z" />
+                <!-- Subtle Claw Points -->
+                <path d="M 22,25 C 23,21 26,22 25,26 Z" />
+                <path d="M 42,9 C 43,5 46,6 45,10 Z" />
+                <path d="M 58,9 C 57,5 54,6 55,10 Z" />
+                <path d="M 78,25 C 77,21 74,22 75,26 Z" />
             `
         },
         {
@@ -105,28 +114,49 @@
             emoji: '🐥',
             viewBox: '0 0 100 100',
             path: `
-                <!-- 3 Front Toes + 1 Back Spur Connected -->
-                <path d="M 50,62 L 50,88 L 47,88 L 47,64 L 16,36 L 20,32 L 48,58 L 48,12 L 52,12 L 52,58 L 80,32 L 84,36 L 53,64 L 53,88 L 50,88 Z" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-                <!-- Toe Claw Nodes -->
-                <circle cx="50" cy="14" r="5" />
-                <circle cx="17" cy="35" r="5" />
-                <circle cx="83" cy="35" r="5" />
-                <circle cx="50" cy="88" r="4.5" />
+                <!-- Beautiful Unified Baby Chick / Bird Footprint with Organic Webbed Curves & Rounded Pads -->
+                <path d="
+                    M 50,58 
+                    C 52,44 49,30 50,15 
+                    C 47,11 53,11 50,7
+                    C 47,11 53,11 50,15
+                    C 51,30 48,44 50,58
+                    C 58,52 68,44 78,35
+                    C 82,31 85,36 82,39
+                    C 72,48 62,56 55,62
+                    C 55,70 54,78 52,88
+                    C 50,93 48,93 48,88
+                    C 46,78 45,70 45,62
+                    C 38,56 28,48 18,39
+                    C 15,36 18,31 22,35
+                    C 32,44 42,52 50,58 Z
+                " />
+                <!-- Central Ankle Cushion & Digit Knuckles -->
+                <circle cx="50" cy="60" r="7" />
+                <circle cx="50" cy="18" r="5" />
+                <circle cx="21" cy="37" r="4.5" />
+                <circle cx="79" cy="37" r="4.5" />
+                <circle cx="50" cy="87" r="4" />
+                <!-- Claw Tips -->
+                <path d="M 50,13 L 50,6" stroke-width="3" stroke-linecap="round" />
+                <path d="M 23,35 L 14,28" stroke-width="3" stroke-linecap="round" />
+                <path d="M 77,35 L 86,28" stroke-width="3" stroke-linecap="round" />
+                <path d="M 50,89 L 50,95" stroke-width="2.5" stroke-linecap="round" />
             `
         },
         {
             id: 'cow',
-            name: 'سم گاو و دام',
+            name: 'دام و گاو',
             emoji: '🐮',
             viewBox: '0 0 100 100',
             path: `
-                <!-- Cow Left Cloven Hoof Half -->
-                <path d="M 47,20 C 35,20 22,34 22,60 C 22,78 33,88 47,88 L 47,20 Z" />
-                <!-- Cow Right Cloven Hoof Half -->
-                <path d="M 53,20 C 65,20 78,34 78,60 C 78,78 67,88 53,88 L 53,20 Z" />
-                <!-- Accessory Dewclaws at Top -->
-                <ellipse cx="32" cy="14" rx="6" ry="4" transform="rotate(-15 32 14)" />
-                <ellipse cx="68" cy="14" rx="6" ry="4" transform="rotate(15 68 14)" />
+                <!-- Left Cloven Hoof Half (Natural Arched Kidney Silhouette) -->
+                <path d="M 45,18 C 34,18 20,30 18,52 C 16,68 23,80 37,82 C 43,83 45,79 45,72 C 45,54 44,36 45,18 Z" />
+                <!-- Right Cloven Hoof Half (Natural Arched Kidney Silhouette) -->
+                <path d="M 55,18 C 66,18 80,30 82,52 C 84,68 77,80 63,82 C 57,83 55,79 55,72 C 55,54 56,36 55,18 Z" />
+                <!-- 2 Accessory Dewclaw Prints (Soft Bovine Heel Pods) -->
+                <ellipse cx="28" cy="91" rx="6" ry="4" transform="rotate(-15 28 91)" />
+                <ellipse cx="72" cy="91" rx="6" ry="4" transform="rotate(15 72 91)" />
             `
         }
     ];
@@ -137,8 +167,8 @@
     const loaderDiv = document.createElement('div');
     loaderDiv.id = 'asena-paw-loader';
     loaderDiv.innerHTML = `
-        <div class="paw-loader-content">
-            <div class="paw-svg-container" style="filter: drop-shadow(0 8px 18px ${theme.glow});">
+        <div class="paw-loader-card">
+            <div class="paw-svg-container" style="box-shadow: 0 10px 25px -5px ${theme.glow};">
                 <svg viewBox="${chosen.viewBox}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="${gradId}" x1="0%" y1="100%" x2="0%" y2="0%">
@@ -147,23 +177,26 @@
                         </linearGradient>
                     </defs>
                     
-                    <!-- Background Empty Frame -->
+                    <!-- Background Soft Silhouette (Ghost Track) -->
                     <g class="paw-bg-path">
                         ${chosen.path}
                     </g>
                     
-                    <!-- Animated Rising Liquid Fill -->
-                    <g class="paw-fill-path" fill="url(#${gradId})" stroke="${theme.start}" stroke-width="1">
+                    <!-- Rising Liquid Animated Fill -->
+                    <g class="paw-fill-path" fill="url(#${gradId})" stroke="${theme.start}" stroke-width="0.8">
                         ${chosen.path}
                     </g>
                 </svg>
             </div>
-            <div style="text-align: center;">
+            <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
                 <div class="paw-loader-title" style="color: ${theme.title};">
-                    <span>${chosen.emoji}</span>
+                    <span style="font-size: 20px;">${chosen.emoji}</span>
                     <span>${theme.subtitle}</span>
                 </div>
-                <div class="paw-loader-sub">ردپای ${chosen.name} • در حال بارگذاری...</div>
+                <div class="paw-loader-sub">ردپای هنری ${chosen.name} • بارگذاری سریع...</div>
+                <div class="paw-progress-pill">
+                    <div class="paw-progress-bar" style="background: linear-gradient(to left, ${theme.start}, ${theme.end});"></div>
+                </div>
             </div>
         </div>
     `;
@@ -185,11 +218,11 @@
     }
 
     if (document.readyState === 'complete') {
-        setTimeout(dismissLoader, 300);
+        setTimeout(dismissLoader, 350);
     } else {
-        window.addEventListener('load', () => setTimeout(dismissLoader, 300));
+        window.addEventListener('load', () => setTimeout(dismissLoader, 350));
     }
 
     // Safety fallback timer so it never blocks the user
-    setTimeout(dismissLoader, 1100);
+    setTimeout(dismissLoader, 1200);
 })();
