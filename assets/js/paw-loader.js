@@ -4,24 +4,24 @@
  *  - 4 Unique Vector Paws: Cat Paw (گربه), Dog Paw (سگ), Chick Footprint (جوجه/پرنده), Cow Hoof (سم گاو)
  *  - Randomized selection on every page load
  *  - Rising liquid fill animation from bottom to top
- *  - Model-Aware Exact Color Adaptation:
- *      * Pharmacy Edition: Pure Teal (#0f766e) -> Emerald (#059669)
- *      * Standard Petshop: Navy (#002d72) -> Warm Orange (#ea580c)
- *      * Premium Enterprise: Royal Navy (#002d72) -> Indigo (#3d5ca2)
- *      * Basic Petshop: Navy (#002d72) -> Classic Blue (#1d4ed8)
+ *  - Deterministic Model-Aware Colors:
+ *      * Pharmacy Edition (data-edition="pharmacy"): Deep Teal (#0f766e) -> Emerald (#059669)
+ *      * Standard Petshop (data-edition="standard"): Navy Blue (#002d72) -> Warm Orange (#ea580c)
+ *      * Premium Enterprise (data-edition="premium"): Royal Navy (#002d72) -> Indigo Blue (#3d5ca2)
+ *      * Basic Petshop (data-edition="basic"): Navy Blue (#002d72) -> Classic Blue (#1d4ed8)
  *  - Auto-dismiss on page load with fallback safety timer
  */
 (function () {
     if (document.getElementById('asena-paw-loader')) return;
 
-    // Detect exact model and theme colors
+    // Detect exact model and theme colors deterministically
     function getThemeColors() {
+        const edition = document.documentElement.getAttribute('data-edition') || '';
         const path = window.location.pathname.toLowerCase();
-        const title = (document.title || '').toLowerCase();
         
-        // 1. Pharmacy Model Detection
-        if (path.includes('pharmacy') || 
-            title.includes('داروخانه') || 
+        // 1. Pharmacy Edition
+        if (edition === 'pharmacy' || 
+            path.includes('pharmacy') || 
             document.body?.classList?.contains('pharma-mode')) {
             return {
                 start: '#0f766e',
@@ -32,8 +32,8 @@
             };
         }
         
-        // 2. Premium / Enterprise Model Detection
-        if (path.includes('premium') || title.includes('پریمیوم') || title.includes('سازمانی')) {
+        // 2. Premium / Enterprise Clinic Model
+        if (edition === 'premium' || path.includes('premium') || path.includes('enterprise')) {
             return {
                 start: '#002d72',
                 end: '#3d5ca2',
@@ -43,8 +43,8 @@
             };
         }
 
-        // 3. Basic Model Detection
-        if (path.includes('basic') || title.includes('پایه')) {
+        // 3. Basic Clinic Model
+        if (edition === 'basic' || path.includes('basic')) {
             return {
                 start: '#002d72',
                 end: '#1d4ed8',
@@ -54,7 +54,7 @@
             };
         }
 
-        // 4. Standard / Best Deal Model (Default Pet Care)
+        // 4. Standard / Best Deal Clinic & Petshop (Navy Blue + Warm Orange)
         return {
             start: '#002d72',
             end: '#ea580c',

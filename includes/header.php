@@ -29,7 +29,7 @@ if (isset($_SESSION['cart'])) {
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
-<html dir="rtl" lang="fa" style="">
+<html dir="rtl" lang="fa" data-edition="pharmacy">
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" name="viewport">
