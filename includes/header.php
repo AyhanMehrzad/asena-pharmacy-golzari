@@ -72,7 +72,7 @@ if (function_exists('get_curated_recommendations')) {
 ?>
 <?php if (!empty($top_notif)): ?>
 <!-- Top Floating Notification Bar -->
-<div id="topNotificationBar" class="bg-gradient-to-r from-secondary-container via-[#ea580c] to-secondary-container text-white py-2 px-4 text-xs font-bold shadow-sm relative z-50">
+<div id="topNotificationBar" class="bg-gradient-to-r from-secondary-container via-primary-container to-secondary-container text-white py-2 px-4 text-xs font-bold shadow-sm relative z-50">
     <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
         <div class="flex items-center gap-2 overflow-hidden">
             <span class="material-symbols-outlined text-base animate-bounce">campaign</span>

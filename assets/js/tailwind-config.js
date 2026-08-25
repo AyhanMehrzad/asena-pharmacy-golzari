@@ -4,11 +4,11 @@ try {
         theme: {
             extend: {
                 "colors": {
-                    /* --- Veterinary Pharmacy Palette (Teal & Emerald Theme) --- */
-                    "primary": "#0f766e",
-                    "primary-container": "#115e59",
-                    "primary-light": "#0d9488",
-                    "primary-fixed": "#ccfbf1",
+                    /* --- Veterinary Pharmacy Natural Harmony Palette (Teal + Emerald + Cyan) --- */
+                    "primary": "#0f766e",             /* Deep Rich Teal */
+                    "primary-container": "#115e59",   /* Dark Teal Container */
+                    "primary-light": "#0d9488",       /* Vibrant Medium Teal */
+                    "primary-fixed": "#ccfbf1",       /* Soft Fresh Mint */
                     "primary-fixed-dim": "#99f6e4",
                     "on-primary": "#ffffff",
                     "on-primary-container": "#ccfbf1",
@@ -16,6 +16,27 @@ try {
                     "on-primary-fixed-variant": "#115e59",
                     "inverse-primary": "#99f6e4",
                     
+                    /* Complementary Emerald Accents (Replaces Orange for Pharmacy) */
+                    "secondary": "#047857",           /* Deep Forest Emerald */
+                    "secondary-container": "#059669", /* Vibrant Emerald Green CTA */
+                    "secondary-fixed": "#d1fae5",     /* Soft Mint Background */
+                    "secondary-fixed-dim": "#a7f3d0",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-container": "#ffffff",
+                    "on-secondary-fixed": "#064e3b",
+                    "on-secondary-fixed-variant": "#047857",
+                    
+                    /* Medical Cyan / Aqua Complement */
+                    "tertiary": "#0284c7",
+                    "tertiary-container": "#0369a1",
+                    "tertiary-fixed": "#e0f2fe",
+                    "tertiary-fixed-dim": "#bae6fd",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#e0f2fe",
+                    "on-tertiary-fixed": "#082f49",
+                    "on-tertiary-fixed-variant": "#0369a1",
+                    
+                    /* Clean Fresh Canvases */
                     "surface-tint": "#0f766e",
                     "surface": "#f8fafc",
                     "surface-bright": "#ffffff",
@@ -37,25 +58,6 @@ try {
                     
                     "outline": "#64748b",
                     "outline-variant": "#cbd5e1",
-                    
-                    /* Complementary Accents & Status */
-                    "secondary": "#c2410c",
-                    "secondary-container": "#ea580c",
-                    "secondary-fixed": "#ffedd5",
-                    "secondary-fixed-dim": "#fed7aa",
-                    "on-secondary": "#ffffff",
-                    "on-secondary-container": "#ffffff",
-                    "on-secondary-fixed": "#431407",
-                    "on-secondary-fixed-variant": "#9a3412",
-                    
-                    "tertiary": "#042f2e",
-                    "tertiary-container": "#134e4a",
-                    "tertiary-fixed": "#ccfbf1",
-                    "tertiary-fixed-dim": "#99f6e4",
-                    "on-tertiary": "#ffffff",
-                    "on-tertiary-container": "#ccfbf1",
-                    "on-tertiary-fixed": "#042f2e",
-                    "on-tertiary-fixed-variant": "#115e59",
                     
                     "status-active": "#059669",
                     "status-warning": "#d97706",

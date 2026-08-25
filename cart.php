@@ -194,8 +194,8 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
 
                                 <?php if(!empty($prod['is_autoship'])): ?>
                                 <!-- 1-Click Autoship Conversion Bar (Only for products tagged as Autoship) -->
-                                <div class="my-3 p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/60 flex flex-wrap items-center justify-between gap-2">
-                                    <div class="flex items-center gap-1.5 text-xs text-orange-900 font-medium">
+                                <div class="my-3 p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 flex flex-wrap items-center justify-between gap-2">
+                                    <div class="flex items-center gap-1.5 text-xs text-emerald-900 font-medium">
                                         <span class="material-symbols-outlined text-secondary-container text-base">savings</span>
                                         <span>تخفیف مداوم <?= !empty($prod['autoship_discount']) ? (int)$prod['autoship_discount'] : 15 ?>٪ با ارسال منظم دوره‌ای</span>
                                     </div>
@@ -204,7 +204,7 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                                         <input type="hidden" name="active_tab" value="autoship">
                                         <input type="hidden" name="product_id" value="<?= $prod['id'] ?>">
                                         <input type="hidden" name="action" value="toggle_type">
-                                        <button type="submit" class="bg-secondary-container hover:bg-[#ea580c] text-white px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1 active:scale-95 cursor-pointer">
+                                        <button type="submit" class="bg-secondary-container hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1 active:scale-95 cursor-pointer">
                                             <span class="material-symbols-outlined text-sm">autorenew</span>
                                             تبدیل به تحویل خودکار (Autoship)
                                         </button>
@@ -360,7 +360,7 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                     <div class="lg:w-2/3 space-y-4">
                         
                         <!-- Autoship Benefit Banner -->
-                        <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-5 rounded-3xl shadow-lg flex items-center justify-between gap-4">
+                        <div class="bg-gradient-to-r from-teal-800 via-primary to-emerald-700 text-white p-5 rounded-3xl shadow-lg flex items-center justify-between gap-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white shrink-0">
                                     <span class="material-symbols-outlined text-2xl">verified</span>
@@ -370,7 +370,7 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                                     <p class="text-[11px] text-white/90">تخفیف دائمی ۱۵٪ + بدون نیاز به سفارش مجدد ماهانه</p>
                                 </div>
                             </div>
-                            <span class="text-xs bg-white text-orange-900 font-bold px-3 py-1 rounded-full shrink-0 shadow-sm">ارسال منظم رایگان</span>
+                            <span class="text-xs bg-white text-emerald-900 font-bold px-3 py-1 rounded-full shrink-0 shadow-sm">ارسال منظم رایگان</span>
                         </div>
 
                         <?php foreach($autoship_products as $prod): ?>

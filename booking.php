@@ -50,12 +50,12 @@ $booked_slots_json = json_encode($booked_slots);
 <style>
     /* Add specific styles for selected states */
     .doctor-card.selected {
-        border-color: #fd8100 !important;
-        background-color: #f9f9f9 !important;
+        border-color: #059669 !important;
+        background-color: #f0fdf4 !important;
     }
     .date-card.selected {
-        border-color: #fd8100 !important;
-        background-color: #eeeeee !important;
+        border-color: #059669 !important;
+        background-color: #f0fdf4 !important;
     }
     .time-btn.selected {
         background-color: #0f766e !important;
