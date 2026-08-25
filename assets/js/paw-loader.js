@@ -1,11 +1,11 @@
 /**
- * ASENA Multi-Animal Liquid Fill Rising Paw Loader (Artistically Enhanced)
+ * ASENA Multi-Animal Liquid Fill Rising Paw Loader (Artistically Polished)
  * Features:
- *  - 4 Anatomically & Artistically Crafted Animal Footprint Models:
- *      * 🐱 Cat Paw: Smooth organic kitten cushion + 4 rounded toe beans
- *      * 🐶 Dog Paw: Bold triangular canine pad + 4 claw-topped oval beans
- *      * 🐥 Chick Footprint: Smooth continuous baby bird footprint with 3 splayed forward toes, rear spur & rounded toe joints
- *      * 🐮 Cow Cloven Hoof: Elegant twin crescent cloven hoof segments with natural cleft & upper dewclaws
+ *  - 4 High-End Precision Animal Footprints:
+ *      * 🐱 Cat Paw: Tri-lobed organic cushion + 4 rounded kitten beans
+ *      * 🐶 Dog Paw: Heart canine pad + 4 almond toe pads with claw tips
+ *      * 🐥 Chick Footprint: Beautiful continuous splayed 3-digit bird track + rear spur
+ *      * 🐮 Cow Cloven Hoof: Clean, symmetrical twin-shield cloven hoof with rounded bulbs & dewclaws
  *  - Randomized selection on every page load
  *  - Rising liquid fill animation with matching linear progress indicator
  *  - Deterministic Edition & Palette Matching:
@@ -97,15 +97,15 @@
                 <!-- Dog Robust Heart-Shaped Palm Cushion -->
                 <path d="M 50,52 C 35,52 20,63 24,79 C 28,91 40,93 50,87 C 60,93 72,91 76,79 C 80,63 65,52 50,52 Z" />
                 <!-- 4 Canine Toes with Claw Tips -->
-                <path d="M 23,32 C 16,36 15,48 21,54 C 27,60 35,54 33,42 C 32,34 27,30 23,32 Z" />
-                <path d="M 42,16 C 35,19 34,31 40,38 C 46,44 54,39 52,27 C 51,19 46,14 42,16 Z" />
-                <path d="M 58,16 C 65,19 66,31 60,38 C 54,44 46,39 48,27 C 49,19 54,14 58,16 Z" />
-                <path d="M 77,32 C 84,36 85,48 79,54 C 73,60 65,54 67,42 C 68,34 73,30 77,32 Z" />
-                <!-- Subtle Claw Points -->
-                <path d="M 22,25 C 23,21 26,22 25,26 Z" />
-                <path d="M 42,9 C 43,5 46,6 45,10 Z" />
-                <path d="M 58,9 C 57,5 54,6 55,10 Z" />
-                <path d="M 78,25 C 77,21 74,22 75,26 Z" />
+                <ellipse cx="24" cy="42" rx="9" ry="14" transform="rotate(-25 24 42)" />
+                <ellipse cx="42" cy="27" rx="9.5" ry="14.5" transform="rotate(-8 42 27)" />
+                <ellipse cx="58" cy="27" rx="9.5" ry="14.5" transform="rotate(8 58 27)" />
+                <ellipse cx="76" cy="42" rx="9" ry="14" transform="rotate(25 76 42)" />
+                <!-- Claw Accents -->
+                <path d="M 21,27 Q 23,21 25,27" stroke-width="2" stroke-linecap="round" />
+                <path d="M 40,11 Q 42,5 44,11" stroke-width="2" stroke-linecap="round" />
+                <path d="M 56,11 Q 58,5 60,11" stroke-width="2" stroke-linecap="round" />
+                <path d="M 75,27 Q 77,21 79,27" stroke-width="2" stroke-linecap="round" />
             `
         },
         {
@@ -114,34 +114,19 @@
             emoji: '🐥',
             viewBox: '0 0 100 100',
             path: `
-                <!-- Beautiful Unified Baby Chick / Bird Footprint with Organic Webbed Curves & Rounded Pads -->
-                <path d="
-                    M 50,58 
-                    C 52,44 49,30 50,15 
-                    C 47,11 53,11 50,7
-                    C 47,11 53,11 50,15
-                    C 51,30 48,44 50,58
-                    C 58,52 68,44 78,35
-                    C 82,31 85,36 82,39
-                    C 72,48 62,56 55,62
-                    C 55,70 54,78 52,88
-                    C 50,93 48,93 48,88
-                    C 46,78 45,70 45,62
-                    C 38,56 28,48 18,39
-                    C 15,36 18,31 22,35
-                    C 32,44 42,52 50,58 Z
-                " />
+                <!-- Clean Unified Baby Chick / Bird Track -->
+                <path d="M 47,56 C 47,42 46,26 47,15 C 48,11 52,11 53,15 C 54,26 53,42 53,56 C 60,50 70,42 79,33 C 83,29 86,34 83,37 C 74,46 64,54 56,61 C 56,68 55,77 53,86 C 51,91 49,91 47,86 C 45,77 44,68 44,61 C 36,54 26,46 17,37 C 14,34 17,29 21,33 C 30,42 40,50 47,56 Z" />
                 <!-- Central Ankle Cushion & Digit Knuckles -->
-                <circle cx="50" cy="60" r="7" />
-                <circle cx="50" cy="18" r="5" />
-                <circle cx="21" cy="37" r="4.5" />
-                <circle cx="79" cy="37" r="4.5" />
-                <circle cx="50" cy="87" r="4" />
+                <circle cx="50" cy="58" r="6.5" />
+                <circle cx="50" cy="14" r="5" />
+                <circle cx="81" cy="35" r="4.5" />
+                <circle cx="19" cy="35" r="4.5" />
+                <circle cx="50" cy="88" r="4" />
                 <!-- Claw Tips -->
-                <path d="M 50,13 L 50,6" stroke-width="3" stroke-linecap="round" />
-                <path d="M 23,35 L 14,28" stroke-width="3" stroke-linecap="round" />
-                <path d="M 77,35 L 86,28" stroke-width="3" stroke-linecap="round" />
-                <path d="M 50,89 L 50,95" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 50,11 L 50,5" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 82,34 L 89,28" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 18,34 L 11,28" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 50,90 L 50,96" stroke-width="2" stroke-linecap="round" />
             `
         },
         {
@@ -150,13 +135,13 @@
             emoji: '🐮',
             viewBox: '0 0 100 100',
             path: `
-                <!-- Left Cloven Hoof Half (Natural Arched Kidney Silhouette) -->
-                <path d="M 45,18 C 34,18 20,30 18,52 C 16,68 23,80 37,82 C 43,83 45,79 45,72 C 45,54 44,36 45,18 Z" />
-                <!-- Right Cloven Hoof Half (Natural Arched Kidney Silhouette) -->
-                <path d="M 55,18 C 66,18 80,30 82,52 C 84,68 77,80 63,82 C 57,83 55,79 55,72 C 55,54 56,36 55,18 Z" />
-                <!-- 2 Accessory Dewclaw Prints (Soft Bovine Heel Pods) -->
-                <ellipse cx="28" cy="91" rx="6" ry="4" transform="rotate(-15 28 91)" />
-                <ellipse cx="72" cy="91" rx="6" ry="4" transform="rotate(15 72 91)" />
+                <!-- Left Cloven Hoof Half (Shield/Drop Curved Silhouette) -->
+                <path d="M 46,14 C 41,13 32,20 23,34 C 14,48 13,66 18,78 C 22,87 34,89 43,84 C 46,82 46,76 46,68 C 45,50 45,32 46,14 Z" />
+                <!-- Right Cloven Hoof Half (Shield/Drop Curved Silhouette) -->
+                <path d="M 54,14 C 59,13 68,20 77,34 C 86,48 87,66 82,78 C 78,87 66,89 57,84 C 54,82 54,76 54,68 C 55,50 55,32 54,14 Z" />
+                <!-- 2 Rounded Dewclaw Imprints -->
+                <ellipse cx="27" cy="92" rx="6" ry="4" transform="rotate(-15 27 92)" />
+                <ellipse cx="73" cy="92" rx="6" ry="4" transform="rotate(15 73 92)" />
             `
         }
     ];
@@ -193,7 +178,7 @@
                     <span style="font-size: 20px;">${chosen.emoji}</span>
                     <span>${theme.subtitle}</span>
                 </div>
-                <div class="paw-loader-sub">ردپای هنری ${chosen.name} • بارگذاری سریع...</div>
+                <div class="paw-loader-sub">ردپای ${chosen.name} • بارگذاری سریع...</div>
                 <div class="paw-progress-pill">
                     <div class="paw-progress-bar" style="background: linear-gradient(to left, ${theme.start}, ${theme.end});"></div>
                 </div>
