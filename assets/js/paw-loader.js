@@ -4,22 +4,68 @@
  *  - 4 Unique Vector Paws: Cat Paw (گربه), Dog Paw (سگ), Chick Footprint (جوجه/پرنده), Cow Hoof (سم گاو)
  *  - Randomized selection on every page load
  *  - Rising liquid fill animation from bottom to top
- *  - Theme-aware gradient coloring (Teal/Emerald for Pharmacy, Blue/Orange for Petshop)
+ *  - Model-Aware Exact Color Adaptation:
+ *      * Pharmacy Edition: Pure Teal (#0f766e) -> Emerald (#059669)
+ *      * Standard Petshop: Navy (#002d72) -> Warm Orange (#ea580c)
+ *      * Premium Enterprise: Royal Navy (#002d72) -> Indigo (#3d5ca2)
+ *      * Basic Petshop: Navy (#002d72) -> Classic Blue (#1d4ed8)
  *  - Auto-dismiss on page load with fallback safety timer
  */
 (function () {
     if (document.getElementById('asena-paw-loader')) return;
 
-    // Detect if this is pharmacy edition or pet care edition
-    const isPharmacy = document.title.includes('داروخانه') || 
-                       window.location.pathname.includes('pharmacy') || 
-                       document.body?.classList?.contains('pharma-mode') ||
-                       document.querySelector('meta[name="theme-color"]')?.content === '#0f766e';
+    // Detect exact model and theme colors
+    function getThemeColors() {
+        const path = window.location.pathname.toLowerCase();
+        const title = (document.title || '').toLowerCase();
+        
+        // 1. Pharmacy Model Detection
+        if (path.includes('pharmacy') || 
+            title.includes('داروخانه') || 
+            document.body?.classList?.contains('pharma-mode')) {
+            return {
+                start: '#0f766e',
+                end: '#059669',
+                title: '#0f766e',
+                subtitle: 'آسنا | داروخانه تخصصی دامپزشکی',
+                glow: 'rgba(15, 118, 110, 0.25)'
+            };
+        }
+        
+        // 2. Premium / Enterprise Model Detection
+        if (path.includes('premium') || title.includes('پریمیوم') || title.includes('سازمانی')) {
+            return {
+                start: '#002d72',
+                end: '#3d5ca2',
+                title: '#002d72',
+                subtitle: 'آسنا | سامانه سازمانی کلینیک و بیمارستان دامپزشکی',
+                glow: 'rgba(61, 92, 162, 0.25)'
+            };
+        }
 
+        // 3. Basic Model Detection
+        if (path.includes('basic') || title.includes('پایه')) {
+            return {
+                start: '#002d72',
+                end: '#1d4ed8',
+                title: '#002d72',
+                subtitle: 'آسنا | سامانه پایه کلینیک و پت‌شاپ',
+                glow: 'rgba(0, 45, 114, 0.22)'
+            };
+        }
+
+        // 4. Standard / Best Deal Model (Default Pet Care)
+        return {
+            start: '#002d72',
+            end: '#ea580c',
+            title: '#002d72',
+            subtitle: 'آسنا | کلینیک و پت‌شاپ تخصصی',
+            glow: 'rgba(234, 88, 12, 0.25)'
+        };
+    }
+
+    const theme = getThemeColors();
     const gradId = 'pawLiquidGrad_' + Math.random().toString(36).substr(2, 9);
-    const gradStart = isPharmacy ? '#0f766e' : '#002d72';
-    const gradEnd = isPharmacy ? '#059669' : '#ea580c';
-    const titleColor = isPharmacy ? '#0f766e' : '#002d72';
 
     // 4 Distinct Animal SVG Vector Models
     const animalModels = [
@@ -92,12 +138,12 @@
     loaderDiv.id = 'asena-paw-loader';
     loaderDiv.innerHTML = `
         <div class="paw-loader-content">
-            <div class="paw-svg-container">
+            <div class="paw-svg-container" style="filter: drop-shadow(0 8px 18px ${theme.glow});">
                 <svg viewBox="${chosen.viewBox}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="${gradId}" x1="0%" y1="100%" x2="0%" y2="0%">
-                            <stop offset="0%" stop-color="${gradStart}" />
-                            <stop offset="100%" stop-color="${gradEnd}" />
+                            <stop offset="0%" stop-color="${theme.start}" />
+                            <stop offset="100%" stop-color="${theme.end}" />
                         </linearGradient>
                     </defs>
                     
@@ -107,17 +153,17 @@
                     </g>
                     
                     <!-- Animated Rising Liquid Fill -->
-                    <g class="paw-fill-path" fill="url(#${gradId})" stroke="${gradStart}" stroke-width="1">
+                    <g class="paw-fill-path" fill="url(#${gradId})" stroke="${theme.start}" stroke-width="1">
                         ${chosen.path}
                     </g>
                 </svg>
             </div>
             <div style="text-align: center;">
-                <div class="paw-loader-title" style="color: ${titleColor};">
+                <div class="paw-loader-title" style="color: ${theme.title};">
                     <span>${chosen.emoji}</span>
-                    <span>آسنا | سامانه هوشمند دامپزشکی</span>
+                    <span>${theme.subtitle}</span>
                 </div>
-                <div class="paw-loader-sub">ردپای ${chosen.name} • در حال بارگذاری سریع...</div>
+                <div class="paw-loader-sub">ردپای ${chosen.name} • در حال بارگذاری...</div>
             </div>
         </div>
     `;
@@ -134,16 +180,16 @@
         const loader = document.getElementById('asena-paw-loader');
         if (loader && !loader.classList.contains('loader-hidden')) {
             loader.classList.add('loader-hidden');
-            setTimeout(() => loader.remove(), 450);
+            setTimeout(() => loader.remove(), 400);
         }
     }
 
     if (document.readyState === 'complete') {
-        setTimeout(dismissLoader, 350);
+        setTimeout(dismissLoader, 300);
     } else {
-        window.addEventListener('load', () => setTimeout(dismissLoader, 350));
+        window.addEventListener('load', () => setTimeout(dismissLoader, 300));
     }
 
     // Safety fallback timer so it never blocks the user
-    setTimeout(dismissLoader, 1200);
+    setTimeout(dismissLoader, 1100);
 })();
