@@ -61,6 +61,42 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body class="bg-background text-on-background overflow-x-hidden">
+<?php
+$top_notif = null;
+if (function_exists('get_curated_recommendations')) {
+    $notifs = get_curated_recommendations($pdo, 'notification', 1);
+    if (!empty($notifs)) {
+        $top_notif = $notifs[0];
+    }
+}
+?>
+<?php if (!empty($top_notif)): ?>
+<!-- Top Floating Notification Bar -->
+<div id="topNotificationBar" class="bg-gradient-to-r from-secondary-container via-[#ea580c] to-secondary-container text-white py-2 px-4 text-xs font-bold shadow-sm relative z-50">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 overflow-hidden">
+            <span class="material-symbols-outlined text-base animate-bounce">campaign</span>
+            <?php if (!empty($top_notif['custom_badge'])): ?>
+                <span class="bg-white/20 px-2 py-0.5 rounded-full text-[11px] font-black shrink-0"><?= htmlspecialchars($top_notif['custom_badge']) ?></span>
+            <?php endif; ?>
+            <span class="truncate"><?= htmlspecialchars($top_notif['custom_title'] ?: $top_notif['product_name']) ?></span>
+            <?php if (!empty($top_notif['custom_subtitle'])): ?>
+                <span class="hidden md:inline font-normal opacity-90 text-[11px]">— <?= htmlspecialchars($top_notif['custom_subtitle']) ?></span>
+            <?php endif; ?>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="product_details.php?id=<?= (int)$top_notif['product_id'] ?>" class="bg-white text-secondary-container hover:bg-white/90 px-3 py-1 rounded-lg text-[11px] font-black transition-all shadow-sm flex items-center gap-1">
+                <span>مشاهده و خرید</span>
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+            </a>
+            <button type="button" onclick="document.getElementById('topNotificationBar').remove()" class="text-white/80 hover:text-white p-0.5">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
     <!-- Header Section -->
     <header class="bg-primary shadow-md sticky top-0 z-50 transition-all rounded-3xl mb-8 w-[96%] max-w-[1600px] mx-auto mt-4 lg:mt-6">
         <div class="flex justify-between items-center w-full px-4 lg:px-8 py-3 lg:py-4 flex-row">

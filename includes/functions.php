@@ -203,4 +203,29 @@ function get_autoship_frequency_days(?string $freq): int {
     }
 }
 
+/**
+ * Get active curated recommendations for a given slot type.
+ */
+function get_curated_recommendations(PDO $pdo, string $slot_type, int $limit = 4): array {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT cr.*, p.name as product_name, p.category as product_category, 
+                   p.price as product_price, p.discount_price as product_discount_price,
+                   p.image_url as product_image_url, p.target_animal, p.is_autoship, p.autoship_discount
+            FROM curated_recommendations cr
+            JOIN products p ON cr.product_id = p.id
+            WHERE cr.slot_type = ? AND cr.is_active = 1
+            ORDER BY cr.display_order ASC, cr.created_at DESC
+            LIMIT ?
+        ");
+        $stmt->bindValue(1, $slot_type, PDO::PARAM_STR);
+        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+
 

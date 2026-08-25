@@ -73,20 +73,45 @@ $stats = recalculate_bayesian_rating($pdo, 'product', $product_id);
 $avg_rating = $stats['rating'];
 $review_count = $stats['review_count'];
 
-// Fetch Related / Recommended Products
+// Fetch Related / Recommended Products (Smart Tag & Category matching + Always Random)
 $target_animal = $product['target_animal'] ?? 'all';
-$rec_stmt = $pdo->prepare("
-    SELECT * FROM products 
-    WHERE id != ? AND (category = ? OR (target_animal = ? AND target_animal != 'all')) 
-    ORDER BY RAND() 
-    LIMIT 4
-");
-$rec_stmt->execute([$product_id, $product['category'], $target_animal]);
+$pharmacy_tag  = $product['pharmacy_tag'] ?? null;
+$category      = $product['category'] ?? '';
+
+$conditions = ["id != ?"];
+$params = [$product_id];
+
+$tag_or = [];
+if (!empty($pharmacy_tag)) {
+    $tag_or[] = "pharmacy_tag = ?";
+    $params[] = $pharmacy_tag;
+}
+if (!empty($category)) {
+    $tag_or[] = "category = ?";
+    $params[] = $category;
+}
+if (!empty($target_animal) && $target_animal !== 'all') {
+    $tag_or[] = "(target_animal = ? OR target_animal = 'all')";
+    $params[] = $target_animal;
+}
+
+if (!empty($tag_or)) {
+    $conditions[] = "(" . implode(" OR ", $tag_or) . ")";
+}
+
+$where_clause = implode(" AND ", $conditions);
+$rec_stmt = $pdo->prepare("SELECT * FROM products WHERE {$where_clause} ORDER BY RAND() LIMIT 4");
+$rec_stmt->execute($params);
 $related_products = $rec_stmt->fetchAll(PDO::FETCH_ASSOC);
-if (empty($related_products)) {
-    $rec_fallback = $pdo->prepare("SELECT * FROM products WHERE id != ? ORDER BY RAND() LIMIT 4");
-    $rec_fallback->execute([$product_id]);
-    $related_products = $rec_fallback->fetchAll(PDO::FETCH_ASSOC);
+
+if (count($related_products) < 4) {
+    $exclude_ids = array_merge([$product_id], array_column($related_products, 'id'));
+    $placeholders = implode(',', array_fill(0, count($exclude_ids), '?'));
+    $needed = 4 - count($related_products);
+    $rec_fallback = $pdo->prepare("SELECT * FROM products WHERE id NOT IN ($placeholders) ORDER BY RAND() LIMIT $needed");
+    $rec_fallback->execute($exclude_ids);
+    $fallback_items = $rec_fallback->fetchAll(PDO::FETCH_ASSOC);
+    $related_products = array_merge($related_products, $fallback_items);
 }
 
 // Animal names map

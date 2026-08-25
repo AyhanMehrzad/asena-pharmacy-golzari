@@ -246,6 +246,46 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                             </div>
                         </div>
                         <?php endforeach; ?>
+
+                        <?php 
+                        $cart_upsells = function_exists('get_curated_recommendations') ? get_curated_recommendations($pdo, 'cart_upsell', 4) : [];
+                        ?>
+                        <?php if (!empty($cart_upsells)): ?>
+                        <!-- Curated Cart Upsell & Cross-Sell Section -->
+                        <div class="mt-8 pt-6 border-t border-outline-variant/30">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-secondary-container">auto_awesome</span>
+                                    <h3 class="font-bold text-sm text-primary">پیشنهادهای ویژه برای تکمیل سفارش شما</h3>
+                                </div>
+                                <span class="text-xs text-on-surface-variant">منتخب کارشناسان</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <?php foreach ($cart_upsells as $up): ?>
+                                <div class="bg-white p-3.5 rounded-2xl border border-outline-variant/30 hover:border-secondary-container transition-all flex items-center justify-between gap-3 shadow-sm">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <img src="<?= htmlspecialchars($up['product_image_url'] ?: 'assets/images/toy-mouse.jpg') ?>" class="w-12 h-12 rounded-xl object-cover shrink-0 bg-surface-container-low" alt="Item">
+                                        <div class="space-y-0.5 overflow-hidden">
+                                            <?php if (!empty($up['custom_badge'])): ?>
+                                                <span class="text-[10px] font-black text-secondary-container bg-secondary-container/10 px-2 py-0.5 rounded-full inline-block"><?= htmlspecialchars($up['custom_badge']) ?></span>
+                                            <?php endif; ?>
+                                            <h4 class="font-bold text-xs text-primary truncate max-w-[140px] sm:max-w-[180px]"><?= htmlspecialchars($up['custom_title'] ?: $up['product_name']) ?></h4>
+                                            <p class="text-xs font-mono font-bold text-secondary-container"><?= number_format($up['product_discount_price'] ?: $up['product_price']) ?> تومان</p>
+                                        </div>
+                                    </div>
+                                    <form action="actions/cart_action.php" method="POST" class="m-0 shrink-0">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="product_id" value="<?= $up['product_id'] ?>">
+                                        <button type="submit" class="bg-secondary-container hover:bg-[#ea580c] text-white p-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95" title="افزودن سریع به سبد">
+                                            <span class="material-symbols-outlined text-base">add_shopping_cart</span>
+                                        </button>
+                                    </form>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Standard Summary Box -->

@@ -965,44 +965,64 @@ function toggleWishlist(btn, productId) {
 }
 
 // --- Slider Logic ---
-const slides = [
-    {
-        title: "اشتراک هوشمند؛<br />همیشه در دسترس",
-        desc: "برنامه غذایی و دارویی پت شما هرگز متوقف نمی‌شود. با فعال‌سازی اشتراک، از تخفیف دائمی و اولویت در خدمات بهره‌مند شوید.",
-        badgeIcon: "autorenew",
-        badgeText: "سیستم تحویل خودکار (Autoship)",
-        link: "subscriptions.php",
-        linkText: "شروع تجربه اشتراک",
-        img: "assets/images/cat-hero.jpg"
-    },
-    {
-        title: "برترین محصولات<br />برای سلامت پت",
-        desc: "فروشگاه ما با مجموعه‌ای بی‌نظیر از بهترین برندهای جهانی، تضمین‌کننده سلامت و نشاط حیوان خانگی شماست.",
-        badgeIcon: "local_shipping",
-        badgeText: "ارسال رایگان سفارشات بالای ۵۰۰ هزار تومان",
-        link: "shop.php",
-        linkText: "مشاهده فروشگاه",
-        img: "assets/images/toy-mouse.jpg"
-    },
-    {
-        title: "کلینیک تخصصی<br />در دستان شما",
-        desc: "با استفاده از سیستم یکپارچه رزرواسیون آنلاین، بدون معطلی و در سریع‌ترین زمان ممکن برای پت خود نوبت بگیرید.",
-        badgeIcon: "medical_services",
-        badgeText: "پشتیبانی درمانی حرفه‌ای",
-        link: "booking.php",
-        linkText: "رزرو نوبت کلینیک",
-        img: "assets/images/presentation-dog.jpg"
-    },
-    {
-        title: "داروخانه تخصصی؛<br />ارسال فوری نسخه",
-        desc: "تامین مستقیم داروهای کمیاب، واکسن‌های زنجیره سرد و مکمل‌های تقویتی انواع گونه‌های حیوانات با تاییدیه دامپزشکی.",
-        badgeIcon: "local_pharmacy",
-        badgeText: "داروخانه آنلاین دامپزشکی",
-        link: "pharmacy.php",
-        linkText: "ورود به داروخانه",
-        img: "assets/images/dog-hero.jpg"
-    }
+<?php
+$curated_banners = function_exists('get_curated_recommendations') ? get_curated_recommendations($pdo, 'banner', 5) : [];
+$slides_data = [];
+
+foreach ($curated_banners as $banner) {
+    $slides_data[] = [
+        'title' => !empty($banner['custom_title']) ? nl2br(htmlspecialchars($banner['custom_title'])) : htmlspecialchars($banner['product_name']),
+        'desc' => !empty($banner['custom_subtitle']) ? htmlspecialchars($banner['custom_subtitle']) : ('تامین مستقیم با تخفیف ویژه ' . number_format($banner['product_discount_price'] ?: $banner['product_price']) . ' تومان همراه با تحویل اکسپرس.'),
+        'badgeIcon' => 'auto_awesome',
+        'badgeText' => !empty($banner['custom_badge']) ? htmlspecialchars($banner['custom_badge']) : '🔥 پیشنهاد برگزیده',
+        'link' => 'product_details.php?id=' . (int)$banner['product_id'],
+        'linkText' => 'مشاهده و خرید محصول',
+        'img' => !empty($banner['product_image_url']) ? $banner['product_image_url'] : 'assets/images/cat-hero.jpg'
+    ];
+}
+
+$default_slides = [
+    [
+        'title' => "اشتراک هوشمند؛<br />همیشه در دسترس",
+        'desc' => "برنامه غذایی و دارویی پت شما هرگز متوقف نمی‌شود. با فعال‌سازی اشتراک، از تخفیف دائمی و اولویت در خدمات بهره‌مند شوید.",
+        'badgeIcon' => "autorenew",
+        'badgeText' => "سیستم تحویل خودکار (Autoship)",
+        'link' => "subscriptions.php",
+        'linkText' => "شروع تجربه اشتراک",
+        'img' => "assets/images/cat-hero.jpg"
+    ],
+    [
+        'title' => "برترین محصولات<br />برای سلامت پت",
+        'desc' => "فروشگاه ما با مجموعه‌ای بی‌نظیر از بهترین برندهای جهانی، تضمین‌کننده سلامت و نشاط حیوان خانگی شماست.",
+        'badgeIcon' => "local_shipping",
+        'badgeText' => "ارسال رایگان سفارشات بالای ۵۰۰ هزار تومان",
+        'link' => "shop.php",
+        'linkText' => "مشاهده فروشگاه",
+        'img' => "assets/images/toy-mouse.jpg"
+    ],
+    [
+        'title' => "کلینیک تخصصی<br />در دستان شما",
+        'desc' => "با استفاده از سیستم یکپارچه رزرواسیون آنلاین، بدون معطلی و در سریع‌ترین زمان ممکن برای پت خود نوبت بگیرید.",
+        'badgeIcon' => "medical_services",
+        'badgeText' => "پشتیبانی درمانی حرفه‌ای",
+        'link' => "booking.php",
+        'linkText' => "رزرو نوبت کلینیک",
+        'img' => "assets/images/presentation-dog.jpg"
+    ],
+    [
+        'title' => "داروخانه تخصصی؛<br />ارسال فوری نسخه",
+        'desc' => "تامین مستقیم داروهای کمیاب، واکسن‌های زنجیره سرد و مکمل‌های تقویتی انواع گونه‌های حیوانات با تاییدیه دامپزشکی.",
+        'badgeIcon' => "local_pharmacy",
+        'badgeText' => "داروخانه آنلاین دامپزشکی",
+        'link' => "pharmacy.php",
+        'linkText' => "ورود به داروخانه",
+        'img' => "assets/images/dog-hero.jpg"
+    ]
 ];
+
+$all_slides = !empty($slides_data) ? array_merge($slides_data, array_slice($default_slides, 0, max(0, 4 - count($slides_data)))) : $default_slides;
+?>
+const slides = <?= json_encode($all_slides, JSON_UNESCAPED_UNICODE) ?>;
 
 let currentSlide = 0;
 let slideInterval = setInterval(nextSlide, 6000);

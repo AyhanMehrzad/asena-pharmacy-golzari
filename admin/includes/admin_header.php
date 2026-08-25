@@ -149,6 +149,7 @@ $adminName = $adminCheck['name'] ?? 'مدیر سیستم';
             'orders' => ['icon' => 'local_shipping', 'title' => 'سفارشات و ارسال', 'url' => 'orders.php'],
             'clinic' => ['icon' => 'medical_services', 'title' => 'مدیریت کلینیک', 'url' => 'clinic_management.php'],
             'inventory' => ['icon' => 'shopping_bag', 'title' => 'انبار و فروشگاه', 'url' => 'inventory.php'],
+            'recommendations' => ['icon' => 'auto_awesome', 'title' => 'پیشنهادات و بنرها', 'url' => 'recommendations.php'],
             'users' => ['icon' => 'group', 'title' => 'مدیریت کاربران', 'url' => 'user_management.php'],
             'subscriptions' => ['icon' => 'event_repeat', 'title' => 'مدیریت اشتراک‌ها', 'url' => 'subscriptions.php'],
             'tickets' => ['icon' => 'support_agent', 'title' => 'تیکت و پشتیبانی', 'url' => 'tickets.php'],
