@@ -58,9 +58,9 @@ $booked_slots_json = json_encode($booked_slots);
         background-color: #eeeeee !important;
     }
     .time-btn.selected {
-        background-color: #002d72 !important;
+        background-color: #0f766e !important;
         color: white !important;
-        border-color: #002d72 !important;
+        border-color: #0f766e !important;
     }
 </style>
 

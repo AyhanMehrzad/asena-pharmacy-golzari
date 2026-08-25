@@ -226,7 +226,7 @@ function buildUrl($updates) {
 <main class="max-w-container-max mx-auto overflow-hidden py-8 px-margin-desktop min-h-[70vh]">
     
     <!-- Hero Banner with Prescription Upload Action -->
-    <section class="bg-gradient-to-r from-[#001a48] via-primary-container to-[#002d72] text-white rounded-[2.5rem] p-8 lg:p-12 mb-10 shadow-2xl relative overflow-hidden">
+    <section class="bg-gradient-to-r from-primary via-primary-container to-primary-light text-white rounded-[2.5rem] p-8 lg:p-12 mb-10 shadow-2xl relative overflow-hidden">
         <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-secondary-container/20 rounded-full blur-3xl pointer-events-none"></div>
         
         <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">

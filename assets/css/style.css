@@ -59,11 +59,11 @@
 
 .workstation-module:hover {
     box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
-    border-color: var(--primary-container, #002d72);
+    border-color: var(--primary-container, #0f766e);
 }
 
 .paw-pattern {
-    background-image: radial-gradient(#002d72 0.5px, transparent 0.5px);
+    background-image: radial-gradient(#0f766e 0.5px, transparent 0.5px);
     background-size: 32px 32px;
     opacity: 0.04;
 }
@@ -97,12 +97,12 @@
     transform: translateY(-4px);
 }
 .animal-circle-item.active .animal-circle-ring {
-    border-color: #002d72;
-    box-shadow: 0 0 0 4px rgba(0, 45, 114, 0.15), 0 10px 20px -5px rgba(0, 45, 114, 0.25);
-    background-color: #f0f4ff;
+    border-color: #0f766e;
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.18), 0 10px 20px -5px rgba(15, 118, 110, 0.25);
+    background-color: #f0fdfa;
 }
 .animal-circle-item.active .animal-circle-label {
-    color: #001a48;
+    color: #0f766e;
     font-weight: 700;
 }
 
