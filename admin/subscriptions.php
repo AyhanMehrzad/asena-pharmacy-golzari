@@ -194,7 +194,11 @@ $whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) :
 $query = "
     SELECT o.*, u.name as user_name, u.phone as user_phone, u.address as user_address,
            (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'not_received') as not_received_count,
-           (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'shipped') as shipped_count
+           (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'shipped') as shipped_count,
+           (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id AND d.status = 'delivered') as delivered_count,
+           (SELECT COUNT(*) FROM subscription_deliveries d WHERE d.subscription_id = o.id) as total_deliveries_count,
+           (SELECT MIN(scheduled_date) FROM subscription_deliveries d WHERE d.subscription_id = o.id) as first_delivery_date,
+           (SELECT MAX(scheduled_date) FROM subscription_deliveries d WHERE d.subscription_id = o.id) as last_delivery_date
     FROM user_subscriptions o 
     JOIN users u ON o.user_id = u.id 
     $whereSql 
@@ -449,16 +453,77 @@ function translate_status($status) {
                                     $can_dispatch = true;
                                 }
                             }
+
+                            // User Autoship Preference & Timeline Calculations
+                            $freq_key = $subscription['delivery_frequency'] ?? '1_month';
+                            $freq_label = format_autoship_frequency($freq_key);
+                            $user_pref_days = get_autoship_frequency_days($freq_key);
+
+                            // Duration calculation
+                            $duration_months = (int)($subscription['duration_months'] ?? 0);
+                            if ($duration_months <= 0) {
+                                if (str_contains($subscription['plan_name'], '6')) {
+                                    $duration_months = 6;
+                                } elseif (str_contains($subscription['plan_name'], '12') || str_contains($subscription['plan_name'], 'سال')) {
+                                    $duration_months = 12;
+                                } elseif (str_contains($subscription['plan_name'], '3')) {
+                                    $duration_months = 3;
+                                } else {
+                                    $duration_months = max(1, (int)($subscription['total_deliveries_count'] ?? 1));
+                                }
+                            }
+
+                            // Timeline start and end dates
+                            $start_raw = !empty($subscription['first_delivery_date']) ? $subscription['first_delivery_date'] : $subscription['created_at'];
+                            $start_dt = new DateTime($start_raw);
+                            $start_persian = $fmtDateOnly->format($start_dt);
+
+                            if (!empty($subscription['last_delivery_date'])) {
+                                $end_dt = new DateTime($subscription['last_delivery_date']);
+                            } else {
+                                $end_dt = (clone $start_dt)->modify("+{$duration_months} months");
+                            }
+                            $end_persian = $fmtDateOnly->format($end_dt);
+                            $timeline_label = "از $start_persian تا $end_persian ($duration_months ماهه)";
+
+                            $completed_deliveries = (int)$subscription['shipped_count'] + (int)$subscription['delivered_count'];
+                            $total_deliveries = max(1, (int)$subscription['total_deliveries_count']);
                         ?>
                         <tr class="hover:bg-surface-container-low/60 transition-colors group <?= $hasNotReceivedReport ? 'bg-error/5 border-r-4 border-r-error' : '' ?>">
-                            <!-- ID & Plan -->
+                            <!-- ID & Plan & Autoship Selection Declaration -->
                             <td class="px-6 py-4">
                                 <a href="subscription_details.php?id=<?= $subscription['id'] ?>" class="font-bold text-primary hover:underline block text-sm mb-1">
                                     #SUB-<?= $subscription['id'] ?>
                                 </a>
-                                <span class="bg-primary/5 text-primary px-2 py-0.5 rounded-md font-bold text-[11px]">
+                                <span class="bg-primary/5 text-primary px-2 py-0.5 rounded-md font-bold text-[11px] inline-block mb-1.5">
                                     <?= htmlspecialchars($subscription['plan_name']) ?>
                                 </span>
+
+                                <!-- User Autoship Frequency Declaration -->
+                                <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                    <span class="inline-flex items-center gap-1 bg-amber-500/10 text-amber-800 border border-amber-500/30 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-xs" title="بازه ارسال انتخابی کاربر">
+                                        <span class="material-symbols-outlined text-[12px] text-amber-600">autorenew</span>
+                                        <span>بازه:</span>
+                                        <strong><?= htmlspecialchars($freq_label) ?></strong>
+                                    </span>
+                                </div>
+
+                                <!-- From When to When Timeline -->
+                                <div class="mt-1 text-[10px] text-on-surface-variant flex items-center gap-1" title="بازه زمانی اشتراک">
+                                    <span class="material-symbols-outlined text-[12px] text-primary/70">date_range</span>
+                                    <span>از</span>
+                                    <strong class="text-on-surface persian-number"><?= $start_persian ?></strong>
+                                    <span>تا</span>
+                                    <strong class="text-on-surface persian-number"><?= $end_persian ?></strong>
+                                    <span class="text-primary font-bold">(<?= $duration_months ?> ماهه)</span>
+                                </div>
+
+                                <!-- Delivery Step Counter -->
+                                <div class="mt-0.5 text-[10px] text-on-surface-variant/80 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[12px] text-secondary-container">local_shipping</span>
+                                    <span>ارسال شده:</span>
+                                    <strong class="text-primary persian-number"><?= $completed_deliveries ?></strong> از <strong class="text-primary persian-number"><?= $total_deliveries ?></strong> نوبت
+                                </div>
                             </td>
 
                             <!-- Customer & Contact -->
@@ -541,7 +606,7 @@ function translate_status($status) {
                                     <?php elseif($is_active): ?>
                                         <?php if($can_dispatch): ?>
                                             <button type="button" 
-                                                    onclick="openDispatchModal(<?= $subscription['id'] ?>, '<?= addslashes($subscription['user_name']) ?>', '<?= addslashes($subscription['plan_name']) ?>', '<?= $subscription['next_delivery_date'] ?>')"
+                                                    onclick="openDispatchModal(<?= $subscription['id'] ?>, '<?= addslashes($subscription['user_name']) ?>', '<?= addslashes($subscription['plan_name']) ?>', '<?= $subscription['next_delivery_date'] ?>', <?= $user_pref_days ?>, '<?= addslashes($freq_label) ?>', '<?= addslashes($timeline_label) ?>')"
                                                     class="px-3.5 py-1.5 bg-secondary-container hover:bg-secondary text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
                                                     title="ثبت تحویل بسته به پیک">
                                                 <span class="material-symbols-outlined text-base">moped</span>
@@ -586,20 +651,37 @@ function translate_status($status) {
             <input type="hidden" name="action" value="quick_dispatch">
             <input type="hidden" name="subscription_id" id="dispatchSubId" value="">
 
-            <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 text-xs space-y-1">
+            <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 text-xs space-y-1.5">
                 <p><span class="text-on-surface-variant">مشتری:</span> <strong class="text-primary" id="dispatchCustomerName">-</strong></p>
                 <p><span class="text-on-surface-variant">پلن:</span> <strong class="text-on-surface" id="dispatchPlanName">-</strong></p>
                 <p><span class="text-on-surface-variant">تاریخ نوبت جاری:</span> <strong class="text-secondary-container persian-number" id="dispatchDate">-</strong></p>
+                <div class="pt-1.5 border-t border-outline-variant/20 space-y-1">
+                    <p class="flex items-center justify-between">
+                        <span class="text-on-surface-variant">بازه انتخابی مشتری:</span>
+                        <strong class="text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded border border-amber-200" id="dispatchUserPref">-</strong>
+                    </p>
+                    <p class="flex items-center justify-between">
+                        <span class="text-on-surface-variant">بازه زمانی کل اشتراک:</span>
+                        <strong class="text-primary persian-number" id="dispatchTimeline">-</strong>
+                    </p>
+                </div>
             </div>
 
-            <div class="space-y-1">
-                <label class="text-xs font-bold text-on-surface">فاصله زمانی تا نوبت ارسال بعدی:</label>
-                <select name="advance_days" class="w-full p-2.5 rounded-xl border border-outline-variant text-xs outline-none focus:border-primary">
-                    <option value="30">۱ ماه آینده (+۳۰ روز)</option>
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-on-surface">فاصله زمانی تا نوبت ارسال بعدی:</label>
+                    <span class="text-[10px] bg-secondary-container/10 text-secondary-container font-bold px-2 py-0.5 rounded-full" id="dispatchPrefNotice">پیش‌فرض: بر اساس انتخاب کاربر</span>
+                </div>
+                <select name="advance_days" id="dispatchAdvanceDays" class="w-full p-2.5 rounded-xl border border-outline-variant text-xs outline-none focus:border-primary font-bold">
                     <option value="14">۲ هفته آینده (+۱۴ روز)</option>
+                    <option value="30">۱ ماه آینده (+۳۰ روز)</option>
                     <option value="60">۲ ماه آینده (+۶۰ روز)</option>
+                    <option value="90">۳ ماه آینده (+۹۰ روز)</option>
                     <option value="7">۱ هفته آینده (+۷ روز)</option>
                 </select>
+                <p class="text-[10px] text-on-surface-variant">
+                    💡 بازه انتخابی کاربر به‌صورت پیش‌فرض در لیست بالا انتخاب شده است. در صورت تمایل می‌توانید فاصله دیگری تعیین فرمایید.
+                </p>
             </div>
 
             <div class="space-y-1">
@@ -665,11 +747,21 @@ function translate_status($status) {
 </div>
 
 <script>
-function openDispatchModal(subId, customerName, planName, curDate) {
+function openDispatchModal(subId, customerName, planName, curDate, prefDays, prefText, timelineText) {
     document.getElementById('dispatchSubId').value = subId;
     document.getElementById('dispatchCustomerName').textContent = customerName;
     document.getElementById('dispatchPlanName').textContent = planName;
     document.getElementById('dispatchDate').textContent = curDate || 'امروز';
+    document.getElementById('dispatchUserPref').textContent = prefText || 'هر ۱ ماه (۳۰ روز)';
+    document.getElementById('dispatchTimeline').textContent = timelineText || '-';
+
+    const select = document.getElementById('dispatchAdvanceDays');
+    if (select && prefDays) {
+        select.value = String(prefDays);
+        if (!select.value) {
+            select.value = "30";
+        }
+    }
     
     const modal = document.getElementById('dispatchModal');
     modal.classList.remove('hidden');

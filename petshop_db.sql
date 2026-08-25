@@ -715,6 +715,9 @@ CREATE TABLE `user_subscriptions` (
   `status` enum('active','ended','cancelled') DEFAULT 'active',
   `next_delivery_date` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `duration_months` int(11) DEFAULT 3,
+  `payment_model` enum('monthly','upfront') DEFAULT 'monthly',
+  `delivery_frequency` varchar(50) DEFAULT '1_month',
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `idx_user_subs_status` (`status`),
@@ -728,7 +731,7 @@ CREATE TABLE `user_subscriptions` (
 
 LOCK TABLES `user_subscriptions` WRITE;
 /*!40000 ALTER TABLE `user_subscriptions` DISABLE KEYS */;
-INSERT INTO `user_subscriptions` VALUES (2,2,'اشتراک ۶ ماهه',2100000,'active','2026-09-02','2026-07-31 19:08:06'),(3,11,'اشتراک ۳ ماهه',2500000,'active','2026-09-23','2026-08-03 11:53:44'),(4,4,'اشتراک ۳ ماهه ویژه گربه',1850000,'active','2026-08-25','2026-08-20 08:00:00'),(5,6,'اشتراک ماهانه داروهای قلبی سگ',950000,'active','2026-08-28','2026-08-10 10:00:00'),(6,5,'اشتراک ۶ ماهه مکمل و سم اسب',3200000,'active','2026-09-19','2026-08-01 07:00:00');
+INSERT INTO `user_subscriptions` VALUES (2,2,'اشتراک ۶ ماهه',2100000,'active','2026-09-02','2026-07-31 19:08:06',6,'monthly','1_month'),(3,11,'اشتراک ۳ ماهه',2500000,'active','2026-09-23','2026-08-03 11:53:44',3,'monthly','1_month'),(4,4,'اشتراک ۳ ماهه ویژه گربه',1850000,'active','2026-08-25','2026-08-20 08:00:00',3,'monthly','2_weeks'),(5,6,'اشتراک ماهانه داروهای قلبی سگ',950000,'active','2026-08-28','2026-08-10 10:00:00',1,'monthly','2_weeks'),(6,5,'اشتراک ۶ ماهه مکمل و سم اسب',3200000,'active','2026-09-19','2026-08-01 07:00:00',6,'monthly','1_month');
 /*!40000 ALTER TABLE `user_subscriptions` ENABLE KEYS */;
 UNLOCK TABLES;
 

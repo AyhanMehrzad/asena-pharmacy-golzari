@@ -146,3 +146,61 @@ function get_app_base_url(): string {
     return $scheme . '://' . $host . $subDir;
 }
 
+/**
+ * Formats autoship delivery frequency into human-readable Persian text.
+ */
+function format_autoship_frequency(?string $freq): string {
+    $map = [
+        '2_weeks'  => 'هر ۲ هفته یک‌بار (۱۴ روز)',
+        '2_week'   => 'هر ۲ هفته یک‌بار (۱۴ روز)',
+        '14_days'  => 'هر ۲ هفته یک‌بار (۱۴ روز)',
+        '14'       => 'هر ۲ هفته یک‌بار (۱۴ روز)',
+        '1_week'   => 'هر ۱ هفته یک‌بار (۷ روز)',
+        '7_days'   => 'هر ۱ هفته یک‌بار (۷ روز)',
+        '7'        => 'هر ۱ هفته یک‌بار (۷ روز)',
+        '1_month'  => 'هر ۱ ماه یک‌بار (۳۰ روز)',
+        'monthly'  => 'هر ۱ ماه یک‌بار (۳۰ روز)',
+        '30_days'  => 'هر ۱ ماه یک‌بار (۳۰ روز)',
+        '30'       => 'هر ۱ ماه یک‌بار (۳۰ روز)',
+        '2_months' => 'هر ۲ ماه یک‌بار (۶۰ روز)',
+        '60_days'  => 'هر ۲ ماه یک‌بار (۶۰ روز)',
+        '60'       => 'هر ۲ ماه یک‌بار (۶۰ روز)',
+        '3_months' => 'هر ۳ ماه یک‌بار (۹۰ روز)',
+        '90_days'  => 'هر ۳ ماه یک‌بار (۹۰ روز)',
+        '90'       => 'هر ۳ ماه یک‌بار (۹۰ روز)',
+    ];
+    return $map[$freq ?? ''] ?? 'هر ۱ ماه یک‌بار (۳۰ روز)';
+}
+
+/**
+ * Returns integer number of days corresponding to an autoship frequency string.
+ */
+function get_autoship_frequency_days(?string $freq): int {
+    switch ($freq) {
+        case '2_weeks':
+        case '2_week':
+        case '14_days':
+        case '14':
+            return 14;
+        case '1_week':
+        case '7_days':
+        case '7':
+            return 7;
+        case '2_months':
+        case '60_days':
+        case '60':
+            return 60;
+        case '3_months':
+        case '90_days':
+        case '90':
+            return 90;
+        case '1_month':
+        case 'monthly':
+        case '30_days':
+        case '30':
+        default:
+            return 30;
+    }
+}
+
+
