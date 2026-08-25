@@ -300,7 +300,7 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                        class="animal-circle-item flex flex-col items-center gap-3 shrink-0 cursor-pointer group <?php echo $selected ? 'active' : ''; ?>"
                        style="width: 110px;">
                         <div class="animal-circle-ring w-24 h-24 rounded-full p-1 border-2 border-outline-variant/30 bg-surface-container-low transition-all duration-300 flex items-center justify-center relative overflow-hidden group-hover:border-primary shadow-sm">
-                            <img src="<?php echo $species['image']; ?>" class="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" alt="<?php echo $species['name']; ?>">
+                            <img loading="lazy" src="<?php echo $species['image']; ?>" class="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" alt="<?php echo $species['name']; ?>">
                             <?php if($selected): ?>
                             <div class="absolute inset-0 bg-primary/20 backdrop-blur-[1px] flex items-center justify-center">
                                 <span class="material-symbols-outlined text-white text-2xl drop-shadow">check_circle</span>
@@ -358,7 +358,7 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                 </div>
 
                 <div class="aspect-square bg-surface-container-lowest rounded-xl overflow-hidden mb-4 relative">
-                    <img src="<?php echo htmlspecialchars($auto_item['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($auto_item['name']); ?>">
+                    <img loading="lazy" src="<?php echo htmlspecialchars($auto_item['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($auto_item['name']); ?>">
                 </div>
 
                 <div>
@@ -719,7 +719,7 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                     <!-- Product Image & Overlay -->
                     <div class="aspect-square bg-surface-container-lowest rounded-2xl mb-4 sm:mb-6 overflow-hidden relative">
                         <a href="product_details.php?id=<?php echo $product['id']; ?>" class="block w-full h-full">
-                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <img loading="lazy" src="<?php echo htmlspecialchars($product['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </a>
                         
                         <!-- Desktop Only Animated Add to Cart Overlay -->
@@ -844,7 +844,7 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
                 </div>
                 
                 <div class="aspect-square bg-surface-container-lowest rounded-2xl overflow-hidden mb-4 relative">
-                    <img src="<?php echo htmlspecialchars($bo_item['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="<?php echo htmlspecialchars($bo_item['name']); ?>">
+                    <img loading="lazy" src="<?php echo htmlspecialchars($bo_item['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="<?php echo htmlspecialchars($bo_item['name']); ?>">
                 </div>
 
                 <div>
@@ -886,7 +886,7 @@ function buildUrlRemoveArrayItem($arrayName, $valueToRemove) {
             <?php foreach($recommended_products as $rec): ?>
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/20 flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div class="aspect-square bg-surface-container-lowest rounded-xl overflow-hidden mb-3">
-                    <img src="<?php echo htmlspecialchars($rec['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($rec['name']); ?>">
+                    <img loading="lazy" src="<?php echo htmlspecialchars($rec['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($rec['name']); ?>">
                 </div>
                 <div>
                     <h4 class="text-xs font-bold text-on-surface line-clamp-2 mb-2"><?php echo htmlspecialchars($rec['name']); ?></h4>

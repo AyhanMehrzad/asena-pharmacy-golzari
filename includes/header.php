@@ -59,6 +59,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <script src="assets/js/tailwindcss-cdn.js"></script>
     <script src="assets/js/tailwind-config.js?v=<?php echo time(); ?>"></script>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/paw-loader.css">
+    <script src="assets/js/paw-loader.js" defer></script>
 </head>
 <body class="bg-background text-on-background overflow-x-hidden">
 <?php
@@ -245,3 +247,28 @@ if (function_exists('get_curated_recommendations')) {
             }
         }
     </script>
+
+    <!-- Mobile Bottom Navigation Bar (md:hidden) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-outline-variant/30 py-2 px-3 flex items-center justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <a href="index.php" class="flex flex-col items-center gap-0.5 text-[11px] font-bold <?= $current_page == 'index.php' ? 'text-primary' : 'text-outline hover:text-primary' ?>">
+            <span class="material-symbols-outlined text-xl">home</span>
+            <span>خانه</span>
+        </a>
+        <a href="pharmacy.php" class="flex flex-col items-center gap-0.5 text-[11px] font-bold <?= $current_page == 'pharmacy.php' ? 'text-primary' : 'text-outline hover:text-primary' ?>">
+            <span class="material-symbols-outlined text-xl">local_pharmacy</span>
+            <span>داروخانه</span>
+        </a>
+        <a href="cart.php" class="flex flex-col items-center gap-0.5 text-[11px] font-bold relative <?= $current_page == 'cart.php' ? 'text-primary' : 'text-outline hover:text-primary' ?>">
+            <span class="material-symbols-outlined text-xl">shopping_cart</span>
+            <?php if($cart_count > 0): ?>
+                <span class="absolute -top-1 right-2 w-4 h-4 bg-secondary-container text-white rounded-full text-[9px] flex items-center justify-center font-bold">
+                    <?= $cart_count ?>
+                </span>
+            <?php endif; ?>
+            <span>سبد خرید</span>
+        </a>
+        <a href="<?= isset($_SESSION['user_id']) ? 'profile.php' : 'login.php' ?>" class="flex flex-col items-center gap-0.5 text-[11px] font-bold <?= in_array($current_page, ['profile.php', 'login.php']) ? 'text-primary' : 'text-outline hover:text-primary' ?>">
+            <span class="material-symbols-outlined text-xl">person</span>
+            <span>حساب کاربری</span>
+        </a>
+    </nav>

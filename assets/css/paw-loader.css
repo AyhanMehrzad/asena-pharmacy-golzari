@@ -1,0 +1,86 @@
+/* ASENA Multi-Animal Liquid Fill Rising Paw Loader */
+#asena-paw-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
+    user-select: none;
+    direction: rtl;
+}
+
+#asena-paw-loader.loader-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.paw-loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    animation: pawPulse 2.2s ease-in-out infinite;
+}
+
+.paw-svg-container {
+    width: 96px;
+    height: 96px;
+    position: relative;
+    filter: drop-shadow(0 8px 18px rgba(15, 118, 110, 0.15));
+}
+
+/* Base outline path (empty container) */
+.paw-bg-path {
+    fill: #f1f5f9;
+    stroke: #e2e8f0;
+    stroke-width: 2;
+    transition: all 0.3s;
+}
+
+/* Rising liquid animation */
+@keyframes liquidRise {
+    0% {
+        clip-path: inset(100% 0 0 0);
+    }
+    45% {
+        clip-path: inset(40% 0 0 0);
+    }
+    85% {
+        clip-path: inset(10% 0 0 0);
+    }
+    100% {
+        clip-path: inset(0% 0 0 0);
+    }
+}
+
+.paw-fill-path {
+    animation: liquidRise 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.paw-loader-title {
+    font-family: 'Vazirmatn', 'Geist', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.paw-loader-sub {
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+@keyframes pawPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+}

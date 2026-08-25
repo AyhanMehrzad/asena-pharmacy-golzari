@@ -1,14 +1,33 @@
-/* fallback */
+/* Local Self-Hosted Material Symbols & Material Icons (100% VPN-Free for Iran) */
 @font-face {
   font-family: 'Material Symbols Outlined';
   font-style: normal;
   font-weight: 100 700;
   font-display: block;
-  src: url(../fonts/kJEPBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzBwG-RpA6RzaxHMPdY40KH8nGzv3fzfVJO1Q.woff2) format('woff2');
+  src: url('../fonts/kJEPBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzBwG-RpA6RzaxHMPdY40KH8nGzv3fzfVJO1Q.woff2') format('woff2');
 }
 
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined' !important;
+@font-face {
+  font-family: 'Material Icons Round';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/kJEPBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzBwG-RpA6RzaxHMPdY40KH8nGzv3fzfVJO1Q.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/kJEPBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzBwG-RpA6RzaxHMPdY40KH8nGzv3fzfVJO1Q.woff2') format('woff2');
+}
+
+.material-symbols-outlined,
+.material-icons-round,
+.material-icons,
+.material-symbols-rounded {
+  font-family: 'Material Symbols Outlined', 'Material Icons Round', 'Material Icons' !important;
   font-weight: normal;
   font-style: normal;
   font-size: 24px;

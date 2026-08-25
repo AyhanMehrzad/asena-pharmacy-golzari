@@ -223,7 +223,7 @@ function buildUrl($updates) {
    </div>
 </div>
 
-<main class="max-w-container-max mx-auto overflow-hidden py-8 px-margin-desktop min-h-[70vh]">
+<main class="max-w-container-max mx-auto overflow-hidden py-8 pb-24 md:pb-8 px-4 sm:px-margin-desktop min-h-[70vh]">
     
     <!-- Hero Banner with Prescription Upload Action -->
     <section class="bg-gradient-to-r from-primary via-primary-container to-primary-light text-white rounded-[2.5rem] p-8 lg:p-12 mb-10 shadow-2xl relative overflow-hidden">
@@ -293,7 +293,7 @@ function buildUrl($updates) {
                        class="animal-circle-item flex flex-col items-center gap-3 shrink-0 cursor-pointer group <?php echo $selected ? 'active' : ''; ?>"
                        style="width: 110px;">
                         <div class="animal-circle-ring w-24 h-24 rounded-full p-1 border-2 border-outline-variant/30 bg-surface-container-low transition-all duration-300 flex items-center justify-center relative overflow-hidden group-hover:border-primary shadow-sm">
-                            <img src="<?php echo $species['image']; ?>" class="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" alt="<?php echo $species['name']; ?>">
+                            <img loading="lazy" src="<?php echo $species['image']; ?>" class="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" alt="<?php echo $species['name']; ?>">
                             <?php if($selected): ?>
                             <div class="absolute inset-0 bg-primary/20 backdrop-blur-[1px] flex items-center justify-center">
                                 <span class="material-symbols-outlined text-white text-2xl drop-shadow">check_circle</span>
@@ -587,7 +587,7 @@ function buildUrl($updates) {
                     <!-- Product Image Container -->
                     <div class="aspect-square bg-surface-container-lowest rounded-2xl mb-4 sm:mb-6 overflow-hidden relative">
                         <a href="product_details.php?id=<?php echo $product['id']; ?>" class="block w-full h-full">
-                            <img src="<?php echo htmlspecialchars($product['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <img loading="lazy" src="<?php echo htmlspecialchars($product['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </a>
                         
                         <!-- Desktop Hover Overlay Only (lg:flex) -->

@@ -170,7 +170,7 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                         <?php foreach($standard_products as $prod): ?>
                         <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-outline-variant/30 flex flex-col sm:flex-row items-center gap-5 relative group hover:border-primary/30 transition-all">
                             <div class="w-24 h-24 sm:w-28 sm:h-28 bg-surface-container-lowest rounded-2xl overflow-hidden shrink-0 border border-outline-variant/30">
-                                <img src="<?php echo htmlspecialchars($prod['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?= htmlspecialchars($prod['name']) ?>">
+                                <img loading="lazy" src="<?php echo htmlspecialchars($prod['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?= htmlspecialchars($prod['name']) ?>">
                             </div>
                             
                             <div class="flex-1 w-full">
@@ -264,7 +264,7 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                                 <?php foreach ($cart_upsells as $up): ?>
                                 <div class="bg-white p-3.5 rounded-2xl border border-outline-variant/30 hover:border-secondary-container transition-all flex items-center justify-between gap-3 shadow-sm">
                                     <div class="flex items-center gap-3 overflow-hidden">
-                                        <img src="<?= htmlspecialchars($up['product_image_url'] ?: 'assets/images/toy-mouse.jpg') ?>" class="w-12 h-12 rounded-xl object-cover shrink-0 bg-surface-container-low" alt="Item">
+                                        <img loading="lazy" src="<?= htmlspecialchars($up['product_image_url'] ?: 'assets/images/toy-mouse.jpg') ?>" class="w-12 h-12 rounded-xl object-cover shrink-0 bg-surface-container-low" alt="Item">
                                         <div class="space-y-0.5 overflow-hidden">
                                             <?php if (!empty($up['custom_badge'])): ?>
                                                 <span class="text-[10px] font-black text-secondary-container bg-secondary-container/10 px-2 py-0.5 rounded-full inline-block"><?= htmlspecialchars($up['custom_badge']) ?></span>
@@ -377,7 +377,7 @@ if (!in_array($default_tab, ['standard', 'autoship'])) {
                         <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border-2 border-secondary-container/30 flex flex-col sm:flex-row items-center gap-5 relative group hover:border-secondary-container transition-all">
                             
                             <div class="w-24 h-24 sm:w-28 sm:h-28 bg-surface-container-lowest rounded-2xl overflow-hidden shrink-0 border border-outline-variant/30 relative">
-                                <img src="<?php echo htmlspecialchars($prod['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?= htmlspecialchars($prod['name']) ?>">
+                                <img loading="lazy" src="<?php echo htmlspecialchars($prod['image_url']); ?>" onerror="this.src='assets/images/pharma-default.svg'" class="w-full h-full object-cover" alt="<?= htmlspecialchars($prod['name']) ?>">
                                 <span class="absolute bottom-1 right-1 bg-secondary-container text-white text-[9px] font-bold px-1.5 py-0.2 rounded-md">Autoship</span>
                             </div>
                             

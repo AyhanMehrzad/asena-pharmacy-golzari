@@ -559,7 +559,7 @@ $top_donors = $donor_stmt->fetchAll(PDO::FETCH_ASSOC);
                     </button>
 
                     <div class="aspect-square bg-surface-container-lowest rounded-2xl mb-4 overflow-hidden relative">
-                        <img src="<?php echo htmlspecialchars($product['image_url']); ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        <img loading="lazy" src="<?php echo htmlspecialchars($product['image_url']); ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         
                         <!-- Quick add to cart overlay -->
                         <div class="absolute inset-x-0 bottom-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/60 to-transparent flex justify-center z-20">
@@ -771,7 +771,7 @@ function renderMessages(messages) {
         let imgHtml = '';
         if (msg.image_url) {
             const safeImg = escapeHtml(msg.image_url);
-            imgHtml = `<img src="${safeImg}" class="rounded-xl mb-3 max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" alt="ضمیمه پیام">`;
+            imgHtml = `<img loading="lazy" src="${safeImg}" class="rounded-xl mb-3 max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" alt="ضمیمه پیام">`;
         }
 
         const time = new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
@@ -841,7 +841,7 @@ function sendChatMessage(e) {
     const container = document.getElementById('chat-messages');
     let imgHtml = '';
     if (imageInput.files.length > 0) {
-        imgHtml = `<img src="${document.getElementById('image-preview').src}" class="rounded-xl mb-3 max-w-[200px] opacity-70">`;
+        imgHtml = `<img loading="lazy" src="${document.getElementById('image-preview').src}" class="rounded-xl mb-3 max-w-[200px] opacity-70">`;
     }
     
     const time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });

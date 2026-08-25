@@ -161,7 +161,7 @@ $autoship_price = round($base_price * (100 - $autoship_discount) / 100);
                     </div>
                 <?php endif; ?>
 
-                <img src="<?php echo htmlspecialchars($product['image_url']); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                <img loading="lazy" src="<?php echo htmlspecialchars($product['image_url']); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="<?php echo htmlspecialchars($product['name']); ?>">
             </div>
             
             <!-- Quick Features Banner -->
@@ -290,7 +290,7 @@ $autoship_price = round($base_price * (100 - $autoship_discount) / 100);
             <?php foreach($related_products as $rel): ?>
             <div class="bg-white rounded-3xl p-5 shadow-md hover:shadow-xl transition-all duration-300 border border-outline-variant/15 flex flex-col justify-between group">
                 <div class="aspect-square bg-surface-container-lowest rounded-2xl mb-4 overflow-hidden relative">
-                    <img src="<?php echo htmlspecialchars($rel['image_url']); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="<?php echo htmlspecialchars($rel['name']); ?>">
+                    <img loading="lazy" src="<?php echo htmlspecialchars($rel['image_url']); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="<?php echo htmlspecialchars($rel['name']); ?>">
                 </div>
                 <div>
                     <span class="text-[11px] text-on-surface-variant font-bold"><?php echo htmlspecialchars($rel['brand'] ?? 'آسنا'); ?></span>
