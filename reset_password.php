@@ -1,11 +1,15 @@
-﻿<?php
+<?php
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
 require_once 'includes/SmsService.php';
 
 $error = '';
 $success = '';
-$phone = $_GET['phone'] ?? ($_POST['phone'] ?? '');
+$rawPhone = $_GET['phone'] ?? ($_POST['phone'] ?? '');
+$phone = SmsService::normalizePhone($rawPhone);
+if (empty($phone)) {
+    $phone = $rawPhone;
+}
 
 if (empty($phone)) {
     header("Location: forgot_password.php");
@@ -18,41 +22,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($rate_error) {
             $error = $rate_error;
         } else {
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
-            $stmt->execute([$phone]);
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ? OR phone = ?");
+            $stmt->execute([$phone, $rawPhone]);
             if ($stmt->rowCount() > 0) {
                 $otp = sprintf("%06d", mt_rand(100000, 999999));
-                $stmt = $pdo->prepare("UPDATE users SET sms_code = ? WHERE phone = ?");
-                if ($stmt->execute([$otp, $phone])) {
+                $stmt = $pdo->prepare("UPDATE users SET sms_code = ? WHERE phone = ? OR phone = ?");
+                if ($stmt->execute([$otp, $phone, $rawPhone])) {
                     $sms = new SmsService($pdo);
                     $sms->sendOtp($phone, $otp);
-                    $success = 'ع©ط¯ طھط£غŒغŒط¯ ط¬ط¯غŒط¯ ظ¾غŒط§ظ…ع© ط´ط¯.';
+                    $success = 'کد تأیید جدید پیامک شد.';
                 } else {
-                    $error = 'ط®ط·ط§ ط¯ط± ط³غŒط³طھظ…. ظ„ط·ظپط§ظ‹ ط¯ظˆط¨ط§ط±ظ‡ طھظ„ط§ط´ ع©ظ†غŒط¯.';
+                    $error = 'خطا در سیستم. لطفاً دوباره تلاش کنید.';
                 }
             } else {
-                $error = 'ع©ط§ط±ط¨ط±غŒ غŒط§ظپطھ ظ†ط´ط¯.';
+                $error = 'کاربری یافت نشد.';
             }
         }
     } else {
-        $otp = trim($_POST['otp'] ?? '');
+        $otp = SmsService::normalizeOtp($_POST['otp'] ?? '');
         $password = $_POST['password'] ?? '';
     
     if (empty($otp) || empty($password)) {
-        $error = 'ظ„ط·ظپط§ظ‹ طھظ…ط§ظ…غŒ ظپغŒظ„ط¯ظ‡ط§ ط±ط§ ظ¾ط± ع©ظ†غŒط¯.';
+        $error = 'لطفاً تمامی فیلدها را پر کنید.';
     } else {
         $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $phone);
         if ($rate_error) {
             $error = $rate_error;
         } else {
-            $stmt = $pdo->prepare("SELECT id, sms_code FROM users WHERE phone = ?");
-            $stmt->execute([$phone]);
+            $stmt = $pdo->prepare("SELECT id, sms_code FROM users WHERE phone = ? OR phone = ?");
+            $stmt->execute([$phone, $rawPhone]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$user) {
-                $error = 'ع©ط§ط±ط¨ط±غŒ ط¨ط§ ط§غŒظ† ظ…ط´ط®طµط§طھ غŒط§ظپطھ ظ†ط´ط¯.';
+                $error = 'کاربری با این مشخصات یافت نشد.';
             } elseif (empty($user['sms_code']) || $user['sms_code'] !== $otp) {
-                $error = 'ع©ط¯ طھط£غŒغŒط¯ ظˆط§ط±ط¯ ط´ط¯ظ‡ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ.';
+                $error = 'کد تأیید وارد شده نامعتبر است.';
             } else {
                 // Success! Reset password
                 $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -62,11 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // $_SESSION['user_id'] = $user['id'];
                     
                     // For now, redirect to login with success message in session or query string
-                    $_SESSION['login_success'] = 'ط±ظ…ط² ط¹ط¨ظˆط± ط´ظ…ط§ ط¨ط§ ظ…ظˆظپظ‚غŒطھ طھط؛غŒغŒط± ع©ط±ط¯. ظ„ط·ظپط§ظ‹ ظˆط§ط±ط¯ ط´ظˆغŒط¯.';
+                    $_SESSION['login_success'] = 'رمز عبور شما با موفقیت تغییر کرد. لطفاً وارد شوید.';
                     header("Location: login.php?reset=success");
                     exit;
                 } else {
-                    $error = 'ط®ط·ط§ ط¯ط± طھط؛غŒغŒط± ط±ظ…ط² ط¹ط¨ظˆط±. ظ„ط·ظپط§ظ‹ ط¯ظˆط¨ط§ط±ظ‡ طھظ„ط§ط´ ع©ظ†غŒط¯.';
+                    $error = 'خطا در تغییر رمز عبور. لطفاً دوباره تلاش کنید.';
                 }
             }
         }
@@ -79,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>ASENA | ط¨ط§ط²ظ†ط´ط§ظ†غŒ ط±ظ…ط² ط¹ط¨ظˆط±</title>
+<title>ASENA | بازنشانی رمز عبور</title>
 <script src="assets/js/tailwindcss-cdn.js"></script>
 <link href="assets/css/material-symbols.css" rel="stylesheet"/>
 <link href="assets/css/geist.css" rel="stylesheet"/>
@@ -93,13 +97,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="relative z-10 p-24 max-w-2xl text-white">
         <div class="mb-8">
             <span class="inline-block px-4 py-1 rounded-full bg-secondary-container text-white font-bold text-sm mb-4">
-                طھط£غŒغŒط¯ ظ‡ظˆغŒطھ
+                تأیید هویت
             </span>
             <h1 class="text-4xl font-bold mb-6 leading-tight">
-                ط§غŒط¬ط§ط¯ ط±ظ…ط² ط¹ط¨ظˆط± ط¬ط¯غŒط¯
+                ایجاد رمز عبور جدید
             </h1>
             <p class="text-lg opacity-90 leading-relaxed">
-                ظ„ط·ظپط§ظ‹ ع©ط¯ غ¶ ط±ظ‚ظ…غŒ ظ¾غŒط§ظ…ع© ط´ط¯ظ‡ ط±ط§ ط¨ظ‡ ظ‡ظ…ط±ط§ظ‡ ط±ظ…ط² ط¹ط¨ظˆط± ط¬ط¯غŒط¯ ط®ظˆط¯ ظˆط§ط±ط¯ ع©ظ†غŒط¯ طھط§ ط¨ظ‡ ط­ط³ط§ط¨ ع©ط§ط±ط¨ط±غŒ ط®ظˆط¯ ط¯ط³طھط±ط³غŒ ظ¾غŒط¯ط§ ع©ظ†غŒط¯.
+                لطفاً کد ۶ رقمی پیامک شده را به همراه رمز عبور جدید خود وارد کنید تا به حساب کاربری خود دسترسی پیدا کنید.
             </p>
         </div>
     </div>
@@ -121,8 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <div class="max-w-md w-full mx-auto">
         <div class="mb-12 mt-12 lg:mt-0">
-            <h2 class="text-3xl font-bold text-on-surface mb-2">ط¨ط§ط²ظ†ط´ط§ظ†غŒ ط±ظ…ط² ط¹ط¨ظˆط±</h2>
-            <p class="text-sm text-on-surface-variant leading-relaxed">ط¨ط±ط§غŒ ط´ظ…ط§ط±ظ‡ <?php echo htmlspecialchars($phone); ?></p>
+            <h2 class="text-3xl font-bold text-on-surface mb-2">بازنشانی رمز عبور</h2>
+            <p class="text-sm text-on-surface-variant leading-relaxed">برای شماره <?php echo htmlspecialchars($phone); ?></p>
         </div>
 
         <?php if($success): ?>
@@ -131,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <span class="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
                 </div>
                 <div class="flex-1">
-                    <h4 class="font-bold text-sm text-emerald-900">ظ…ظˆظپظ‚غŒطھ</h4>
+                    <h4 class="font-bold text-sm text-emerald-900">موفقیت</h4>
                     <p class="text-xs opacity-90 mt-1 leading-relaxed"><?php echo htmlspecialchars($success); ?></p>
                 </div>
             </div>
@@ -143,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <span class="material-symbols-outlined text-red-600 text-[18px]">error</span>
                 </div>
                 <div class="flex-1">
-                    <h4 class="font-bold text-sm text-red-900">ط®ط·ط§</h4>
+                    <h4 class="font-bold text-sm text-red-900">خطا</h4>
                     <p class="text-xs opacity-90 mt-1 leading-relaxed"><?php echo htmlspecialchars($error); ?></p>
                 </div>
             </div>
@@ -155,16 +159,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="hidden" name="phone" value="<?php echo htmlspecialchars($phone); ?>" />
             
             <div class="input-group">
-                <label class="block font-bold text-sm text-on-surface-variant mb-2">ع©ط¯ طھط£غŒغŒط¯ غ¶ ط±ظ‚ظ…غŒ</label>
+                <label class="block font-bold text-sm text-on-surface-variant mb-2">کد تأیید ۶ رقمی</label>
                 <div class="relative">
                     <input name="otp" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-center tracking-widest text-lg dir-ltr" placeholder="------" type="text" maxlength="6" required/>
                 </div>
             </div>
 
             <div class="input-group">
-                <label class="block font-bold text-sm text-on-surface-variant mb-2">ط±ظ…ط² ط¹ط¨ظˆط± ط¬ط¯غŒط¯</label>
+                <label class="block font-bold text-sm text-on-surface-variant mb-2">رمز عبور جدید</label>
                 <div class="relative">
-                    <input name="password" class="w-full h-12 pr-4 pl-12 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-left dir-ltr" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" type="password" required/>
+                    <input name="password" class="w-full h-12 pr-4 pl-12 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-left dir-ltr" placeholder="••••••••" type="password" required/>
                     <button class="absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors" type="button" onclick="const p = this.previousElementSibling; p.type = p.type === 'password' ? 'text' : 'password';">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -172,17 +176,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <button type="submit" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all active:scale-[0.98] shadow-lg shadow-primary-container/20">
-                طھط؛غŒغŒط± ط±ظ…ط² ط¹ط¨ظˆط±
+                تغییر رمز عبور
             </button>
             
             <div class="text-center mt-4">
                 <button type="button" id="resend-btn" onclick="document.getElementById('resend-form').submit();" class="text-sm font-bold text-secondary hover:underline disabled:opacity-50 disabled:no-underline" disabled>
-                    ط§ط±ط³ط§ظ„ ظ…ط¬ط¯ط¯ ع©ط¯ (<span id="countdown">120</span> ط«ط§ظ†غŒظ‡)
+                    ارسال مجدد کد (<span id="countdown">120</span> ثانیه)
                 </button>
             </div>
             
             <div class="text-center mt-6">
-                <a class="font-bold text-sm text-secondary hover:underline" href="login.php">ط¨ط§ط²ع¯ط´طھ ط¨ظ‡ طµظپط­ظ‡ ظˆط±ظˆط¯</a>
+                <a class="font-bold text-sm text-secondary hover:underline" href="login.php">بازگشت به صفحه ورود</a>
             </div>
         </form>
 
@@ -205,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (timeLeft <= 0) {
                 clearInterval(timer);
                 resendBtn.disabled = false;
-                resendBtn.innerHTML = 'ط§ط±ط³ط§ظ„ ظ…ط¬ط¯ط¯ ع©ط¯';
+                resendBtn.innerHTML = 'ارسال مجدد کد';
             } else {
                 countdownEl.innerText = timeLeft;
             }
@@ -214,4 +218,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </script>
 </body>
 </html>
-

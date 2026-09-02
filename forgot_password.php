@@ -7,27 +7,28 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $phone = trim($_POST['phone'] ?? '');
+    $rawPhone = trim($_POST['phone'] ?? '');
+    $phone = SmsService::normalizePhone($rawPhone);
     
     if (empty($phone)) {
-        $error = 'لطفاً ایمیل یا شماره موبایل خود را وارد کنید.';
+        $error = 'لطفاً شماره موبایل خود را وارد کنید.';
     } else {
         $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $phone);
         if ($rate_error) {
             $error = $rate_error;
         } else {
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
-            $stmt->execute([$phone]);
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ? OR phone = ?");
+            $stmt->execute([$phone, $rawPhone]);
             
             if ($stmt->rowCount() === 0) {
-                $error = 'کاربری با این مشخصات یافت نشد.';
+                $error = 'کاربری با این شماره موبایل یافت نشد.';
             } else {
                 // Generate a 6-digit OTP
-                $otp = sprintf("%06d", mt_rand(1, 999999));
+                $otp = sprintf("%06d", mt_rand(100000, 999999));
                 
-                $stmt = $pdo->prepare("UPDATE users SET sms_code = ? WHERE phone = ?");
-                if ($stmt->execute([$otp, $phone])) {
-                    $sms = new SmsService();
+                $stmt = $pdo->prepare("UPDATE users SET sms_code = ? WHERE phone = ? OR phone = ?");
+                if ($stmt->execute([$otp, $phone, $rawPhone])) {
+                    $sms = new SmsService($pdo);
                     $sms->sendOtp($phone, $otp);
                     
                     header("Location: reset_password.php?phone=" . urlencode($phone));

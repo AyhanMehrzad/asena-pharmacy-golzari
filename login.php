@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once 'includes/db.php';
 require_once 'includes/config.php';
 require_once 'includes/SmsService.php';
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($mode === 'resend_signup_otp') {
         if (isset($_SESSION['signup_data'])) {
-            $phone = $_SESSION['signup_data']['phone'];
+            $phone = SmsService::normalizePhone($_SESSION['signup_data']['phone']);
             $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $phone);
             if ($rate_error) {
                 $error = $rate_error;
@@ -43,18 +43,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $otp = sprintf("%06d", mt_rand(100000, 999999));
                 $_SESSION['signup_data']['otp'] = $otp;
                 $sms = new SmsService($pdo);
-                $sms->sendOtp($phone, $otp);
-                $success = 'ع©ط¯ طھط§غŒغŒط¯ ط¬ط¯غŒط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط¨ط±ط§غŒ ط´ظ…ط§ط±ظ‡ ' . htmlspecialchars($phone) . ' ظ¾غŒط§ظ…ع© ط´ط¯.';
+                $sent = $sms->sendOtp($phone, $otp);
+                $success = 'کد تایید جدید با موفقیت برای شماره ' . htmlspecialchars($phone) . ' پیامک شد.';
             }
         } else {
-            $error = 'ظ†ط´ط³طھ ط´ظ…ط§ ظ…ظ†ظ‚ط¶غŒ ط´ط¯ظ‡ ط§ط³طھ. ظ„ط·ظپط§ظ‹ ط¯ظˆط¨ط§ط±ظ‡ ط«ط¨طھ ظ†ط§ظ… ع©ظ†غŒط¯.';
+            $error = 'نشست شما منقضی شده است. لطفاً دوباره ثبت نام کنید.';
         }
     } elseif ($mode === 'verify_signup') {
-        $otp = trim($_POST['otp'] ?? '');
+        $otp = SmsService::normalizeOtp($_POST['otp'] ?? '');
         if (isset($_SESSION['signup_data'])) {
             if ($otp === $_SESSION['signup_data']['otp']) {
-                $phone = $_SESSION['signup_data']['phone'];
-                $name = $_SESSION['signup_data']['name'];
+                $phone = SmsService::normalizePhone($_SESSION['signup_data']['phone']);
+                $name = trim($_SESSION['signup_data']['name'] ?? '');
                 $password = $_SESSION['signup_data']['password'];
                 
                 $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -71,20 +71,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header("Location: index.php");
                     exit;
                 } else {
-                    $error = 'ط®ط·ط§ ط¯ط± ط«ط¨طھ ع©ط§ط±ط¨ط±.';
+                    $error = 'خطا در ثبت کاربر.';
                 }
             } else {
-                $error = 'ع©ط¯ ظˆط§ط±ط¯ ط´ط¯ظ‡ ط§ط´طھط¨ط§ظ‡ ط§ط³طھ.';
+                $error = 'کد وارد شده اشتباه است.';
             }
         } else {
-            $error = 'ظ†ط´ط³طھ ط´ظ…ط§ ظ…ظ†ظ‚ط¶غŒ ط´ط¯ظ‡ ط§ط³طھ. ظ„ط·ظپط§ظ‹ ط¯ظˆط¨ط§ط±ظ‡ ط«ط¨طھ ظ†ط§ظ… ع©ظ†غŒط¯.';
+            $error = 'نشست شما منقضی شده است. لطفاً دوباره ثبت نام کنید.';
         }
     } else {
-        $phone = trim($_POST['phone'] ?? '');
+        $rawPhone = trim($_POST['phone'] ?? '');
         $password = $_POST['password'] ?? '';
+        $normalizedPhone = SmsService::normalizePhone($rawPhone);
+        $phone = $normalizedPhone ?: $rawPhone;
         
-        if (empty($phone) || empty($password)) {
-            $error = 'ظ„ط·ظپط§ظ‹ طھظ…ط§ظ…غŒ ظپغŒظ„ط¯ظ‡ط§ ط±ط§ ظ¾ط± ع©ظ†غŒط¯.';
+        if (empty($rawPhone) || empty($password)) {
+            $error = 'لطفاً تمامی فیلدها را پر کنید.';
         } else {
             $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $phone);
             if ($rate_error) {
@@ -93,25 +95,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($mode === 'signup') {
                     $name = trim($_POST['name'] ?? '');
                     
-                    $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
-                    $stmt->execute([$phone]);
-                    if ($stmt->rowCount() > 0) {
-                        $error = 'ط§غŒظ† ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„/ط§غŒظ…غŒظ„ ظ‚ط¨ظ„ط§ظ‹ ط«ط¨طھ ط´ط¯ظ‡ ط§ط³طھ.';
+                    // Validate phone number format (must be standard 11-digit 09...)
+                    if (!preg_match('/^09\d{9}$/', $phone)) {
+                        $error = 'لطفاً یک شماره موبایل معتبر ۱۱ رقمی (مانند ۰۹۱۲۳۴۵۶۷۸۹) وارد نمایید.';
                     } else {
-                        $otp = sprintf("%06d", mt_rand(100000, 999999));
-                        $sms = new SmsService();
-                        $sms->sendOtp($phone, $otp);
-                        
-                        $_SESSION['signup_data'] = [
-                            'phone' => $phone,
-                            'name' => $name,
-                            'password' => $password,
-                            'otp' => $otp
-                        ];
+                        $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ? OR phone = ?");
+                        $stmt->execute([$phone, $rawPhone]);
+                        if ($stmt->rowCount() > 0) {
+                            $error = 'این شماره موبایل قبلاً ثبت شده است.';
+                        } else {
+                            $otp = sprintf("%06d", mt_rand(100000, 999999));
+                            $sms = new SmsService($pdo);
+                            $sms->sendOtp($phone, $otp);
+                            
+                            $_SESSION['signup_data'] = [
+                                'phone' => $phone,
+                                'name' => $name,
+                                'password' => $password,
+                                'otp' => $otp
+                            ];
+                        }
                     }
                 } elseif ($mode === 'login') {
-                    $stmt = $pdo->prepare("SELECT id, role, password FROM users WHERE phone = ?");
-                    $stmt->execute([$phone]);
+                    $stmt = $pdo->prepare("SELECT id, role, password FROM users WHERE phone = ? OR phone = ? OR email = ?");
+                    $stmt->execute([$phone, $rawPhone, $rawPhone]);
                     $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     if ($user && !empty($user['password']) && password_verify($password, $user['password'])) {
@@ -124,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         header("Location: index.php");
                         exit;
                     } else {
-                        $error = 'ط§ط·ظ„ط§ط¹ط§طھ ظˆط±ظˆط¯ ط§ط´طھط¨ط§ظ‡ ط§ط³طھ.';
+                        $error = 'اطلاعات ورود اشتباه است.';
                     }
                 }
             }
@@ -137,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>ASENA | ظˆط±ظˆط¯ ظˆ ط«ط¨طھâ€Œظ†ط§ظ…</title>
+<title>ASENA | ورود و ثبت‌نام</title>
 <script src="assets/js/tailwindcss-cdn.js"></script>
 <link href="assets/css/material-symbols.css" rel="stylesheet"/>
 <link href="assets/css/geist.css" rel="stylesheet"/>
@@ -151,26 +158,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="relative z-10 p-24 max-w-2xl text-white">
 <div class="mb-8">
 <span class="inline-block px-4 py-1 rounded-full bg-secondary-container text-white font-bold text-sm mb-4">
-                        ط®ط¯ظ…ط§طھ ظ…طھظ…ط§غŒط² ط­غŒظˆط§ظ†ط§طھ ط®ط§ظ†ع¯غŒ
+                        خدمات متمایز حیوانات خانگی
                     </span>
 <h1 class="text-4xl font-bold mb-6 leading-tight">
-                        ظ…ط±ط§ظ‚ط¨طھغŒ ظ‡ظˆط´ظ…ظ†ط¯ط§ظ†ظ‡ ط¨ط±ط§غŒ ظ‡ظ…ط±ط§ظ‡ط§ظ† ظ‡ظ…غŒط´ع¯غŒ ط´ظ…ط§
+                        مراقبتی هوشمندانه برای همراهان همیشگی شما
                     </h1>
 <p class="text-lg opacity-90 leading-relaxed">
-                        ط¨ظ‡ ط¬ط§ظ…ط¹ظ‡ ط¨ط²ط±ع¯ ASENA ط¨ظ¾غŒظˆظ†ط¯غŒط¯. ط¬ط§غŒغŒ ع©ظ‡ طھع©ظ†ظˆظ„ظˆعکغŒ ظˆ ط¹ط´ظ‚ ط¨ظ‡ ط­غŒظˆط§ظ†ط§طھ ط¨ط§ ظ‡ظ… طھظ„ط§ظ‚غŒ ظ…غŒâ€Œع©ظ†ظ†ط¯ طھط§ ط¨ظ‡طھط±غŒظ† طھط¬ط±ط¨ظ‡ ط¯ط±ظ…ط§ظ†غŒ ظˆ ط±ظپط§ظ‡غŒ ط±ط§ ظپط±ط§ظ‡ظ… ط¢ظˆط±ظ†ط¯.
+                        به جامعه بزرگ ASENA بپیوندید. جایی که تکنولوژی و عشق به حیوانات با هم تلاقی می‌کنند تا بهترین تجربه درمانی و رفاهی را فراهم آورند.
                     </p>
 </div>
 <!-- Feature Bento Mini -->
 <div class="grid grid-cols-2 gap-4 mt-12">
 <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/20">
 <span class="material-symbols-outlined text-secondary-container mb-2">medical_services</span>
-<div class="text-lg font-bold text-white">ظ¾ط±ظˆظ†ط¯ظ‡ ظ¾ط²ط´ع©غŒ</div>
-<div class="text-sm text-white/70">ط¯ط³طھط±ط³غŒ ط¢ظ†غŒ ط¨ظ‡ ط³ظˆط§ط¨ظ‚ ط³ظ„ط§ظ…طھ</div>
+<div class="text-lg font-bold text-white">پرونده پزشکی</div>
+<div class="text-sm text-white/70">دسترسی آنی به سوابق سلامت</div>
 </div>
 <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/20">
 <span class="material-symbols-outlined text-secondary-container mb-2">calendar_month</span>
-<div class="text-lg font-bold text-white">ظ†ظˆط¨طھâ€Œط¯ظ‡غŒ ط¢ظ†ظ„ط§غŒظ†</div>
-<div class="text-sm text-white/70">ط±ط²ط±ظˆ ط³ط±غŒط¹ ط¨ط§ ظ…طھط®طµطµغŒظ† ظ…ط¬ط±ط¨</div>
+<div class="text-lg font-bold text-white">نوبت‌دهی آنلاین</div>
+<div class="text-sm text-white/70">رزرو سریع با متخصصین مجرب</div>
 </div>
 </div>
 </div>
@@ -193,8 +200,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php if(isset($_SESSION['signup_data'])): ?>
 <div class="max-w-md w-full mx-auto" id="auth-container">
     <div class="mb-12 mt-12 lg:mt-0">
-        <h2 class="text-3xl font-bold text-on-surface mb-2">طھط§غŒغŒط¯ ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„</h2>
-        <p class="text-sm text-on-surface-variant">ع©ط¯ غ¶ ط±ظ‚ظ…غŒ ط§ط±ط³ط§ظ„ ط´ط¯ظ‡ ط¨ظ‡ <?php echo htmlspecialchars($_SESSION['signup_data']['phone']); ?> ط±ط§ ظˆط§ط±ط¯ ع©ظ†غŒط¯.</p>
+        <h2 class="text-3xl font-bold text-on-surface mb-2">تایید شماره موبایل</h2>
+        <p class="text-sm text-on-surface-variant">کد ۶ رقمی ارسال شده به <?php echo htmlspecialchars($_SESSION['signup_data']['phone']); ?> را وارد کنید.</p>
     </div>
 
     <?php if($error): ?>
@@ -203,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span class="material-symbols-outlined text-red-600 text-[18px]">error</span>
             </div>
             <div class="flex-1">
-                <h4 class="font-bold text-sm text-red-900">ط®ط·ط§</h4>
+                <h4 class="font-bold text-sm text-red-900">خطا</h4>
                 <p class="text-xs opacity-90 mt-1 leading-relaxed"><?php echo htmlspecialchars($error); ?></p>
             </div>
         </div>
@@ -215,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span class="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
             </div>
             <div class="flex-1">
-                <h4 class="font-bold text-sm text-emerald-900">ط§ط±ط³ط§ظ„ ظ…ظˆظپظ‚</h4>
+                <h4 class="font-bold text-sm text-emerald-900">ارسال موفق</h4>
                 <p class="text-xs opacity-90 mt-1 leading-relaxed"><?php echo htmlspecialchars($success); ?></p>
             </div>
         </div>
@@ -224,20 +231,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form class="space-y-5" method="POST" action="login.php">
         <input type="hidden" name="mode" value="verify_signup" />
         <div class="input-group">
-            <label class="block font-bold text-sm text-on-surface-variant mb-2 transition-colors">ع©ط¯ طھط§غŒغŒط¯ غ¶ ط±ظ‚ظ…غŒ</label>
+            <label class="block font-bold text-sm text-on-surface-variant mb-2 transition-colors">کد تایید ۶ رقمی</label>
             <input name="otp" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-center tracking-widest text-lg dir-ltr" placeholder="------" type="text" maxlength="6" required autofocus/>
         </div>
         
         <button type="submit" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all active:scale-[0.98] shadow-lg shadow-primary-container/20">
-            طھط§غŒغŒط¯ ظˆ ط¹ط¶ظˆغŒطھ
+            تایید و عضویت
         </button>
 
         <div class="flex items-center justify-between mt-4 pt-2 border-t border-outline-variant/30">
             <button type="button" id="resend-signup-btn" onclick="document.getElementById('resend-signup-form').submit();" class="text-sm font-bold text-secondary hover:underline disabled:opacity-50 disabled:no-underline flex items-center gap-1.5" disabled>
                 <span class="material-symbols-outlined text-[16px]">refresh</span>
-                <span>ط§ط±ط³ط§ظ„ ظ…ط¬ط¯ط¯ ع©ط¯ (<span id="signup-countdown">60</span> ط«ط§ظ†غŒظ‡)</span>
+                <span>ارسال مجدد کد (<span id="signup-countdown">60</span> ثانیه)</span>
             </button>
-            <a class="font-bold text-sm text-on-surface-variant hover:text-primary transition-colors" href="login.php?cancel_signup=1">طھط؛غŒغŒط± ط´ظ…ط§ط±ظ‡ / ط§طµظ„ط§ط­</a>
+            <a class="font-bold text-sm text-on-surface-variant hover:text-primary transition-colors" href="login.php?cancel_signup=1">تغییر شماره / اصلاح</a>
         </div>
     </form>
 
@@ -249,11 +256,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="max-w-md w-full mx-auto" id="auth-container">
 <!-- Toggle Header -->
 <div class="mb-12 mt-12 lg:mt-0">
-<h2 class="text-3xl font-bold text-on-surface mb-2" id="form-title">ط®ظˆط´ ط¢ظ…ط¯غŒط¯</h2>
-<p class="text-sm text-on-surface-variant" id="form-subtitle">ظ„ط·ظپط§ظ‹ ط¨ط±ط§غŒ ظˆط±ظˆط¯ ط¨ظ‡ ظ¾ظ†ظ„ ع©ط§ط±ط¨ط±غŒ ط§ط·ظ„ط§ط¹ط§طھ ط®ظˆط¯ ط±ط§ ظˆط§ط±ط¯ ع©ظ†غŒط¯.</p>
+<h2 class="text-3xl font-bold text-on-surface mb-2" id="form-title">خوش آمدید</h2>
+<p class="text-sm text-on-surface-variant" id="form-subtitle">لطفاً برای ورود به پنل کاربری اطلاعات خود را وارد کنید.</p>
 <div class="flex mt-8 p-1 bg-surface-container-low rounded-xl">
-<button class="flex-1 py-3 rounded-lg font-bold text-sm transition-all duration-300 bg-white shadow-sm text-primary" id="btn-login" onclick="toggleMode('login')">ظˆط±ظˆط¯</button>
-<button class="flex-1 py-3 rounded-lg font-bold text-sm transition-all duration-300 text-on-surface-variant hover:text-on-surface" id="btn-signup" onclick="toggleMode('signup')">ط«ط¨طھâ€Œظ†ط§ظ…</button>
+<button class="flex-1 py-3 rounded-lg font-bold text-sm transition-all duration-300 bg-white shadow-sm text-primary" id="btn-login" onclick="toggleMode('login')">ورود</button>
+<button class="flex-1 py-3 rounded-lg font-bold text-sm transition-all duration-300 text-on-surface-variant hover:text-on-surface" id="btn-signup" onclick="toggleMode('signup')">ثبت‌نام</button>
 </div>
 </div>
 
@@ -263,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span class="material-symbols-outlined text-red-600 text-[18px]">error</span>
         </div>
         <div class="flex-1">
-            <h4 class="font-bold text-sm text-red-900">ط®ط·ط§ ط¯ط± ظˆط±ظˆط¯</h4>
+            <h4 class="font-bold text-sm text-red-900">خطا در ورود</h4>
             <p class="text-xs opacity-90 mt-1 leading-relaxed"><?php echo htmlspecialchars($error); ?></p>
         </div>
     </div>
@@ -275,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span class="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
         </div>
         <div class="flex-1">
-            <h4 class="font-bold text-sm text-emerald-900">ط¹ظ…ظ„غŒط§طھ ظ…ظˆظپظ‚</h4>
+            <h4 class="font-bold text-sm text-emerald-900">عملیات موفق</h4>
             <p class="text-xs opacity-90 mt-1 leading-relaxed"><?php echo htmlspecialchars($_SESSION['login_success']); unset($_SESSION['login_success']); ?></p>
         </div>
     </div>
@@ -286,7 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <input type="hidden" name="mode" id="form-mode" value="<?php echo htmlspecialchars($_POST['mode'] ?? 'login'); ?>" />
 
 <div class="input-group">
-<label class="block font-bold text-sm text-on-surface-variant mb-2 transition-colors">ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„</label>
+<label class="block font-bold text-sm text-on-surface-variant mb-2 transition-colors">شماره موبایل</label>
 <div class="relative">
 <input name="phone" value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>" class="w-full h-12 pr-4 pl-12 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-left dir-ltr" placeholder="0912..." type="text" required/>
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">smartphone</span>
@@ -295,15 +302,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="space-y-5 <?php echo (isset($_POST['mode']) && $_POST['mode'] === 'signup') ? '' : 'hidden'; ?>" id="signup-fields">
 <div class="input-group">
-<label class="block font-bold text-sm text-on-surface-variant mb-2">ظ†ط§ظ… ظˆ ظ†ط§ظ… ط®ط§ظ†ظˆط§ط¯ع¯غŒ</label>
-<input name="name" value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm" placeholder="ظ†ط§ظ… ط´ظ…ط§" type="text"/>
+<label class="block font-bold text-sm text-on-surface-variant mb-2">نام و نام خانوادگی</label>
+<input name="name" value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm" placeholder="نام شما" type="text"/>
 </div>
 </div>
 
 <div class="input-group">
-<label class="block font-bold text-sm text-on-surface-variant mb-2 transition-colors">ط±ظ…ط² ط¹ط¨ظˆط±</label>
+<label class="block font-bold text-sm text-on-surface-variant mb-2 transition-colors">رمز عبور</label>
 <div class="relative">
-<input name="password" class="w-full h-12 pr-4 pl-12 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-left dir-ltr" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" type="password" required/>
+<input name="password" class="w-full h-12 pr-4 pl-12 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-left dir-ltr" placeholder="••••••••" type="password" required/>
 <button class="absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors" type="button" onclick="const p = this.previousElementSibling; p.type = p.type === 'password' ? 'text' : 'password';">
 <span class="material-symbols-outlined">visibility</span>
 </button>
@@ -313,13 +320,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="flex items-center justify-between py-2 <?php echo (isset($_POST['mode']) && $_POST['mode'] === 'signup') ? 'hidden' : ''; ?>" id="login-extras">
 <label class="flex items-center gap-2 cursor-pointer group">
 <input class="rounded border-outline-variant text-primary focus:ring-primary-container w-4 h-4" type="checkbox"/>
-<span class="font-bold text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">ظ…ط±ط§ ط¨ظ‡ ط®ط§ط·ط± ط¨ط³ظ¾ط§ط±</span>
+<span class="font-bold text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">مرا به خاطر بسپار</span>
 </label>
-<a class="font-bold text-sm text-secondary hover:underline" href="forgot_password.php">ظپط±ط§ظ…ظˆط´غŒ ط±ظ…ط² ط¹ط¨ظˆط±طں</a>
+<a class="font-bold text-sm text-secondary hover:underline" href="forgot_password.php">فراموشی رمز عبور؟</a>
 </div>
 
 <button type="submit" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all active:scale-[0.98] shadow-lg shadow-primary-container/20">
-<span id="submit-text"><?php echo (isset($_POST['mode']) && $_POST['mode'] === 'signup') ? 'ط§غŒط¬ط§ط¯ ط­ط³ط§ط¨ ع©ط§ط±ط¨ط±غŒ' : 'ظˆط±ظˆط¯ ط¨ظ‡ ط­ط³ط§ط¨'; ?></span>
+<span id="submit-text"><?php echo (isset($_POST['mode']) && $_POST['mode'] === 'signup') ? 'ایجاد حساب کاربری' : 'ورود به حساب'; ?></span>
 </button>
 </form>
 <?php endif; ?>
@@ -328,7 +335,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Divider -->
 <div class="relative my-10 text-center">
 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-surface-container-high"></div></div>
-<span class="relative px-4 bg-white text-on-surface-variant font-bold text-xs">غŒط§ ظˆط±ظˆط¯ ط§ط² ط·ط±غŒظ‚</span>
+<span class="relative px-4 bg-white text-on-surface-variant font-bold text-xs">یا ورود از طریق</span>
 </div>
 
 <!-- Social Logins -->
@@ -340,13 +347,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335"></path>
 </svg>
-                        ع¯ظˆع¯ظ„
+                        گوگل
                     </a>
 <a href="<?php echo htmlspecialchars($apple_oauth_url); ?>" class="flex items-center justify-center gap-3 h-12 border border-outline-variant rounded-lg hover:bg-surface-container-low transition-all font-bold text-sm text-on-surface cursor-pointer">
 <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
 <path d="M17.05 20.28c-.96.95-2.06 1.72-3.32 1.72-1.18 0-1.6-.74-2.95-.74-1.37 0-1.87.72-2.96.72-1.2 0-2.2-.76-3.19-1.72-2.01-1.96-3.53-5.54-3.53-8.8 0-3.3 1.6-5.06 3.19-5.06 1.03 0 1.83.6 2.65.6.83 0 1.4-.6 2.62-.6 1.34 0 2.5.76 3.1 1.72-2.73 1.65-2.28 5.6.43 6.7-.6 1.43-1.35 2.83-2.54 3.76zm-3.54-15.65c.6-.73 1-1.74 1-2.75 0-.14-.02-.28-.04-.41-.95.04-2.1.64-2.78 1.43-.6.7-.85 1.65-.85 2.65 0 .15.02.3.06.41.05 0 .1 0 .15 0 .9 0 1.9-.45 2.46-1.33z"></path>
 </svg>
-                        ط§ظ¾ظ„
+                        اپل
                     </a>
 </div>
 <?php endif; ?>
@@ -354,10 +361,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Footer Links -->
 <div class="mt-8 pb-8 text-center w-full">
 <div class="flex flex-wrap justify-center gap-6 font-bold text-sm text-outline">
-<a class="hover:text-primary transition-colors" href="#">ظ‚ظˆط§ظ†غŒظ† ظˆ ظ…ظ‚ط±ط±ط§طھ</a>
-<a class="hover:text-primary transition-colors" href="#">ط­ط±غŒظ… ط®طµظˆطµغŒ</a>
-<a class="hover:text-primary transition-colors" href="#">ظ¾ط´طھغŒط¨ط§ظ†غŒ</a>
-<span class="mr-auto hidden md:inline opacity-60">آ© <?= date('Y') ?> ASENA</span>
+<a class="hover:text-primary transition-colors" href="#">قوانین و مقررات</a>
+<a class="hover:text-primary transition-colors" href="#">حریم خصوصی</a>
+<a class="hover:text-primary transition-colors" href="#">پشتیبانی</a>
+<span class="mr-auto hidden md:inline opacity-60">© <?= date('Y') ?> ASENA</span>
 </div>
 </div>
 </section>
@@ -373,7 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (timeLeft <= 0) {
                 clearInterval(timer);
                 resendSignupBtn.disabled = false;
-                resendSignupBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">refresh</span><span>ط§ط±ط³ط§ظ„ ظ…ط¬ط¯ط¯ ع©ط¯ ظ¾غŒط§ظ…ع©غŒ</span>';
+                resendSignupBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">refresh</span><span>ارسال مجدد کد پیامکی</span>';
             } else {
                 signupCountdownEl.innerText = timeLeft;
             }

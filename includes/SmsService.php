@@ -115,18 +115,42 @@ class SmsService {
 
     /**
      * Normalize Iranian phone number to standard 09... format
+     * Supports Persian/Arabic digits, international prefixes (+98, 0098, 98), dashes, and spaces
      */
     public static function normalizePhone($phone) {
         $phone = trim((string)$phone);
-        $phone = preg_replace('/[^\d+]/', '', $phone);
-        if (strpos($phone, '+98') === 0) {
-            $phone = '0' . substr($phone, 3);
-        } elseif (strpos($phone, '0098') === 0) {
+        // 1. Convert Persian / Arabic numerals to standard English digits
+        $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        $arabic  = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        $english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        $phone = str_replace($persian, $english, $phone);
+        $phone = str_replace($arabic, $english, $phone);
+
+        // 2. Remove all non-digits
+        $phone = preg_replace('/[^\d]/', '', $phone);
+
+        // 3. Handle prefixes
+        if (strpos($phone, '0098') === 0) {
             $phone = '0' . substr($phone, 4);
+        } elseif (strpos($phone, '98') === 0 && strlen($phone) >= 12) {
+            $phone = '0' . substr($phone, 2);
         } elseif (preg_match('/^9\d{9}$/', $phone)) {
             $phone = '0' . $phone;
         }
         return $phone;
+    }
+
+    /**
+     * Normalize OTP digits (converts Persian/Arabic numerals to 0-9)
+     */
+    public static function normalizeOtp($otp) {
+        $otp = trim((string)$otp);
+        $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        $arabic  = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        $english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        $otp = str_replace($persian, $english, $otp);
+        $otp = str_replace($arabic, $english, $otp);
+        return preg_replace('/[^\d]/', '', $otp);
     }
 
     public static function getLastError() {
