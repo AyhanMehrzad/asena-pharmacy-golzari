@@ -1,12 +1,13 @@
-﻿<?php
+<?php
 /**
- * SmsService.php â€” Universal Meli Payamak SMS Gateway for ASENA Platform
+ * SmsService.php — Universal Meli Payamak SMS Gateway for ASENA Platform
  *
  * Supports:
- * 1. Modern Meli Payamak Console REST API (Token-based: /api/send/otp, /api/send/shared, /api/send/simple)
- * 2. Classic Meli Payamak REST API (BaseServiceNumber, SendSMS, GetCredit)
- * 3. Classic Meli Payamak SOAP API (SendByBaseNumber, SendSimpleSMS2, GetCredit)
+ * 1. Classic Meli Payamak REST API (BaseServiceNumber, SendSMS, GetCredit)
+ * 2. Modern Meli Payamak Console REST API (/api/send/shared, /api/send/otp, /api/send/simple)
+ * 3. Classic Meli Payamak SOAP API (SendByBaseNumber2, SendSimpleSMS2, GetCredit)
  * 4. Multi-layer configuration priority (Database site_settings -> .env/getenv -> constants -> defaults)
+ * 5. Automatic username sanitization (stripping leading 0) and API Key credential binding
  */
 
 class SmsService {
@@ -19,14 +20,14 @@ class SmsService {
     private static $lastResponse = null;
 
     // Pattern Body IDs from Melipayamak panel (Can be overridden via DB, .env or constants)
-    const BODY_ID_OTP            = '518597'; // ع©ط¯ طھط§غŒغŒط¯ ظˆط±ظˆط¯/ط«ط¨طھ ظ†ط§ظ…/ظپط±ط§ظ…ظˆط´غŒ ط±ظ…ط²
-    const BODY_ID_BOOKING        = '528861'; // طھط§غŒغŒط¯ ط±ط²ط±ظˆ ظ†ظˆط¨طھ ط¨ظ‡ ع©ط§ط±ط¨ط±
-    const BODY_ID_RESCHEDULE     = '528862'; // طھط؛غŒغŒط± ط²ظ…ط§ظ† ظ†ظˆط¨طھ
-    const BODY_ID_SHIPPING       = '528863'; // ط§ط±ط³ط§ظ„ ط³ظپط§ط±ط´ ط¨ظ‡ ط®ط±غŒط¯ط§ط±
-    const BODY_ID_SUBSCRIPTION   = '528864'; // ظپط¹ط§ظ„â€Œط³ط§ط²غŒ ط¨ط³طھظ‡ ط§ط´طھط±ط§ع©
-    const BODY_ID_CHARITY        = '528865'; // ظ‚ط¯ط±ط¯ط§ظ†غŒ ط®غŒط±غŒظ‡
-    const BODY_ID_ADMIN_ORDER    = '528866'; // ط§ط·ظ„ط§ط¹â€Œط±ط³ط§ظ†غŒ ط³ظپط§ط±ط´ ط¬ط¯غŒط¯ ط¨ظ‡ ظ…ط¯غŒط±
-    const BODY_ID_DOCTOR_BOOKING = '528867'; // ط§ط·ظ„ط§ط¹â€Œط±ط³ط§ظ†غŒ ظ†ظˆط¨طھ ط¬ط¯غŒط¯ ط¨ظ‡ ظ¾ط²ط´ع©
+    const BODY_ID_OTP            = '518597'; // کد تایید ورود/ثبت نام/فراموشی رمز (login/signup asena.company)
+    const BODY_ID_BOOKING        = '528861'; // تایید رزرو نوبت به کاربر (تایید رزرو نوبت آسنا)
+    const BODY_ID_RESCHEDULE     = '528862'; // تغییر زمان نوبت ویزیت
+    const BODY_ID_SHIPPING       = '528863'; // ارسال سفارش
+    const BODY_ID_SUBSCRIPTION   = '528864'; // فعال‌سازی اشتراک
+    const BODY_ID_CHARITY        = '528865'; // تشکر واریز خیریه
+    const BODY_ID_ADMIN_ORDER    = '528866'; // سفارش جدید به مدیر
+    const BODY_ID_DOCTOR_BOOKING = '528867'; // نوبت جدید به پزشک
 
     public function __construct(?PDO $pdo = null) {
         $this->pdo = $pdo;
@@ -34,17 +35,17 @@ class SmsService {
             $this->pdo = $GLOBALS['pdo'];
         }
 
-        // 1. API Key (Console Token or Web Service Key)
+        // 1. API Key (Web Service ApiKey or Console Token)
         $this->apiKey = $this->resolveConfig('melipayamak_api_key', 'MELIPAYAMAK_API_KEY', 'd3cbc1e6-79e8-4a25-910e-35e86370cad0');
 
-        // 2. Panel Username
+        // 2. Panel Username (e.g. 09146676978 or 9146676978)
         $this->username = $this->resolveConfig('melipayamak_username', 'MELIPAYAMAK_USERNAME', '09146676978');
 
         // 3. Panel Password / ApiKey
-        $this->password = $this->resolveConfig('melipayamak_password', 'MELIPAYAMAK_PASSWORD', 'NZ456QM9L');
+        $this->password = $this->resolveConfig('melipayamak_password', 'MELIPAYAMAK_PASSWORD', 'd3cbc1e6-79e8-4a25-910e-35e86370cad0');
 
-        // 4. Sender Line Number
-        $this->from = $this->resolveConfig('melipayamak_from', 'MELIPAYAMAK_FROM', '2170007653');
+        // 4. Sender Line Number (Default user line: 50004001914667)
+        $this->from = $this->resolveConfig('melipayamak_from', 'MELIPAYAMAK_FROM', '50004001914667');
     }
 
     /**
@@ -62,10 +63,31 @@ class SmsService {
     }
 
     /**
+     * Get effective username for Melipayamak web services (must be without leading 0 for mobile numbers)
+     */
+    public function getEffectiveUsername(): string {
+        $u = trim((string)$this->username);
+        if (preg_match('/^0(9\d{9})$/', $u, $m)) {
+            return $m[1]; // e.g. 9146676978
+        }
+        return $u;
+    }
+
+    /**
+     * Get effective password for Melipayamak web services (ApiKey is required by Melipayamak code -110)
+     */
+    public function getEffectivePassword(): string {
+        if (!empty($this->apiKey)) {
+            return trim((string)$this->apiKey);
+        }
+        return trim((string)$this->password);
+    }
+
+    /**
      * Get effective body ID for a pattern type
      */
     public static function getBodyId($type, ?PDO $pdo = null) {
-        $type = strtolower(trim($type));
+        $type = strtolower(trim((string)$type));
         $dbKey = 'melipayamak_body_id_' . $type;
         $envKey = 'MELIPAYAMAK_BODY_ID_' . strtoupper($type);
 
@@ -88,7 +110,7 @@ class SmsService {
             'doctor_booking' => self::BODY_ID_DOCTOR_BOOKING,
         ];
 
-        return $constMap[$type] ?? '12345';
+        return $constMap[$type] ?? '518597';
     }
 
     /**
@@ -121,35 +143,21 @@ class SmsService {
     public function sendOtp($phone, $code) {
         $phone = self::normalizePhone($phone);
         if (empty($phone) || strlen($phone) < 10) {
-            self::$lastError = 'ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„ ع¯غŒط±ظ†ط¯ظ‡ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ.';
+            self::$lastError = 'شماره موبایل گیرنده نامعتبر است.';
             return false;
         }
 
         $code = (string)$code;
         $bodyId = self::getBodyId('otp', $this->pdo);
 
-        // 1. Try Console OTP API
-        if (!empty($this->apiKey)) {
-            $url = "https://console.melipayamak.com/api/send/otp/{$this->apiKey}";
-            // Try standard OTP JSON payload
-            $res = $this->postJson($url, ['to' => $phone, 'text' => $code]);
-            if ($res['ok']) return true;
-
-            // Try shared-style OTP JSON payload
-            if (!empty($bodyId) && $bodyId !== '12345') {
-                $res2 = $this->postJson($url, ['to' => $phone, 'bodyId' => (int)$bodyId, 'args' => [$code]]);
-                if ($res2['ok']) return true;
-            }
-        }
-
-        // 2. Try Pattern Request (Console Shared -> Classic REST BaseServiceNumber -> Classic SOAP)
-        $patternSent = $this->sendPatternRequest($phone, $bodyId, [$code]);
-        if ($patternSent) {
+        // Send via Multi-Tier Pattern Engine
+        $sent = $this->sendPatternRequest($phone, $bodyId, [$code]);
+        if ($sent) {
             return true;
         }
 
-        // 3. Fallback: Direct SMS
-        $text = "ع©ط¯ طھط§غŒغŒط¯ ط´ظ…ط§ ط¯ط± ط³ط§ظ…ط§ظ†ظ‡ ط¢ط³ظ†ط§: $code\nasena.company";
+        // Fallback: Direct SMS
+        $text = "کاربرگرامی کد تایید شما : $code می باشد. با تشکر. ASENA";
         return $this->sendDirectSms($phone, $text);
     }
 
@@ -161,7 +169,7 @@ class SmsService {
         $bodyId = self::getBodyId('booking', $this->pdo);
         $sent = $this->sendPatternRequest($phone, $bodyId, [$date, $time]);
         if (!$sent) {
-            $text = "ع©ط§ط±ط¨ط± ع¯ط±ط§ظ…غŒطŒ ظ†ظˆط¨طھ ظˆغŒط²غŒطھ ط´ظ…ط§ ط¯ط± ط¢ط³ظ†ط§ ط¨ط±ط§غŒ طھط§ط±غŒط® $date ط³ط§ط¹طھ $time ط¨ط§ ظ…ظˆظپظ‚غŒطھ طھط§غŒغŒط¯ ط´ط¯.\nasena.company";
+            $text = "کاربر گرامی، نوبت ویزیت شما در آسنا برای تاریخ $date ساعت $time با موفقیت تایید شد. asena";
             return $this->sendDirectSms($phone, $text);
         }
         return true;
@@ -175,7 +183,7 @@ class SmsService {
         $bodyId = self::getBodyId('reschedule', $this->pdo);
         $patternSent = $this->sendPatternRequest($phone, $bodyId, [$doctorName, $petName, $newDate, $newTime]);
         if (!$patternSent) {
-            $text = "ع©ط§ط±ط¨ط± ع¯ط±ط§ظ…غŒ ط¢ط³ظ†ط§طŒ ط²ظ…ط§ظ† ظ†ظˆط¨طھ ظˆغŒط²غŒطھ ظ¾طھ ط´ظ…ط§ ($petName) ط¨ط§ ط¯ع©طھط± $doctorName ط¨ظ‡ ط¹ظ„طھ آ«" . ($reason ?: 'ظ…ظˆط§ط±ط¯ ظپظˆط±ط³â€Œظ…ط§عکظˆط± ظˆ ظ‡ظ…ط§ظ‡ظ†ع¯غŒ ظ…ط¬ط¯ط¯ ظ…ط·ط¨') . "آ» ط¨ظ‡ طھط§ط±غŒط® $newDate ط³ط§ط¹طھ $newTime طھط؛غŒغŒط± غŒط§ظپطھ.\nasena.company";
+            $text = "کاربر گرامی آسنا، زمان نوبت ویزیت پت شما ($petName) با دکتر $doctorName به تاریخ $newDate ساعت $newTime تغییر یافت. asena";
             return $this->sendDirectSms($phone, $text);
         }
         return true;
@@ -189,7 +197,7 @@ class SmsService {
         $bodyId = self::getBodyId('shipping', $this->pdo);
         $sent = $this->sendPatternRequest($phone, $bodyId, [(string)$orderId]);
         if (!$sent) {
-            $text = "ط³ظپط§ط±ط´ ط´ظ…ط§ ط¨ظ‡ ط´ظ…ط§ط±ظ‡ $orderId ط¯ط± ط¢ط³ظ†ط§ ظ¾ط±ط¯ط§ط²ط´ ظˆ طھط­ظˆغŒظ„ ظˆط§ط­ط¯ ط§ط±ط³ط§ظ„ ط´ط¯.\nasena.company";
+            $text = "سفارش شما به شماره $orderId در آسنا پردازش و تحویل واحد ارسال شد. asena";
             return $this->sendDirectSms($phone, $text);
         }
         return true;
@@ -198,12 +206,12 @@ class SmsService {
     /**
      * Send Subscription Confirmation to user
      */
-    public function sendSubscriptionSent($phone, $planName = 'ظ…ط§ظ‡ط§ظ†ظ‡') {
+    public function sendSubscriptionSent($phone, $planName = 'ماهانه') {
         $phone = self::normalizePhone($phone);
         $bodyId = self::getBodyId('subscription', $this->pdo);
         $sent = $this->sendPatternRequest($phone, $bodyId, [$planName]);
         if (!$sent) {
-            $text = "ط§ط´طھط±ط§ع© $planName ط´ظ…ط§ ط¯ط± ط³ط§ظ…ط§ظ†ظ‡ ط¢ط³ظ†ط§ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ظپط¹ط§ظ„ ع¯ط±ط¯غŒط¯.\nasena.company";
+            $text = "اشتراک $planName شما در سامانه آسنا با موفقیت فعال گردید. asena";
             return $this->sendDirectSms($phone, $text);
         }
         return true;
@@ -218,7 +226,7 @@ class SmsService {
         $bodyId = self::getBodyId('charity', $this->pdo);
         $sent = $this->sendPatternRequest($phone, $bodyId, [$formattedAmount]);
         if (!$sent) {
-            $text = "ع©ط§ط±ط¨ط± ع¯ط±ط§ظ…غŒطŒ ط§ط² ط­ظ…ط§غŒطھ ط§ط±ط²ط´ظ…ظ†ط¯ ط´ظ…ط§ ط¨ظ‡ ظ…ط¨ظ„ط؛ $formattedAmount طھظˆظ…ط§ظ† ط¨ظ‡ ظ¾ظˆغŒط´ ط®غŒط±غŒظ‡ ط­غŒظˆط§ظ†ط§طھ ط¢ط³ظ†ط§ ط³ظ¾ط§ط³ع¯ط²ط§ط±غŒظ….\nasena.company";
+            $text = "کاربر گرامی، از حمایت ارزشمند شما به مبلغ $formattedAmount تومان به پویش خیریه حیوانات آسنا سپاسگزاریم. asena";
             return $this->sendDirectSms($phone, $text);
         }
         return true;
@@ -241,7 +249,7 @@ class SmsService {
 
             $sent = $this->sendPatternRequest($p, $bodyId, [(string)$orderId, $formattedAmount]);
             if (!$sent) {
-                $text = "ظ…ط¯غŒط± ع¯ط±ط§ظ…غŒطŒ ط³ظپط§ط±ط´ ط¬ط¯غŒط¯ ط¨ظ‡ ط´ظ…ط§ط±ظ‡ $orderId ط¨ط§ ظ…ط¨ظ„ط؛ $formattedAmount طھظˆظ…ط§ظ† ط¯ط± ط³ط§ظ…ط§ظ†ظ‡ ط¢ط³ظ†ط§ ط«ط¨طھ ط´ط¯.\nasena.company";
+                $text = "مدیر گرامی، سفارش جدید به شماره $orderId با مبلغ $formattedAmount تومان در سامانه آسنا ثبت شد. asena";
                 $this->sendDirectSms($p, $text);
             }
             $atLeastOneSent = true;
@@ -257,13 +265,13 @@ class SmsService {
         $phone = self::normalizePhone($phone);
         if (empty($phone)) return false;
 
-        $doctorName = $doctorName ?: 'ظ‡ظ…ع©ط§ط± ع¯ط±ط§ظ…غŒ';
-        $petName    = $petName ?: 'ظ¾طھ ط¨غŒظ…ط§ط±';
+        $doctorName = $doctorName ?: 'همکار گرامی';
+        $petName    = $petName ?: 'پت بیمار';
         $bodyId     = self::getBodyId('doctor_booking', $this->pdo);
 
         $sent = $this->sendPatternRequest($phone, $bodyId, [$doctorName, $petName, $date, $time]);
         if (!$sent) {
-            $text = "ط¯ع©طھط± $doctorName ع¯ط±ط§ظ…غŒطŒ ظ†ظˆط¨طھ ط¬ط¯غŒط¯ ط¨ط±ط§غŒ ظ¾طھ ($petName) ط¯ط± طھط§ط±غŒط® $date ط³ط§ط¹طھ $time ط¯ط± ط¢ط³ظ†ط§ ط«ط¨طھ ط´ط¯.\nasena.company";
+            $text = "دکتر $doctorName گرامی، نوبت جدید برای پت ($petName) در تاریخ $date ساعت $time در آسنا ثبت شد. asena";
             $this->sendDirectSms($phone, $text);
         }
 
@@ -271,48 +279,51 @@ class SmsService {
     }
 
     /**
-     * Send Pattern / Shared Service Request (Multi-tier: Console Shared -> Classic REST -> Classic SOAP)
+     * Send Pattern / Shared Service Request
+     * Multi-tier: Classic REST BaseServiceNumber -> Console Shared -> Classic SOAP SendByBaseNumber2
      */
     public function sendPatternRequest($phone, $bodyId, array $textVariables) {
         $phone = self::normalizePhone($phone);
         if (empty($phone)) return false;
 
-        // Skip invalid/dummy pattern
-        if ($bodyId === '12345' || empty($bodyId)) {
-            self::$lastError = 'ط´ظ†ط§ط³ظ‡ ظ¾طھط±ظ† طھظ†ط¸غŒظ… ظ†ط´ط¯ظ‡ ط§ط³طھ.';
+        if (empty($bodyId) || $bodyId === '12345') {
+            self::$lastError = 'شناسه پترن تنظیم نشده است.';
             return false;
         }
 
-        // Tier 1: Modern Console Shared REST API
-        if (!empty($this->apiKey)) {
-            $url = "https://console.melipayamak.com/api/send/shared/{$this->apiKey}";
-            $res = $this->postJson($url, ['to' => $phone, 'bodyId' => (int)$bodyId, 'args' => array_values($textVariables)]);
-            if (!empty($res['ok'])) {
-                self::$lastResponse = $res;
+        $textString = implode(';', array_values($textVariables));
+        $effectiveUser = $this->getEffectiveUsername();
+        $effectivePass = $this->getEffectivePassword();
+
+        // Tier 1: Classic REST API (BaseServiceNumber) - Fastest & Most Compatible
+        $url = "https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber";
+        $payload = [
+            'username' => $effectiveUser,
+            'password' => $effectivePass,
+            'text'     => $textString,
+            'to'       => $phone,
+            'bodyId'   => (int)$bodyId
+        ];
+        $res = $this->postJson($url, $payload);
+        self::$lastResponse = $res;
+
+        if ($res['ok'] && !empty($res['data'])) {
+            $json = $res['data'];
+            $retStatus = (int)($json['RetStatus'] ?? 0);
+            $strRet = strtolower((string)($json['StrRetStatus'] ?? ''));
+            $val = $json['Value'] ?? '';
+
+            if ($retStatus === 1 || $strRet === 'ok' || (is_numeric($val) && (float)$val > 1000)) {
                 return true;
             }
         }
 
-        // Tier 2: Classic REST API (BaseServiceNumber)
-        $textString = implode(';', $textVariables);
-        $data = [
-            'username' => $this->username,
-            'password' => $this->password,
-            'from'     => $this->from,
-            'to'       => $phone,
-            'text'     => $textString,
-            'bodyId'   => $bodyId
-        ];
-        $url = "https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber";
-        $res = $this->postForm($url, $data);
-        self::$lastResponse = $res;
-
-        if ($res['ok']) {
-            $json = json_decode($res['body'], true);
-            if (isset($json['RetStatus']) && ($json['RetStatus'] == 1 || (is_numeric($json['Value']) && (float)$json['Value'] > 100))) {
-                return true;
-            }
-            if (isset($json['Value']) && is_numeric($json['Value']) && (float)$json['Value'] > 100) {
+        // Tier 2: Console Shared REST API (for console tokens)
+        if (!empty($this->apiKey)) {
+            $cUrl = "https://console.melipayamak.com/api/send/shared/{$this->apiKey}";
+            $cRes = $this->postJson($cUrl, ['to' => $phone, 'bodyId' => (int)$bodyId, 'args' => array_values($textVariables)]);
+            if (!empty($cRes['ok'])) {
+                self::$lastResponse = $cRes;
                 return true;
             }
         }
@@ -324,7 +335,8 @@ class SmsService {
             return true;
         }
 
-        self::$lastError = 'ط§ط±ط³ط§ظ„ ظ¾غŒط§ظ…ع© ط¨ط§ ظ¾طھط±ظ† ط®ط¯ظ…ط§طھغŒ ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯: ' . ($res['body'] ?? $soapRes['error'] ?? 'ط®ط·ط§غŒ ظ†ط§ط´ظ†ط§ط®طھظ‡');
+        $rawErr = $res['raw'] ?? $soapRes['error'] ?? 'خطای نامشخص';
+        self::$lastError = 'ارسال پیامک با پترن خدماتی ناموفق بود: ' . $rawErr;
         return false;
     }
 
@@ -335,35 +347,37 @@ class SmsService {
         $phone = self::normalizePhone($phone);
         if (empty($phone)) return false;
 
-        // Tier 1: Console Simple SMS
-        if (!empty($this->apiKey)) {
-            $url = "https://console.melipayamak.com/api/send/simple/{$this->apiKey}";
-            $res = $this->postJson($url, ['to' => $phone, 'from' => $this->from, 'text' => $text]);
-            if (!empty($res['ok'])) {
-                self::$lastResponse = $res;
-                return true;
-            }
-        }
+        $effectiveUser = $this->getEffectiveUsername();
+        $effectivePass = $this->getEffectivePassword();
 
-        // Tier 2: Classic REST SendSMS
-        $data = [
-            'username' => $this->username,
-            'password' => $this->password,
+        // Tier 1: Classic REST SendSMS
+        $payload = [
+            'username' => $effectiveUser,
+            'password' => $effectivePass,
             'from'     => $this->from,
             'to'       => $phone,
             'text'     => $text,
             'isflash'  => false
         ];
         $url = "https://rest.payamak-panel.com/api/SendSMS/SendSMS";
-        $res = $this->postForm($url, $data);
+        $res = $this->postJson($url, $payload);
         self::$lastResponse = $res;
 
-        if ($res['ok']) {
-            $json = json_decode($res['body'], true);
-            if (isset($json['RetStatus']) && $json['RetStatus'] == 1) {
+        if ($res['ok'] && !empty($res['data'])) {
+            $json = $res['data'];
+            $retStatus = (int)($json['RetStatus'] ?? 0);
+            $val = $json['Value'] ?? '';
+            if ($retStatus === 1 || (is_numeric($val) && (float)$val > 1000)) {
                 return true;
             }
-            if (isset($json['Value']) && is_numeric($json['Value']) && (float)$json['Value'] > 100) {
+        }
+
+        // Tier 2: Console Simple SMS
+        if (!empty($this->apiKey)) {
+            $url = "https://console.melipayamak.com/api/send/simple/{$this->apiKey}";
+            $cRes = $this->postJson($url, ['to' => $phone, 'from' => $this->from, 'text' => $text]);
+            if (!empty($cRes['ok'])) {
+                self::$lastResponse = $cRes;
                 return true;
             }
         }
@@ -375,7 +389,7 @@ class SmsService {
             return true;
         }
 
-        self::$lastError = 'ط§ط±ط³ط§ظ„ ظ¾غŒط§ظ…ع© ظ…ط³طھظ‚غŒظ… ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯: ' . ($res['body'] ?? $soapRes['error'] ?? 'ط®ط·ط§غŒ ظ†ط§ظ…ط´ط®طµ');
+        self::$lastError = 'ارسال پیامک مستقیم ناموفق بود: ' . ($res['raw'] ?? $soapRes['error'] ?? 'خطای نامشخص');
         return false;
     }
 
@@ -383,13 +397,19 @@ class SmsService {
      * Diagnose gateway connectivity & check balance
      */
     public function checkCredit() {
+        $effectiveUser = $this->getEffectiveUsername();
+        $effectivePass = $this->getEffectivePassword();
+
         // 1. Try Classic REST GetCredit
         $url = "https://rest.payamak-panel.com/api/SendSMS/GetCredit";
-        $res = $this->postForm($url, ['username' => $this->username, 'password' => $this->password]);
-        if ($res['ok']) {
-            $json = json_decode($res['body'], true);
-            if (isset($json['Value']) && is_numeric($json['Value']) && (float)$json['Value'] >= 0) {
-                return ['ok' => true, 'credit' => (float)$json['Value'], 'source' => 'REST'];
+        $res = $this->postJson($url, ['username' => $effectiveUser, 'password' => $effectivePass]);
+        if ($res['ok'] && isset($res['data']['Value'])) {
+            $val = (float)$res['data']['Value'];
+            if ($val >= 0 && (int)($res['data']['RetStatus'] ?? 1) === 1) {
+                return ['ok' => true, 'credit' => $val, 'source' => 'REST'];
+            }
+            if (isset($res['data']['RetStatus'])) {
+                return ['ok' => false, 'code' => $res['data']['RetStatus'], 'error' => self::translateErrorCode($res['data']['RetStatus']), 'raw' => $res['raw']];
             }
         }
 
@@ -398,8 +418,8 @@ class SmsService {
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <GetCredit xmlns="http://tempuri.org/">
-      <username>' . htmlspecialchars($this->username) . '</username>
-      <password>' . htmlspecialchars($this->password) . '</password>
+      <username>' . htmlspecialchars($effectiveUser) . '</username>
+      <password>' . htmlspecialchars($effectivePass) . '</password>
     </GetCredit>
   </soap:Body>
 </soap:Envelope>';
@@ -429,7 +449,7 @@ class SmsService {
             return ['ok' => false, 'code' => $val, 'error' => self::translateErrorCode($val), 'raw' => $response];
         }
 
-        return ['ok' => false, 'error' => 'ط§ظ…ع©ط§ظ† ط¯ط±غŒط§ظپطھ ظ…ظˆط¬ظˆط¯غŒ ط§ط² ط³ط±ظˆط± ظ…ظ„غŒâ€Œظ¾غŒط§ظ…ع© ظˆط¬ظˆط¯ ظ†ط¯ط§ط±ط¯.', 'raw' => $res['body'] ?? $err];
+        return ['ok' => false, 'error' => 'امکان دریافت موجودی از سرور ملی‌پیامک وجود ندارد.', 'raw' => $res['raw'] ?? $err];
     }
 
     /**
@@ -440,17 +460,17 @@ class SmsService {
         switch ($code) {
             case 0:
             case -111:
-                return 'ظ†ط§ظ… ع©ط§ط±ط¨ط±غŒ غŒط§ ط±ظ…ط² ط¹ط¨ظˆط± ط§ط´طھط¨ط§ظ‡ ط§ط³طھ.';
+                return 'نام کاربری یا رمز عبور اشتباه است.';
             case -108:
-                return 'ط¢ط¯ط±ط³ IP ط´ظ…ط§ ط¨ظ‡ ط¹ظ„طھ ط¯ط±ط®ظˆط§ط³طھâ€Œظ‡ط§غŒ ظ†ط§ظ…ظˆظپظ‚ ظ…ع©ط±ط± ظ…ط³ط¯ظˆط¯ ظ…ظˆظ‚طھ ط´ط¯ظ‡ ط§ط³طھ.';
+                return 'آدرس IP سرور مسدود موقت شده است.';
             case -109:
-                return 'ط§ظ„ط²ط§ظ… ط¨ظ‡ طھط¹ط±غŒظپ IP ظ…ط¬ط§ط² ط¯ط± ظ¾ظ†ظ„ ظ…ظ„غŒ ظ¾غŒط§ظ…ع© (ظ…ظ†ظˆغŒ طھظ†ط¸غŒظ…ط§طھ -> ط¯ط³طھط±ط³غŒ ظˆط¨â€Œط³ط±ظˆغŒط³).';
+                return 'الزام به تعریف IP مجاز در پنل ملی پیامک (منوی توسعه‌دهندگان -> تنظیمات وب‌سرویس).';
             case -110:
-                return 'ط§ظ„ط²ط§ظ… ط¨ظ‡ ط§ط³طھظپط§ط¯ظ‡ ط§ط² ApiKey ط§ط®طھطµط§طµغŒ ط¨ظ‡ ط¬ط§غŒ ط±ظ…ط² ط¹ط¨ظˆط± ط¯ط± ظˆط¨â€Œط³ط±ظˆغŒط³.';
+                return 'الزام به استفاده از ApiKey اختصاصی به جای رمز عبور در وب‌سرویس.';
             case 35:
-                return 'ط´ظ…ط§ط±ظ‡ ع¯غŒط±ظ†ط¯ظ‡ ط¯ط± ظ„غŒط³طھ ط³غŒط§ظ‡ ظ…ط®ط§ط¨ط±ط§طھ ط§ط³طھ (ط¹ط¯ظ… ط¯ط±غŒط§ظپطھ ظ¾غŒط§ظ…ع© طھط¨ظ„غŒط؛ط§طھغŒ). ط§ط±ط³ط§ظ„ ط¨ط§غŒط¯ ط­طھظ…ط§ظ‹ ط¨ط§ ط§ظ„ع¯ظˆغŒ ط®ط¯ظ…ط§طھغŒ (Pattern) ط§ظ†ط¬ط§ظ… ط´ظˆط¯.';
+                return 'شماره گیرنده در لیست سیاه مخابرات است یا ساختار داده نامعتبر است.';
             default:
-                return "ع©ط¯ ط®ط·ط§غŒ ط³ط§ظ…ط§ظ†ظ‡ ظ…ظ„غŒâ€Œظ¾غŒط§ظ…ع©: $code";
+                return "کد وضعیت سامانه ملی‌پیامک: $code";
         }
     }
 
@@ -461,8 +481,11 @@ class SmsService {
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => $jsonData,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-            CURLOPT_TIMEOUT        => 7,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ],
+            CURLOPT_TIMEOUT        => 9,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false
         ]);
@@ -471,38 +494,22 @@ class SmsService {
         $err = curl_error($ch);
         curl_close($ch);
 
-        $decoded = json_decode($response, true);
-        $isSuccess = ($httpCode >= 200 && $httpCode < 300) && (!isset($decoded['status']) || (strpos((string)$decoded['status'], 'ط®ط·ط§') === false && strpos((string)$decoded['status'], 'ظ…ط¹طھط¨ط± ظ†غŒط³طھ') === false));
+        $decoded = json_decode((string)$response, true);
+        $isSuccess = ($httpCode >= 200 && $httpCode < 300) && !empty($decoded) && (!isset($decoded['status']) || (strpos((string)$decoded['status'], 'خطا') === false && strpos((string)$decoded['status'], 'معتبر نیست') === false));
 
-        return ['ok' => $isSuccess, 'http_code' => $httpCode, 'data' => $decoded, 'body' => $response, 'error' => $err];
-    }
-
-    private function postForm($url, array $data) {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => http_build_query($data),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 7,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        ]);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err = curl_error($ch);
-        curl_close($ch);
-
-        $isSuccess = ($httpCode >= 200 && $httpCode < 300) && empty($err);
-        return ['ok' => $isSuccess, 'http_code' => $httpCode, 'body' => $response, 'error' => $err];
+        return ['ok' => $isSuccess, 'http_code' => $httpCode, 'data' => $decoded, 'raw' => $response, 'error' => $err];
     }
 
     private function sendSoapBaseNumber($phone, $bodyId, $textString) {
+        $effectiveUser = $this->getEffectiveUsername();
+        $effectivePass = $this->getEffectivePassword();
+
         $xml = '<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <SendByBaseNumber2 xmlns="http://tempuri.org/">
-      <username>' . htmlspecialchars($this->username) . '</username>
-      <password>' . htmlspecialchars($this->password) . '</password>
+      <username>' . htmlspecialchars($effectiveUser) . '</username>
+      <password>' . htmlspecialchars($effectivePass) . '</password>
       <text>' . htmlspecialchars($textString) . '</text>
       <to>' . htmlspecialchars($phone) . '</to>
       <bodyId>' . (int)$bodyId . '</bodyId>
@@ -529,20 +536,23 @@ class SmsService {
 
         if (!$err && preg_match('/<SendByBaseNumber2Result>([-\d]+)<\/SendByBaseNumber2Result>/', (string)$response, $m)) {
             $val = (float)$m[1];
-            if ($val > 100) {
+            if ($val > 1000) {
                 return ['ok' => true, 'rec_id' => $val, 'raw' => $response];
             }
         }
-        return ['ok' => false, 'error' => $err ?: 'ظ¾ط§ط³ط® ظ†ط§ظ…ظˆظپظ‚ ظˆط¨â€Œط³ط±ظˆغŒط³ SOAP', 'raw' => $response];
+        return ['ok' => false, 'error' => $err ?: 'پاسخ ناموفق وب‌سرویس SOAP', 'raw' => $response];
     }
 
     private function sendSoapSimple($phone, $text) {
+        $effectiveUser = $this->getEffectiveUsername();
+        $effectivePass = $this->getEffectivePassword();
+
         $xml = '<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <SendSimpleSMS2 xmlns="http://tempuri.org/">
-      <username>' . htmlspecialchars($this->username) . '</username>
-      <password>' . htmlspecialchars($this->password) . '</password>
+      <username>' . htmlspecialchars($effectiveUser) . '</username>
+      <password>' . htmlspecialchars($effectivePass) . '</password>
       <to>' . htmlspecialchars($phone) . '</to>
       <from>' . htmlspecialchars($this->from) . '</from>
       <text>' . htmlspecialchars($text) . '</text>
@@ -570,11 +580,10 @@ class SmsService {
 
         if (!$err && preg_match('/<SendSimpleSMS2Result>([-\d]+)<\/SendSimpleSMS2Result>/', (string)$response, $m)) {
             $val = (float)$m[1];
-            if ($val > 100) {
+            if ($val > 1000) {
                 return ['ok' => true, 'rec_id' => $val, 'raw' => $response];
             }
         }
-        return ['ok' => false, 'error' => $err ?: 'ظ¾ط§ط³ط® ظ†ط§ظ…ظˆظپظ‚ ظˆط¨â€Œط³ط±ظˆغŒط³ SOAP SendSimpleSMS2', 'raw' => $response];
+        return ['ok' => false, 'error' => $err ?: 'پاسخ ناموفق وب‌سرویس SOAP SendSimpleSMS2', 'raw' => $response];
     }
 }
-
