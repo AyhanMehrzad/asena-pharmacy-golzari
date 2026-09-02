@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
 require_once 'includes/SmsService.php';
@@ -37,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Step 1: Send OTP
         $phone_input = trim($_POST['phone'] ?? '');
         if (empty($phone_input) || strlen($phone_input) < 10) {
-            $error = 'شماره موبایل نامعتبر است.';
+            $error = 'ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ.';
         } else {
             // Check if phone already used by someone else
             $check = $pdo->prepare("SELECT id FROM users WHERE phone = ? AND id != ?");
             $check->execute([$phone_input, $user_id]);
             if ($check->rowCount() > 0) {
-                $error = 'این شماره موبایل قبلاً ثبت شده است.';
+                $error = 'ط§غŒظ† ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„ ظ‚ط¨ظ„ط§ظ‹ ط«ط¨طھ ط´ط¯ظ‡ ط§ط³طھ.';
             } else {
                 $otp = sprintf("%06d", mt_rand(1, 999999));
                 $_SESSION['oauth_otp_code'] = $otp;
@@ -52,10 +52,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sms = new SmsService();
                 $sms->sendOtp($phone_input, $otp);
                 
-                $_SESSION['mock_otp'] = "کد تایید شما (ارسال شده پیامک): $otp";
                 $step = 2;
             }
         }
+    } elseif (isset($_POST['resend_otp'])) {
+        $pending_phone = $_SESSION['oauth_phone_pending'] ?? '';
+        if (!empty($pending_phone)) {
+            $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $pending_phone);
+            if ($rate_error) {
+                $error = $rate_error;
+            } else {
+                $otp = sprintf("%06d", mt_rand(100000, 999999));
+                $_SESSION['oauth_otp_code'] = $otp;
+                $sms = new SmsService();
+                $sms->sendOtp($pending_phone, $otp);
+                $success = 'ع©ط¯ طھط§غŒغŒط¯ ط¬ط¯غŒط¯ ط¨ط§ ظ…ظˆظپظ‚غŒطھ ط¨ط±ط§غŒ ط´ظ…ط§ط±ظ‡ ' . htmlspecialchars($pending_phone) . ' ط§ط±ط³ط§ظ„ ط´ط¯.';
+            }
+        }
+        $step = 2;
     } elseif (isset($_POST['verify_otp'])) {
         // Step 2: Verify OTP
         $otp_input = trim($_POST['otp'] ?? '');
@@ -63,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pending_phone = $_SESSION['oauth_phone_pending'] ?? '';
         
         if (empty($otp_input) || $otp_input !== $expected_otp) {
-            $error = 'کد وارد شده نامعتبر است.';
+            $error = 'ع©ط¯ ظˆط§ط±ط¯ ط´ط¯ظ‡ ظ†ط§ظ…ط¹طھط¨ط± ط§ط³طھ.';
             $step = 2; // Stay on step 2
         } else {
             // Success
@@ -71,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $step = 3;
             
             unset($_SESSION['oauth_otp_code']);
-            unset($_SESSION['mock_otp']);
         }
     } elseif (isset($_POST['save_address'])) {
         // Step 3: Save Address
@@ -81,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pending_phone = $_SESSION['oauth_phone_pending'] ?? '';
         
         if (empty($city) || empty($address)) {
-            $error = 'شهر و آدرس الزامی است.';
+            $error = 'ط´ظ‡ط± ظˆ ط¢ط¯ط±ط³ ط§ظ„ط²ط§ظ…غŒ ط§ط³طھ.';
             $step = 3;
         } else {
             // Save everything
@@ -102,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>ASENA | تکمیل پروفایل</title>
+    <title>ASENA | طھع©ظ…غŒظ„ ظ¾ط±ظˆظپط§غŒظ„</title>
     <script src="assets/js/tailwindcss-cdn.js"></script>
     <link href="assets/css/material-symbols.css" rel="stylesheet"/>
     <link href="assets/css/geist.css" rel="stylesheet"/>
@@ -114,9 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Hero Section -->
     <section class="hidden lg:flex lg:w-7/12 relative overflow-hidden bg-primary-container items-center justify-center">
         <div class="relative z-10 p-24 max-w-2xl text-white">
-            <h1 class="text-4xl font-bold mb-6 leading-tight">تکمیل حساب کاربری</h1>
+            <h1 class="text-4xl font-bold mb-6 leading-tight">طھع©ظ…غŒظ„ ط­ط³ط§ط¨ ع©ط§ط±ط¨ط±غŒ</h1>
             <p class="text-lg opacity-90 leading-relaxed">
-                برای استفاده کامل از خدمات ما و دریافت سفارشات، لطفاً شماره موبایل و اطلاعات آدرس خود را تکمیل کنید.
+                ط¨ط±ط§غŒ ط§ط³طھظپط§ط¯ظ‡ ع©ط§ظ…ظ„ ط§ط² ط®ط¯ظ…ط§طھ ظ…ط§ ظˆ ط¯ط±غŒط§ظپطھ ط³ظپط§ط±ط´ط§طھطŒ ظ„ط·ظپط§ظ‹ ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„ ظˆ ط§ط·ظ„ط§ط¹ط§طھ ط¢ط¯ط±ط³ ط®ظˆط¯ ط±ط§ طھع©ظ…غŒظ„ ع©ظ†غŒط¯.
             </p>
         </div>
     </section>
@@ -125,28 +138,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <section class="w-full lg:w-5/12 bg-white flex flex-col justify-center px-8 md:px-16 lg:px-24 py-12 relative overflow-y-auto">
         <div class="max-w-md w-full mx-auto">
             <h2 class="text-3xl font-bold text-on-surface mb-2">
-                <?php echo $step === 3 ? 'اطلاعات آدرس' : 'تأیید شماره موبایل'; ?>
+                <?php echo $step === 3 ? 'ط§ط·ظ„ط§ط¹ط§طھ ط¢ط¯ط±ط³' : 'طھط£غŒغŒط¯ ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„'; ?>
             </h2>
             <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">
                 <?php 
-                if ($step === 3) echo 'لطفاً برای ارسال سفارشات، آدرس خود را وارد کنید.';
-                else echo 'ورود موفقیت‌آمیز بود. لطفا شماره موبایل خود را تایید کنید.'; 
+                if ($step === 3) echo 'ظ„ط·ظپط§ظ‹ ط¨ط±ط§غŒ ط§ط±ط³ط§ظ„ ط³ظپط§ط±ط´ط§طھطŒ ط¢ط¯ط±ط³ ط®ظˆط¯ ط±ط§ ظˆط§ط±ط¯ ع©ظ†غŒط¯.';
+                else echo 'ظˆط±ظˆط¯ ظ…ظˆظپظ‚غŒطھâ€Œط¢ظ…غŒط² ط¨ظˆط¯. ظ„ط·ظپط§ ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„ ط®ظˆط¯ ط±ط§ طھط§غŒغŒط¯ ع©ظ†غŒط¯.'; 
                 ?>
             </p>
-
-            <?php if(isset($_SESSION['mock_otp'])): ?>
-                <div class="flex items-start gap-3 bg-blue-50/80 border border-blue-200 text-blue-800 p-4 rounded-2xl shadow-sm mb-6 backdrop-blur-sm transition-all">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                        <span class="material-symbols-outlined text-blue-600 text-[18px]">sms</span>
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-bold text-sm text-blue-900">پیامک تایید</h4>
-                        <p class="text-xs opacity-90 mt-1 leading-relaxed font-bold tracking-wider">
-                            <?php echo htmlspecialchars($_SESSION['mock_otp']); ?>
-                        </p>
-                    </div>
-                </div>
-            <?php endif; ?>
 
             <?php if($error): ?>
                 <div class="flex items-start gap-3 bg-red-50/80 border border-red-200 text-red-800 p-4 rounded-2xl shadow-sm mb-6 backdrop-blur-sm transition-all">
@@ -156,41 +155,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
+            <?php if($success): ?>
+                <div class="flex items-start gap-3 bg-emerald-50/80 border border-emerald-200 text-emerald-800 p-4 rounded-2xl shadow-sm mb-6 backdrop-blur-sm transition-all">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
+                        <span class="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm opacity-90 leading-relaxed font-bold text-emerald-900"><?php echo htmlspecialchars($success); ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <?php if ($step === 1): ?>
             <form class="space-y-6" method="POST">
                 <div class="input-group">
-                    <label class="block font-bold text-sm text-on-surface-variant mb-2">شماره موبایل</label>
+                    <label class="block font-bold text-sm text-on-surface-variant mb-2">ط´ظ…ط§ط±ظ‡ ظ…ظˆط¨ط§غŒظ„</label>
                     <input name="phone" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-left dir-ltr" placeholder="09123456789" type="text" required/>
                 </div>
-                <button type="submit" name="send_otp" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all shadow-lg">ارسال کد تایید</button>
+                <button type="submit" name="send_otp" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all shadow-lg">ط§ط±ط³ط§ظ„ ع©ط¯ طھط§غŒغŒط¯</button>
             </form>
             <?php elseif ($step === 2): ?>
             <form class="space-y-6" method="POST">
                 <div class="input-group">
-                    <label class="block font-bold text-sm text-on-surface-variant mb-2">کد تأیید پیامک شده</label>
-                    <input name="otp" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-center tracking-widest text-lg dir-ltr" placeholder="------" type="text" maxlength="6" required/>
+                    <label class="block font-bold text-sm text-on-surface-variant mb-2">ع©ط¯ طھط£غŒغŒط¯ ظ¾غŒط§ظ…ع© ط´ط¯ظ‡</label>
+                    <input name="otp" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-center tracking-widest text-lg dir-ltr" placeholder="------" type="text" maxlength="6" required autofocus/>
                 </div>
-                <button type="submit" name="verify_otp" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all shadow-lg">تأیید موبایل</button>
+                <button type="submit" name="verify_otp" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all shadow-lg">طھط£غŒغŒط¯ ظ…ظˆط¨ط§غŒظ„</button>
+
+                <div class="flex items-center justify-between mt-4 pt-2 border-t border-outline-variant/30">
+                    <button type="button" id="resend-profile-btn" onclick="document.getElementById('resend-profile-form').submit();" class="text-sm font-bold text-secondary hover:underline disabled:opacity-50 disabled:no-underline flex items-center gap-1.5" disabled>
+                        <span class="material-symbols-outlined text-[16px]">refresh</span>
+                        <span>ط§ط±ط³ط§ظ„ ظ…ط¬ط¯ط¯ ع©ط¯ (<span id="profile-countdown">60</span> ط«ط§ظ†غŒظ‡)</span>
+                    </button>
+                    <a class="font-bold text-sm text-on-surface-variant hover:text-primary transition-colors" href="complete_profile.php">طھط؛غŒغŒط± ط´ظ…ط§ط±ظ‡</a>
+                </div>
+            </form>
+
+            <form id="resend-profile-form" method="POST" action="complete_profile.php" class="hidden">
+                <input type="hidden" name="resend_otp" value="1" />
             </form>
             <?php elseif ($step === 3): ?>
             <form class="space-y-6" method="POST">
                 <div class="input-group">
-                    <label class="block font-bold text-sm text-on-surface-variant mb-2">شهر</label>
-                    <input name="city" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm" placeholder="مثال: تهران" type="text" required/>
+                    <label class="block font-bold text-sm text-on-surface-variant mb-2">ط´ظ‡ط±</label>
+                    <input name="city" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm" placeholder="ظ…ط«ط§ظ„: طھظ‡ط±ط§ظ†" type="text" required/>
                 </div>
                 <div class="input-group">
-                    <label class="block font-bold text-sm text-on-surface-variant mb-2">کد پستی (اختیاری)</label>
+                    <label class="block font-bold text-sm text-on-surface-variant mb-2">ع©ط¯ ظ¾ط³طھغŒ (ط§ط®طھغŒط§ط±غŒ)</label>
                     <input name="postal_code" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-left dir-ltr" placeholder="1234567890" type="text"/>
                 </div>
                 <div class="input-group">
-                    <label class="block font-bold text-sm text-on-surface-variant mb-2">آدرس دقیق</label>
-                    <textarea name="address" class="w-full p-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm" rows="3" placeholder="خیابان، کوچه، پلاک..." required></textarea>
+                    <label class="block font-bold text-sm text-on-surface-variant mb-2">ط¢ط¯ط±ط³ ط¯ظ‚غŒظ‚</label>
+                    <textarea name="address" class="w-full p-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm" rows="3" placeholder="ط®غŒط§ط¨ط§ظ†طŒ ع©ظˆع†ظ‡طŒ ظ¾ظ„ط§ع©..." required></textarea>
                 </div>
-                <button type="submit" name="save_address" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all shadow-lg">ثبت اطلاعات و ورود</button>
+                <button type="submit" name="save_address" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all shadow-lg">ط«ط¨طھ ط§ط·ظ„ط§ط¹ط§طھ ظˆ ظˆط±ظˆط¯</button>
             </form>
             <?php endif; ?>
         </div>
     </section>
 </main>
+<script>
+    const profileCountdownEl = document.getElementById('profile-countdown');
+    const resendProfileBtn = document.getElementById('resend-profile-btn');
+    if (profileCountdownEl && resendProfileBtn) {
+        let timeLeft = 60;
+        const timer = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                resendProfileBtn.disabled = false;
+                resendProfileBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">refresh</span><span>ط§ط±ط³ط§ظ„ ظ…ط¬ط¯ط¯ ع©ط¯ ظ¾غŒط§ظ…ع©غŒ</span>';
+            } else {
+                profileCountdownEl.innerText = timeLeft;
+            }
+        }, 1000);
+    }
+</script>
 </body>
 </html>
+
