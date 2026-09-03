@@ -1,6 +1,6 @@
 -- MariaDB dump 10.19  Distrib 10.4.28-MariaDB, for Linux (x86_64)
 --
--- Host: localhost    Database: asena_pharmacy_golzari
+-- Host: localhost    Database: asena_pharmacy
 -- ------------------------------------------------------
 -- Server version	10.4.28-MariaDB
 

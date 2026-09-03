@@ -35,49 +35,39 @@ $phone_input = $_POST['phone'] ?? '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['send_otp'])) {
         // Step 1: Send OTP
-        $rawPhone = trim($_POST['phone'] ?? '');
-        $phone_input = SmsService::normalizePhone($rawPhone);
-        if (empty($phone_input) || !preg_match('/^09\d{9}$/', $phone_input)) {
-            $error = 'لطفاً یک شماره موبایل معتبر ۱۱ رقمی (مانند ۰۹۱۲۳۴۵۶۷۸۹) وارد نمایید.';
+        $raw_phone = trim($_POST['phone'] ?? '');
+        $phone_input = SmsService::normalizePhone($raw_phone);
+        if (empty($phone_input) || strlen($phone_input) !== 11) {
+            $error = 'شماره موبایل نامعتبر است.';
         } else {
             // Check if phone already used by someone else
-            $check = $pdo->prepare("SELECT id FROM users WHERE (phone = ? OR phone = ?) AND id != ?");
-            $check->execute([$phone_input, $rawPhone, $user_id]);
+            $check = $pdo->prepare("SELECT id FROM users WHERE phone = ? AND id != ?");
+            $check->execute([$phone_input, $user_id]);
             if ($check->rowCount() > 0) {
                 $error = 'این شماره موبایل قبلاً ثبت شده است.';
             } else {
                 $otp = sprintf("%06d", mt_rand(100000, 999999));
                 $_SESSION['oauth_otp_code'] = $otp;
                 $_SESSION['oauth_phone_pending'] = $phone_input;
+                $_SESSION['oauth_otp_expires_at'] = time() + 180; // Valid for 3 minutes
                 
-                $sms = new SmsService($pdo);
+                $sms = new SmsService();
                 $sms->sendOtp($phone_input, $otp);
                 
                 $step = 2;
             }
         }
-    } elseif (isset($_POST['resend_otp'])) {
-        $pending_phone = SmsService::normalizePhone($_SESSION['oauth_phone_pending'] ?? '');
-        if (!empty($pending_phone)) {
-            $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $pending_phone);
-            if ($rate_error) {
-                $error = $rate_error;
-            } else {
-                $otp = sprintf("%06d", mt_rand(100000, 999999));
-                $_SESSION['oauth_otp_code'] = $otp;
-                $sms = new SmsService($pdo);
-                $sms->sendOtp($pending_phone, $otp);
-                $success = 'کد تایید جدید با موفقیت برای شماره ' . htmlspecialchars($pending_phone) . ' ارسال شد.';
-            }
-        }
-        $step = 2;
     } elseif (isset($_POST['verify_otp'])) {
         // Step 2: Verify OTP
-        $otp_input = SmsService::normalizeOtp($_POST['otp'] ?? '');
+        $otp_input = SmsService::sanitizeCode($_POST['otp'] ?? '');
         $expected_otp = $_SESSION['oauth_otp_code'] ?? '';
         $pending_phone = $_SESSION['oauth_phone_pending'] ?? '';
+        $expiresAt = $_SESSION['oauth_otp_expires_at'] ?? 0;
         
-        if (empty($otp_input) || $otp_input !== $expected_otp) {
+        if (time() > $expiresAt) {
+            $error = 'کد وارد شده منقضی شده است. لطفاً مجدداً درخواست ارسال کد دهید.';
+            $step = 2;
+        } elseif (empty($otp_input) || $otp_input !== $expected_otp) {
             $error = 'کد وارد شده نامعتبر است.';
             $step = 2; // Stay on step 2
         } else {
@@ -86,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $step = 3;
             
             unset($_SESSION['oauth_otp_code']);
+            unset($_SESSION['oauth_otp_expires_at']);
         }
     } elseif (isset($_POST['save_address'])) {
         // Step 3: Save Address
@@ -156,17 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
-            <?php if($success): ?>
-                <div class="flex items-start gap-3 bg-emerald-50/80 border border-emerald-200 text-emerald-800 p-4 rounded-2xl shadow-sm mb-6 backdrop-blur-sm transition-all">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
-                        <span class="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-sm opacity-90 leading-relaxed font-bold text-emerald-900"><?php echo htmlspecialchars($success); ?></p>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <?php if ($step === 1): ?>
             <form class="space-y-6" method="POST">
                 <div class="input-group">
@@ -179,21 +159,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form class="space-y-6" method="POST">
                 <div class="input-group">
                     <label class="block font-bold text-sm text-on-surface-variant mb-2">کد تأیید پیامک شده</label>
-                    <input name="otp" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-center tracking-widest text-lg dir-ltr" placeholder="------" type="text" maxlength="6" required autofocus/>
+                    <input name="otp" class="w-full h-12 px-4 rounded-lg border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface-container-lowest transition-all text-sm text-center tracking-widest text-lg dir-ltr" placeholder="------" type="text" maxlength="6" required/>
                 </div>
                 <button type="submit" name="verify_otp" class="w-full h-12 bg-primary-container text-white rounded-lg font-bold text-lg hover:bg-primary transition-all shadow-lg">تأیید موبایل</button>
-
-                <div class="flex items-center justify-between mt-4 pt-2 border-t border-outline-variant/30">
-                    <button type="button" id="resend-profile-btn" onclick="document.getElementById('resend-profile-form').submit();" class="text-sm font-bold text-secondary hover:underline disabled:opacity-50 disabled:no-underline flex items-center gap-1.5" disabled>
-                        <span class="material-symbols-outlined text-[16px]">refresh</span>
-                        <span>ارسال مجدد کد (<span id="profile-countdown">60</span> ثانیه)</span>
-                    </button>
-                    <a class="font-bold text-sm text-on-surface-variant hover:text-primary transition-colors" href="complete_profile.php">تغییر شماره</a>
-                </div>
-            </form>
-
-            <form id="resend-profile-form" method="POST" action="complete_profile.php" class="hidden">
-                <input type="hidden" name="resend_otp" value="1" />
             </form>
             <?php elseif ($step === 3): ?>
             <form class="space-y-6" method="POST">
@@ -215,22 +183,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </section>
 </main>
-<script>
-    const profileCountdownEl = document.getElementById('profile-countdown');
-    const resendProfileBtn = document.getElementById('resend-profile-btn');
-    if (profileCountdownEl && resendProfileBtn) {
-        let timeLeft = 60;
-        const timer = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                resendProfileBtn.disabled = false;
-                resendProfileBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">refresh</span><span>ارسال مجدد کد پیامکی</span>';
-            } else {
-                profileCountdownEl.innerText = timeLeft;
-            }
-        }, 1000);
-    }
-</script>
 </body>
 </html>

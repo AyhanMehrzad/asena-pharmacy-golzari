@@ -3,7 +3,7 @@
         <div class="flex flex-col lg:flex-row-reverse justify-between px-6 lg:px-10 py-10 lg:py-16 gap-10 lg:gap-16">
             <div class="flex flex-col gap-6 lg:w-1/3 text-center lg:text-right items-center lg:items-start">
                 <h3 class="text-3xl font-bold text-primary">ASENA</h3>
-                <p class="text-sm text-on-surface-variant leading-relaxed">اولین اکوسیستم هوشمند مراقبت از حیوانات خانگی در ایران. تلفیقی از تخصص پزشکی، تکنولوژی روز و عشق به حیوانات.</p>
+                <p class="text-sm text-on-surface-variant leading-relaxed">اولین اکوسیستم هوشمند مراقبت از حیوانات خانگی. تلفیقی از تخصص پزشکی، تکنولوژی روز و عشق به حیوانات.</p>
                 <div class="flex gap-4">
                     <a class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary hover:bg-primary-container hover:text-white transition-colors" href="#">
                         <span class="material-symbols-outlined">share</span>
@@ -34,11 +34,26 @@
                     </nav>
                 </div>
                 <div class="flex flex-col gap-5">
-                    <h4 class="font-bold text-lg text-primary">راهنما</h4>
+                    <h4 class="font-bold text-lg text-primary">پایگاه دانش و راهنما</h4>
                     <nav class="flex flex-col gap-3">
-                        <a class="text-sm text-on-surface-variant hover:text-secondary-container transition-colors" href="#">سوالات متداول</a>
+                        <a class="text-sm text-on-surface-variant hover:text-secondary-container transition-colors flex items-center gap-1.5" href="knowledge_base.php">
+                            <span class="material-symbols-outlined text-[16px] text-primary">auto_stories</span>
+                            پایگاه دانش و مقالات تخصصی
+                        </a>
+                        <a class="text-sm text-on-surface-variant hover:text-secondary-container transition-colors flex items-center gap-1.5" href="knowledge_base.php?article=vaccination-schedule-dogs-cats">
+                            <span class="material-symbols-outlined text-[16px] text-primary">vaccines</span>
+                            جدول واکسیناسیون سگ و گربه
+                        </a>
+                        <a class="text-sm text-on-surface-variant hover:text-secondary-container transition-colors flex items-center gap-1.5" href="knowledge_base.php?article=how-autoship-works-guide">
+                            <span class="material-symbols-outlined text-[16px] text-primary">autorenew</span>
+                            راهنمای تحویل خودکار (Autoship)
+                        </a>
+                        <a class="text-sm text-on-surface-variant hover:text-secondary-container transition-colors flex items-center gap-1.5" href="knowledge_base.php?article=pet-poisoning-emergency-guide">
+                            <span class="material-symbols-outlined text-[16px] text-primary">emergency</span>
+                            راهنمای مسمومیت حیوانات
+                        </a>
                     </nav>
-            </div>
+                </div>
         </div>
     </footer>
 
@@ -66,5 +81,7 @@
         // It checks its own lock file so it only actually runs once a day.
         fetch('actions/autoship_worker.php', { method: 'POST' }).catch(() => {});
     </script>
+
+    <?php require_once __DIR__ . '/cookie_consent.php'; ?>
 </body>
 </html>

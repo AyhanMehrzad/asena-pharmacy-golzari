@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#001a44"/>
+      <stop offset="40%" stop-color="#002d72"/>
+      <stop offset="85%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="pawGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle Ambient Circles -->
+  <circle cx="200" cy="150" r="220" fill="#1d4ed8" opacity="0.12" filter="blur(60px)"/>
+  <circle cx="1050" cy="480" r="260" fill="#10b981" opacity="0.15" filter="blur(70px)"/>
+  <circle cx="950" cy="180" r="180" fill="#f97316" opacity="0.1" filter="blur(50px)"/>
+
+  <!-- Border Frame -->
+  <rect x="30" y="30" width="1140" height="570" rx="24" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="2"/>
+
+  <!-- Brand Icon (ASENA Paw Emblem) -->
+  <g transform="translate(140, 185) scale(2.4)" filter="url(#shadow)">
+    <!-- Central Pad -->
+    <path d="M 50 65 C 38 65, 30 75, 35 90 C 40 102, 60 102, 65 90 C 70 75, 62 65, 50 65 Z" fill="url(#pawGrad)"/>
+    <!-- Outer Toes -->
+    <ellipse cx="28" cy="58" rx="8" ry="12" transform="rotate(-25 28 58)" fill="url(#pawGrad)"/>
+    <ellipse cx="43" cy="44" rx="8" ry="13" transform="rotate(-8 43 44)" fill="url(#pawGrad)"/>
+    <ellipse cx="57" cy="44" rx="8" ry="13" transform="rotate(8 57 44)" fill="url(#pawGrad)"/>
+    <ellipse cx="72" cy="58" rx="8" ry="12" transform="rotate(25 72 58)" fill="url(#pawGrad)"/>
+    <!-- Medical Cross Emblem inside -->
+    <path d="M 47 77 L 53 77 L 53 81 L 57 81 L 57 85 L 53 85 L 53 89 L 47 89 L 47 85 L 43 85 L 43 81 L 47 81 Z" fill="#ffffff" opacity="0.95"/>
+  </g>
+
+  <!-- Typography & Brand Text -->
+  <text x="440" y="240" font-family="'Vazirmatn', 'Segoe UI', Tahoma, sans-serif" font-size="78" font-weight="900" fill="#ffffff" letter-spacing="4">
+    ASENA
+  </text>
+  <text x="730" y="240" font-family="'Vazirmatn', Tahoma, sans-serif" font-size="64" font-weight="800" fill="#f97316">
+    آســنا
+  </text>
+
+  <!-- Main Headline in Persian -->
+  <text x="440" y="325" font-family="'Vazirmatn', Tahoma, sans-serif" font-size="34" font-weight="700" fill="#f1f5f9">
+    پلتفرم یکپارچه کلینیک، پت‌شاپ و داروخانه دامپزشکی
+  </text>
+
+  <!-- Subtitle Feature Pills -->
+  <g transform="translate(440, 375)">
+    <!-- Pill 1: نوبت‌دهی آنلاین -->
+    <rect x="0" y="0" width="180" height="42" rx="21" fill="#ffffff" fill-opacity="0.12"/>
+    <text x="90" y="27" font-family="'Vazirmatn', Tahoma, sans-serif" font-size="17" font-weight="600" fill="#e2e8f0" text-anchor="middle">
+      نوبت‌دهی کلینیک
+    </text>
+
+    <!-- Pill 2: پت‌شاپ تخصصی -->
+    <rect x="195" y="0" width="170" height="42" rx="21" fill="#ffffff" fill-opacity="0.12"/>
+    <text x="280" y="27" font-family="'Vazirmatn', Tahoma, sans-serif" font-size="17" font-weight="600" fill="#e2e8f0" text-anchor="middle">
+      پت‌شاپ آنلاین
+    </text>
+
+    <!-- Pill 3: تحویل خودکار -->
+    <rect x="380" y="0" width="180" height="42" rx="21" fill="#ffffff" fill-opacity="0.12"/>
+    <text x="470" y="27" font-family="'Vazirmatn', Tahoma, sans-serif" font-size="17" font-weight="600" fill="#e2e8f0" text-anchor="middle">
+      ارسال دوره‌ای (Autoship)
+    </text>
+  </g>
+
+  <!-- Bottom Badges -->
+  <text x="440" y="480" font-family="'Vazirmatn', Tahoma, sans-serif" font-size="22" font-weight="500" fill="#94a3b8">
+    تامین تخصصی داروهای دام و پت با تاییدیه نسخه دامپزشک | ارسال فوری
+  </text>
+
+  <!-- Domain Bar -->
+  <g transform="translate(140, 520)">
+    <rect x="0" y="0" width="920" height="50" rx="14" fill="#000000" fill-opacity="0.25"/>
+    <circle cx="35" cy="25" r="8" fill="#10b981"/>
+    <text x="55" y="32" font-family="'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#38bdf8">
+      https://asena.company
+    </text>
+    <text x="900" y="32" font-family="'Vazirmatn', Tahoma, sans-serif" font-size="17" font-weight="600" fill="#cbd5e1" text-anchor="end">
+      مرجع خدمات دامپزشکی و سلامت حیوانات خانگی
+    </text>
+  </g>
+</svg>

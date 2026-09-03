@@ -10,8 +10,14 @@ if (file_exists($rootConfig)) {
     require_once $rootConfig;
 }
 
+// Local configuration file in repository root (if exists)
+$localConfig = __DIR__ . '/../config.php';
+if (file_exists($localConfig)) {
+    require_once $localConfig;
+}
+
 $host = defined('DB_HOST') ? DB_HOST : '127.0.0.1';
-$dbname = defined('DB_NAME') ? DB_NAME : 'asena_premium';
+$dbname = defined('DB_NAME') ? DB_NAME : 'asena_pharmacy';
 $user = defined('DB_USER') ? DB_USER : 'root';
 $pass = defined('DB_PASS') ? DB_PASS : '';
 
@@ -26,7 +32,7 @@ try {
     // Try local default credentials if connection failed on localhost
     $connected = false;
     if ($host === '127.0.0.1' || $host === 'localhost') {
-        foreach (array_unique([$dbname, 'asena_premium', 'petshop_db']) as $tryDb) {
+        foreach (array_unique([$dbname, 'asena_pharmacy', 'petshop_db']) as $tryDb) {
             try {
                 $pdo = new PDO("mysql:host=127.0.0.1;dbname=$tryDb;charset=utf8mb4", 'root', '', [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

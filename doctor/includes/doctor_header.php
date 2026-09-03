@@ -152,30 +152,54 @@ if (!$doctorProfile) {
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
+
+        <a href="../blog_editor.php" class="w-full bg-gradient-to-r from-blue-600 to-primary hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all text-xs my-2">
+            <span class="material-symbols-outlined text-base">add_circle</span>
+            <span>+ نگارش مقاله جدید</span>
+        </a>
     </div>
 
-    <nav class="flex-1 px-4 mt-4 space-y-1">
+    <nav class="flex-1 px-3 mt-2 space-y-1">
         <?php 
-        $page = $currentPage ?? 'dashboard';
+        $activeTabKey = $_GET['tab'] ?? (basename($_SERVER['PHP_SELF']) === 'blogs.php' ? 'blogs' : 'calendar');
         
         $navItems = [
-            'dashboard' => ['icon' => 'dashboard', 'title' => 'پیشخوان پزشک', 'url' => 'index.php'],
+            'calendar' => ['icon' => 'calendar_month', 'title' => 'نوبت‌ها و تقویم روزانه', 'tab' => 'calendar-tab'],
+            'blocks'   => ['icon' => 'event_busy', 'title' => 'نوبت‌های تلفنی و مسدودی‌ها', 'tab' => 'blocks-tab'],
+            'schedule' => ['icon' => 'schedule', 'title' => 'برنامه کاری هفتگی', 'tab' => 'schedule-tab'],
+            'blogs'    => ['icon' => 'edit_note', 'title' => 'نگارش و مقالات وبلاگ', 'url' => 'blogs.php'],
+            'services' => ['icon' => 'loyalty', 'title' => 'خدمات، علت‌ها و تگ‌ها', 'tab' => 'services-tab'],
+            'reviews'  => ['icon' => 'reviews', 'title' => 'نظرات و بازخورد مراجعین', 'tab' => 'reviews-tab'],
+            'history'  => ['icon' => 'history', 'title' => 'آرشیو مراجعات و پرونده‌ها', 'tab' => 'history-tab'],
+            'profile'  => ['icon' => 'contact_phone', 'title' => 'اطلاعات تماس و پیامک نوبت', 'tab' => 'profile-tab'],
         ];
 
         foreach ($navItems as $key => $item):
-            $isActive = ($page === $key);
+            $isActive = ($activeTabKey === $key);
             $classes = $isActive 
-                ? "flex items-center gap-3 px-4 py-3 text-secondary-container font-bold border-r-4 border-secondary-container bg-white/5 transition-all"
-                : "flex items-center gap-3 px-4 py-3 text-on-tertiary-container hover:bg-white/10 hover:text-white transition-all";
+                ? "doctor-nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white font-bold bg-secondary-container shadow-sm transition-all"
+                : "doctor-nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-on-tertiary-container hover:bg-white/10 hover:text-white transition-all";
+            $href = !empty($item['url']) ? $item['url'] : "index.php?tab={$key}";
+            $onclick = !empty($item['tab']) ? "if(typeof switchTab === 'function') { switchTab('{$item['tab']}'); if(window.innerWidth < 1024) toggleDoctorSidebar(); return false; }" : "";
         ?>
-        <a class="<?= $classes ?>" href="<?= $item['url'] ?>">
-            <span class="material-symbols-outlined"><?= $item['icon'] ?></span>
-            <span class="font-label-lg text-label-lg"><?= $item['title'] ?></span>
+        <a id="nav-item-<?= $key ?>" class="<?= $classes ?>" href="<?= $href ?>" <?= !empty($onclick) ? 'onclick="'.$onclick.'"' : '' ?>>
+            <span class="material-symbols-outlined text-[20px]"><?= $item['icon'] ?></span>
+            <span class="text-xs font-bold leading-tight"><?= $item['title'] ?></span>
         </a>
         <?php endforeach; ?>
     </nav>
 
-    <div class="p-4 border-t border-white/10">
+        <div class="px-1 mb-2 space-y-1.5">
+            <a href="../knowledge_base.php" target="_blank" class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all">
+                <span class="material-symbols-outlined text-[20px]">auto_stories</span>
+                <span>وبلاگ و پایگاه دانش</span>
+                <span class="material-symbols-outlined text-xs mr-auto">north_east</span>
+            </a>
+            <a href="guide.php" class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all">
+                <span class="material-symbols-outlined text-[20px]">menu_book</span>
+                <span>راهنمای کاربری پزشک</span>
+            </a>
+        </div>
         <a href="../index.php" class="w-full bg-secondary-container text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 active:translate-x-1 duration-200">
             <span class="material-symbols-outlined">storefront</span>
             <span class="font-label-lg text-label-lg">بازگشت به سایت</span>
@@ -200,8 +224,25 @@ if (!$doctorProfile) {
             </button>
         </div>
         
-        <div class="flex items-center gap-4">
-            <div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+        <div class="flex items-center gap-2 sm:gap-3">
+            <a href="../blog_editor.php" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-blue-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm transition-all text-xs font-bold">
+                <span class="material-symbols-outlined text-base">add_circle</span>
+                <span>+ نگارش مقاله جدید</span>
+            </a>
+            <a href="blogs.php" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-primary dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-primary hover:text-white transition-all text-xs font-bold">
+                <span class="material-symbols-outlined text-base">edit_note</span>
+                <span>مقالات من</span>
+            </a>
+            <a href="../knowledge_base.php" target="_blank" class="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-all text-xs font-bold">
+                <span class="material-symbols-outlined text-base">auto_stories</span>
+                <span>پایگاه دانش</span>
+                <span class="material-symbols-outlined text-xs">north_east</span>
+            </a>
+            <a href="guide.php" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition-all text-xs font-bold">
+                <span class="material-symbols-outlined text-base">help_outline</span>
+                <span>راهنما</span>
+            </a>
+            <div class="h-8 w-[1px] bg-outline-variant mx-1"></div>
             <div class="flex items-center gap-3 pl-2">
                 <div class="text-left">
                     <p class="font-label-lg text-label-lg text-on-surface leading-tight">دکتر <?= htmlspecialchars($doctorName) ?></p>

@@ -7,9 +7,6 @@ $error = '';
 $success = '';
 $rawPhone = $_GET['phone'] ?? ($_POST['phone'] ?? '');
 $phone = SmsService::normalizePhone($rawPhone);
-if (empty($phone)) {
-    $phone = $rawPhone;
-}
 
 if (empty($phone)) {
     header("Location: forgot_password.php");
@@ -22,13 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($rate_error) {
             $error = $rate_error;
         } else {
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ? OR phone = ?");
-            $stmt->execute([$phone, $rawPhone]);
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
+            $stmt->execute([$phone]);
             if ($stmt->rowCount() > 0) {
                 $otp = sprintf("%06d", mt_rand(100000, 999999));
-                $stmt = $pdo->prepare("UPDATE users SET sms_code = ? WHERE phone = ? OR phone = ?");
-                if ($stmt->execute([$otp, $phone, $rawPhone])) {
-                    $sms = new SmsService($pdo);
+                $_SESSION['reset_password_data'] = [
+                    'phone'      => $phone,
+                    'otp'        => $otp,
+                    'expires_at' => time() + 180 // Valid for 3 minutes
+                ];
+                $stmt = $pdo->prepare("UPDATE users SET sms_code = ? WHERE phone = ?");
+                if ($stmt->execute([$otp, $phone])) {
+                    $sms = new SmsService();
                     $sms->sendOtp($phone, $otp);
                     $success = 'کد تأیید جدید پیامک شد.';
                 } else {
@@ -39,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } else {
-        $otp = SmsService::normalizeOtp($_POST['otp'] ?? '');
+        $otp = SmsService::sanitizeCode($_POST['otp'] ?? '');
         $password = $_POST['password'] ?? '';
     
     if (empty($otp) || empty($password)) {
@@ -49,19 +51,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($rate_error) {
             $error = $rate_error;
         } else {
-            $stmt = $pdo->prepare("SELECT id, sms_code FROM users WHERE phone = ? OR phone = ?");
-            $stmt->execute([$phone, $rawPhone]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$user) {
-                $error = 'کاربری با این مشخصات یافت نشد.';
-            } elseif (empty($user['sms_code']) || $user['sms_code'] !== $otp) {
-                $error = 'کد تأیید وارد شده نامعتبر است.';
+            // Check expiry if set in session
+            if (isset($_SESSION['reset_password_data']) && time() > ($_SESSION['reset_password_data']['expires_at'] ?? 0)) {
+                $error = 'کد تأیید منقضی شده است. لطفاً بر روی «ارسال مجدد کد» کلیک کنید.';
             } else {
-                // Success! Reset password
-                $hash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("UPDATE users SET password = ?, sms_code = NULL WHERE id = ?");
-                if ($stmt->execute([$hash, $user['id']])) {
+                $stmt = $pdo->prepare("SELECT id, sms_code FROM users WHERE phone = ?");
+                $stmt->execute([$phone]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$user) {
+                    $error = 'کاربری با این مشخصات یافت نشد.';
+                } elseif (empty($user['sms_code']) || $user['sms_code'] !== $otp) {
+                    $error = 'کد تأیید وارد شده نامعتبر است.';
+                } else {
+                    // Success! Reset password
+                    $hash = password_hash($password, PASSWORD_DEFAULT);
+                    $stmt = $pdo->prepare("UPDATE users SET password = ?, sms_code = NULL WHERE id = ?");
+                    if ($stmt->execute([$hash, $user['id']])) {
+                        unset($_SESSION['reset_password_data']);
                     // Optional: Automatically log them in
                     // $_SESSION['user_id'] = $user['id'];
                     
@@ -74,8 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-        }
     }
+}
+}
 }
 ?>
 <!DOCTYPE html>

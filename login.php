@@ -29,33 +29,45 @@ $apple_oauth_url = "https://appleid.apple.com/auth/authorize?" . http_build_quer
 $error = '';
 $success = '';
 
+if (isset($_GET['cancel_signup'])) {
+    unset($_SESSION['signup_data']);
+    header("Location: login.php");
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once 'includes/functions.php';
     $mode = $_POST['mode'] ?? 'login';
     
     if ($mode === 'resend_signup_otp') {
         if (isset($_SESSION['signup_data'])) {
-            $phone = SmsService::normalizePhone($_SESSION['signup_data']['phone']);
+            $phone = SmsService::normalizePhone($_SESSION['signup_data']['phone'] ?? '');
             $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $phone);
             if ($rate_error) {
                 $error = $rate_error;
             } else {
                 $otp = sprintf("%06d", mt_rand(100000, 999999));
                 $_SESSION['signup_data']['otp'] = $otp;
-                $sms = new SmsService($pdo);
+                $_SESSION['signup_data']['otp_expires_at'] = time() + 180;
+                $sms = new SmsService();
                 $sent = $sms->sendOtp($phone, $otp);
-                $success = 'کد تایید جدید با موفقیت برای شماره ' . htmlspecialchars($phone) . ' پیامک شد.';
+                $success = 'کد تایید جدید با موفقیت برای شماره ' . htmlspecialchars($phone) . ' ارسال شد.';
             }
         } else {
             $error = 'نشست شما منقضی شده است. لطفاً دوباره ثبت نام کنید.';
         }
     } elseif ($mode === 'verify_signup') {
-        $otp = SmsService::normalizeOtp($_POST['otp'] ?? '');
+        $otp = SmsService::sanitizeCode($_POST['otp'] ?? '');
         if (isset($_SESSION['signup_data'])) {
-            if ($otp === $_SESSION['signup_data']['otp']) {
-                $phone = SmsService::normalizePhone($_SESSION['signup_data']['phone']);
-                $name = trim($_SESSION['signup_data']['name'] ?? '');
-                $password = $_SESSION['signup_data']['password'];
+            $signupData = $_SESSION['signup_data'];
+            $expiresAt  = $signupData['otp_expires_at'] ?? 0;
+
+            if (time() > $expiresAt) {
+                $error = 'کد تایید منقضی شده است. لطفاً مجدداً تلاش کنید.';
+            } elseif (!empty($otp) && $otp === $signupData['otp']) {
+                $phone = $signupData['phone'];
+                $name = $signupData['name'];
+                $password = $signupData['password'];
                 
                 $hash = password_hash($password, PASSWORD_DEFAULT);
                 $stmt = $pdo->prepare("INSERT INTO users (phone, name, password, loyalty_points) VALUES (?, ?, ?, 50)");
@@ -81,12 +93,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } else {
         $rawPhone = trim($_POST['phone'] ?? '');
+        $phone = SmsService::normalizePhone($rawPhone);
         $password = $_POST['password'] ?? '';
-        $normalizedPhone = SmsService::normalizePhone($rawPhone);
-        $phone = $normalizedPhone ?: $rawPhone;
         
-        if (empty($rawPhone) || empty($password)) {
-            $error = 'لطفاً تمامی فیلدها را پر کنید.';
+        if (empty($phone) || empty($password)) {
+            $error = 'لطفاً تمامی فیلدها را به درستی پر کنید.';
         } else {
             $rate_error = check_rate_limit($pdo, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', $phone);
             if ($rate_error) {
@@ -95,30 +106,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($mode === 'signup') {
                     $name = trim($_POST['name'] ?? '');
                     
-                    // Validate phone number format (must be standard 11-digit 09...)
-                    if (!preg_match('/^09\d{9}$/', $phone)) {
-                        $error = 'لطفاً یک شماره موبایل معتبر ۱۱ رقمی (مانند ۰۹۱۲۳۴۵۶۷۸۹) وارد نمایید.';
+                    $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
+                    $stmt->execute([$phone]);
+                    if ($stmt->rowCount() > 0) {
+                        $error = 'این شماره موبایل/ایمیل قبلاً ثبت شده است.';
                     } else {
-                        $stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ? OR phone = ?");
-                        $stmt->execute([$phone, $rawPhone]);
-                        if ($stmt->rowCount() > 0) {
-                            $error = 'این شماره موبایل قبلاً ثبت شده است.';
-                        } else {
-                            $otp = sprintf("%06d", mt_rand(100000, 999999));
-                            $sms = new SmsService($pdo);
-                            $sms->sendOtp($phone, $otp);
-                            
-                            $_SESSION['signup_data'] = [
-                                'phone' => $phone,
-                                'name' => $name,
-                                'password' => $password,
-                                'otp' => $otp
-                            ];
-                        }
+                        $otp = sprintf("%06d", mt_rand(100000, 999999));
+                        $sms = new SmsService();
+                        $sms->sendOtp($phone, $otp);
+                        
+                        $_SESSION['signup_data'] = [
+                            'phone'          => $phone,
+                            'name'           => $name,
+                            'password'       => $password,
+                            'otp'            => $otp,
+                            'otp_expires_at' => time() + 180 // Valid for 3 minutes
+                        ];
                     }
                 } elseif ($mode === 'login') {
-                    $stmt = $pdo->prepare("SELECT id, role, password FROM users WHERE phone = ? OR phone = ? OR email = ?");
-                    $stmt->execute([$phone, $rawPhone, $rawPhone]);
+                    $stmt = $pdo->prepare("SELECT id, role, password FROM users WHERE phone = ?");
+                    $stmt->execute([$phone]);
                     $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     if ($user && !empty($user['password']) && password_verify($password, $user['password'])) {
@@ -215,7 +222,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     <?php endif; ?>
-
     <?php if($success): ?>
         <div class="flex items-start gap-3 bg-emerald-50/80 border border-emerald-200 text-emerald-800 p-4 rounded-2xl shadow-sm mb-6 backdrop-blur-sm transition-all">
             <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
@@ -244,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span class="material-symbols-outlined text-[16px]">refresh</span>
                 <span>ارسال مجدد کد (<span id="signup-countdown">60</span> ثانیه)</span>
             </button>
-            <a class="font-bold text-sm text-on-surface-variant hover:text-primary transition-colors" href="login.php?cancel_signup=1">تغییر شماره / اصلاح</a>
+            <a class="font-bold text-sm text-on-surface-variant hover:text-primary transition-colors" href="login.php?cancel_signup=1">تغییر شماره / لغو</a>
         </div>
     </form>
 
