@@ -1,0 +1,40 @@
+# robots.txt for ASENA Pharmacy
+User-agent: *
+Allow: /
+Allow: /assets/
+Allow: /uploads/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.svg$
+Allow: /*.woff2$
+
+# AI / Search Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+# Disallow Internal & Sensitive Paths
+Disallow: /admin/
+Disallow: /actions/
+Disallow: /cart.php
+Disallow: /payment.php
+Disallow: /mock_payment_gateway.php
+Disallow: /charity_payment.php
+Disallow: /subscription_checkout.php
+Disallow: /setup_db.php
+Disallow: /config.php
+Disallow: /.env*
+
+Sitemap: https://asena.company/asena-pharmacy/sitemap.xml
