@@ -1,0 +1,30 @@
+name: ASENA CI - Syntax & Quality Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: pdo, pdo_mysql, json, curl, mbstring
+          coverage: none
+
+      - name: Lint all PHP files
+        run: |
+          find . -type f -name "*.php" ! -path "*/vendor/*" -print0 | xargs -0 -n1 -P4 php -l
