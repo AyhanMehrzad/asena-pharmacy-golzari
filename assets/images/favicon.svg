@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Midnight Navy Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020d20"/>
+      <stop offset="50%" stop-color="#00183e"/>
+      <stop offset="100%" stop-color="#002b66"/>
+    </linearGradient>
+
+    <!-- Warm Orange Paw Gradient -->
+    <linearGradient id="pawOrange" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff8c1a"/>
+      <stop offset="100%" stop-color="#f25f00"/>
+    </linearGradient>
+
+    <!-- Teal Medical Accent Gradient -->
+    <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="pawGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#ff7a00" flood-opacity="0.35"/>
+    </filter>
+
+    <filter id="subtleShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Canvas (iOS/Modern Browser standard) -->
+  <rect width="512" height="512" rx="120" fill="url(#bgGrad)"/>
+  <rect x="4" y="4" width="504" height="504" rx="116" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.08"/>
+
+  <!-- Centered Graphic Group -->
+  <g filter="url(#subtleShadow)">
+    <!-- Teal Veterinary Orbit Circle -->
+    <circle cx="256" cy="265" r="148" fill="none" stroke="url(#tealGrad)" stroke-width="20" stroke-linecap="round" stroke-dasharray="140 30 180 30"/>
+
+    <!-- Main Paw Pad with Center Cutout Area -->
+    <g filter="url(#pawGlow)">
+      <!-- Top Center Left Toe -->
+      <ellipse cx="204" cy="172" rx="34" ry="52" transform="rotate(-8 204 172)" fill="url(#pawOrange)"/>
+      <!-- Top Center Right Toe -->
+      <ellipse cx="308" cy="172" rx="34" ry="52" transform="rotate(8 308 172)" fill="url(#pawOrange)"/>
+      <!-- Far Left Toe -->
+      <ellipse cx="138" cy="235" rx="32" ry="46" transform="rotate(-26 138 235)" fill="url(#pawOrange)"/>
+      <!-- Far Right Toe -->
+      <ellipse cx="374" cy="235" rx="32" ry="46" transform="rotate(26 374 235)" fill="url(#pawOrange)"/>
+
+      <!-- Large Center Main Pad -->
+      <path d="M 256 220 
+               C 210 220, 168 250, 168 302 
+               C 168 355, 215 385, 256 385 
+               C 297 385, 344 355, 344 302 
+               C 344 250, 302 220, 256 220 Z" 
+            fill="url(#pawOrange)"/>
+    </g>
+
+    <!-- Medical Plus / Cross (Pure Clean White with Crisp Contrast) -->
+    <g>
+      <!-- Cross Backdrop Badge for Maximum Pop at tiny 16px sizes -->
+      <circle cx="256" cy="298" r="54" fill="#001433" opacity="0.9"/>
+      <!-- Bold White Cross -->
+      <path d="M 244 262 L 268 262 L 268 286 L 292 286 L 292 310 L 268 310 L 268 334 L 244 334 L 244 310 L 220 310 L 220 286 L 244 286 Z" 
+            fill="#ffffff" 
+            stroke="#ffffff" 
+            stroke-width="3" 
+            stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
