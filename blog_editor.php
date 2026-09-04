@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * ASENA Ultra Visual Blog Builder & Live WYSIWYG Editor
  * Enhanced with:
@@ -98,6 +98,10 @@ $init_status = $post['status'] ?? 'published';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ویرایشگر پیشرفته مقالات و وبلاگ - ASENA Blog Studio</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="assets/css/material-symbols.css" rel="stylesheet">
     <link href="assets/css/vazirmatn.css" rel="stylesheet">
@@ -165,7 +169,7 @@ $init_status = $post['status'] ?? 'published';
     <!-- Top Sticky Bar -->
     <header class="sticky top-0 z-50 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3">`r`n                <img src="assets/images/logo.png" alt="لوگوی آسنا" class="w-8 h-8 object-contain">
                 <a href="<?= $user_role === 'admin' ? 'admin/blogs.php' : 'doctor/blogs.php' ?>" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors" title="بازگشت به پنل">
                     <span class="material-symbols-outlined">arrow_forward</span>
                 </a>

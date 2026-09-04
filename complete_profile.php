@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
 require_once 'includes/SmsService.php';
@@ -108,6 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>ASENA | تکمیل پروفایل</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <script src="assets/js/tailwindcss-cdn.js"></script>
     <link href="assets/css/material-symbols.css" rel="stylesheet"/>
     <link href="assets/css/geist.css" rel="stylesheet"/>
@@ -126,8 +130,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </section>
 
-    <!-- Authentication Form Section -->
+        <!-- Authentication Form Section -->
     <section class="w-full lg:w-5/12 bg-white flex flex-col justify-center px-8 md:px-16 lg:px-24 py-12 relative overflow-y-auto">
+        <a href="index.php" class="absolute top-8 right-8 lg:right-24 flex items-center gap-3 group" title="بازگشت به صفحه اصلی">
+            <span class="text-primary-container font-bold text-xl group-hover:opacity-80 transition-opacity">ASENA</span>
+            <div class="w-10 h-10 bg-primary-container/10 border border-primary-container/20 rounded-xl p-1.5 flex items-center justify-center group-hover:scale-105 transition-all shadow-sm">
+                <img src="assets/images/logo.png" alt="لوگوی آسنا" class="w-full h-full object-contain">
+            </div>
+        </a>
         <div class="max-w-md w-full mx-auto">
             <h2 class="text-3xl font-bold text-on-surface mb-2">
                 <?php echo $step === 3 ? 'اطلاعات آدرس' : 'تأیید شماره موبایل'; ?>

@@ -1,8 +1,11 @@
-    <!-- Footer -->
+﻿    <!-- Footer -->
     <footer class="bg-surface-container-low border border-outline-variant/30 rounded-[2rem] md:rounded-[3rem] mt-16 md:mt-24 w-[96%] max-w-[1600px] mx-auto overflow-hidden">
         <div class="flex flex-col lg:flex-row-reverse justify-between px-6 lg:px-10 py-10 lg:py-16 gap-10 lg:gap-16">
             <div class="flex flex-col gap-6 lg:w-1/3 text-center lg:text-right items-center lg:items-start">
-                <h3 class="text-3xl font-bold text-primary">ASENA</h3>
+                <a href="index.php" class="flex items-center gap-3 group">
+                    <img src="assets/images/logo.png" alt="لوگوی آسنا" class="w-10 h-10 object-contain group-hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-3xl font-bold text-primary group-hover:text-secondary-container transition-colors">ASENA</h3>
+                </a>
                 <p class="text-sm text-on-surface-variant leading-relaxed">اولین اکوسیستم هوشمند مراقبت از حیوانات خانگی. تلفیقی از تخصص پزشکی، تکنولوژی روز و عشق به حیوانات.</p>
                 <div class="flex gap-4">
                     <a class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary hover:bg-primary-container hover:text-white transition-colors" href="#">

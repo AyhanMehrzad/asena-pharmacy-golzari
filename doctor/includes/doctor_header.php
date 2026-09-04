@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../includes/db.php';
 
 // Route Guard
@@ -36,6 +36,10 @@ if (!$doctorProfile) {
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>پنل پزشکان آسنا - ASENA Doctor</title>
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link href="../assets/css/material-symbols.css" rel="stylesheet"/>
     <link href="../assets/css/geist.css" rel="stylesheet"/>
@@ -140,9 +144,9 @@ if (!$doctorProfile) {
     <div class="p-6 flex flex-col gap-2">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">medical_services</span>
-                </div>
+                <a href="../index.php" class="w-10 h-10 rounded-xl bg-white p-1.5 shadow-sm flex items-center justify-center hover:scale-105 transition-transform" title="مشاهده سایت">
+                    <img src="../assets/images/logo.png" alt="لوگوی آسنا" class="w-full h-full object-contain">
+                </a>
                 <div>
                     <h1 class="text-xl text-tertiary-fixed font-bold leading-tight">آسنا</h1>
                     <p class="text-sm text-on-tertiary-container/70">پنل پزشکان</p>

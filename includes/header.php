@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/db.php';
 
 // Monthly Loyalty Points Check & Role Refresh
@@ -249,7 +249,12 @@ if (function_exists('get_curated_recommendations')) {
                     </a>
                 </div>
                 
-                <h1 class="text-xl lg:text-2xl font-bold text-white tracking-tight">ASENA</h1>
+                <a href="index.php" class="flex items-center gap-2.5 group" title="صفحه اصلی آسنا">
+                    <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-white/10 p-1.5 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-200">
+                        <img src="assets/images/logo.png" alt="لوگوی آسنا" class="w-full h-full object-contain filter drop-shadow">
+                    </div>
+                    <h1 class="text-xl lg:text-2xl font-bold text-white tracking-tight group-hover:text-secondary-container transition-colors">ASENA</h1>
+                </a>
             </div>
         </div>
     </header>
