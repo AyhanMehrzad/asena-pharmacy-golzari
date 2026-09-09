@@ -237,6 +237,18 @@ img.lazy-img-error {
     background-color: #f1f5f9;
 }
 
+.lazy-img-wrapper:not(.loaded) {
+    background: linear-gradient(90deg, #f1f5f9 20%, #e2e8f0 50%, #f1f5f9 80%);
+    background-size: 200% 100%;
+    animation: shimmerSlide 1.2s infinite ease-in-out;
+}
+
 html.dark .lazy-img-wrapper {
     background-color: #1e293b;
+}
+
+html.dark .lazy-img-wrapper:not(.loaded) {
+    background: linear-gradient(90deg, #1e293b 20%, #334155 50%, #1e293b 80%);
+    background-size: 200% 100%;
+    animation: shimmerSlide 1.2s infinite ease-in-out;
 }

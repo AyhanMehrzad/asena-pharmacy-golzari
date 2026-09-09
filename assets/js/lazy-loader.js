@@ -54,25 +54,30 @@
             }
         }
 
+        function markLoaded() {
+            img.classList.add('lazy-img-loaded');
+            img.classList.remove('lazy-img-init');
+            if (img.parentElement && img.parentElement.classList.contains('lazy-img-wrapper')) {
+                img.parentElement.classList.add('loaded');
+            }
+        }
+
         // Attach error fallback listener
         img.addEventListener('error', function() {
             if (img.dataset.hasFallbackApplied) return;
             img.dataset.hasFallbackApplied = 'true';
             const fallbackSrc = determineFallback(img);
             img.src = fallbackSrc;
-            img.classList.add('lazy-img-error', 'lazy-img-loaded');
-            img.classList.remove('lazy-img-init');
+            img.classList.add('lazy-img-error');
+            markLoaded();
         }, { once: true });
 
         // Add smooth entrance transitions
         if (!img.complete) {
             img.classList.add('lazy-img-init');
-            img.addEventListener('load', function() {
-                img.classList.add('lazy-img-loaded');
-                img.classList.remove('lazy-img-init');
-            }, { once: true });
+            img.addEventListener('load', markLoaded, { once: true });
         } else {
-            img.classList.add('lazy-img-loaded');
+            markLoaded();
         }
     }
 
