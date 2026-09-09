@@ -198,28 +198,10 @@ html.dark .paw-progress-pill {
     100% { transform: translateY(-5px); }
 }
 
-/* --- 3. Shimmer Skeleton Loading Utilities --- */
-.skeleton-shimmer {
-    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-    background-size: 200% 100%;
-    animation: shimmerSlide 1.5s infinite;
-}
-
-html.dark .skeleton-shimmer {
-    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-    background-size: 200% 100%;
-}
-
-@keyframes shimmerSlide {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* --- 4. Lazy Image Transition Utilities --- */
+/* --- 3. Clean Static Image Utilities --- */
 img.lazy-img-init {
     opacity: 0;
-    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s ease;
-    will-change: opacity, transform;
+    transition: opacity 0.25s ease-in-out;
 }
 
 img.lazy-img-loaded {
@@ -227,28 +209,10 @@ img.lazy-img-loaded {
 }
 
 img.lazy-img-error {
-    opacity: 0.85;
-    filter: grayscale(20%);
+    opacity: 0.9;
 }
 
 .lazy-img-wrapper {
     position: relative;
     overflow: hidden;
-    background-color: #f1f5f9;
-}
-
-.lazy-img-wrapper:not(.loaded) {
-    background: linear-gradient(90deg, #f1f5f9 20%, #e2e8f0 50%, #f1f5f9 80%);
-    background-size: 200% 100%;
-    animation: shimmerSlide 1.2s infinite ease-in-out;
-}
-
-html.dark .lazy-img-wrapper {
-    background-color: #1e293b;
-}
-
-html.dark .lazy-img-wrapper:not(.loaded) {
-    background: linear-gradient(90deg, #1e293b 20%, #334155 50%, #1e293b 80%);
-    background-size: 200% 100%;
-    animation: shimmerSlide 1.2s infinite ease-in-out;
 }
