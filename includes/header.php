@@ -62,13 +62,21 @@ $default_seo = $seo_defaults[$current_page] ?? [
 ];
 
 $effective_title = isset($page_title) ? $page_title : $default_seo['title'];
-$effective_desc = isset($page_description) ? $page_description : $default_seo['desc'];
+$effective_desc = isset($page_description) ? $page_description : (isset($page_desc) ? $page_desc : $default_seo['desc']);
 
 $proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'] ?? 'asena.company';
 $effective_canonical = isset($canonical_url) ? $canonical_url : "$proto://$host" . strtok($_SERVER['REQUEST_URI'], '?');
 $effective_og_image = isset($og_image) ? (strpos($og_image, 'http') === 0 ? $og_image : "$proto://$host/" . ltrim($og_image, '/')) : "$proto://$host/assets/images/og-asena.png";
+$effective_og_type = $og_type ?? 'website';
+
+// Dynamic Geo & Local Search Variables
+$effective_geo_region = $geo_region ?? 'IR-07';
+$effective_geo_placename = $geo_placename ?? 'تهران, Iran';
+$effective_geo_position = $geo_position ?? '35.7350;51.4110';
+$effective_geo_icbm = $geo_icbm ?? '35.7350, 51.4110';
 ?>
+
 <!DOCTYPE html>
 <html dir="rtl" lang="fa" data-edition="standard">
 <head>
@@ -80,9 +88,13 @@ $effective_og_image = isset($og_image) ? (strpos($og_image, 'http') === 0 ? $og_
     <meta name="google-site-verification" content="google82c161050c864f06">
     <link rel="canonical" href="<?php echo htmlspecialchars($effective_canonical); ?>">
     <link rel="alternate" hreflang="fa-IR" href="<?php echo htmlspecialchars($effective_canonical); ?>">
-    <link rel="alternate" hreflang="en" href="<?php echo htmlspecialchars($effective_canonical); ?>">
-    <meta name="geo.region" content="IR">
-    <meta name="geo.placename" content="Iran">
+    <link rel="alternate" hreflang="x-default" href="<?php echo htmlspecialchars($effective_canonical); ?>">
+    <!-- Geo / Local Search Meta Tags (Iran Nationwide & Local Packs) -->
+    <meta name="geo.region" content="<?php echo htmlspecialchars($effective_geo_region); ?>">
+    <meta name="geo.placename" content="<?php echo htmlspecialchars($effective_geo_placename); ?>">
+    <meta name="geo.position" content="<?php echo htmlspecialchars($effective_geo_position); ?>">
+    <meta name="ICBM" content="<?php echo htmlspecialchars($effective_geo_icbm); ?>">
+
 
     <!-- Safari / Apple & PWA Mobile App Support -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -102,7 +114,7 @@ $effective_og_image = isset($og_image) ? (strpos($og_image, 'http') === 0 ? $og_
     <link rel="preload" href="/assets/fonts/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2" as="font" type="font/woff2" crossorigin>
     
     <!-- Open Graph / Facebook / Telegram -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="<?php echo htmlspecialchars($effective_og_type); ?>">
     <meta property="og:site_name" content="ASENA | کلینیک و پت‌شاپ تخصصی">
     <meta property="og:locale" content="fa_IR">
     <meta property="og:title" content="<?php echo htmlspecialchars($effective_title); ?>">
@@ -111,6 +123,11 @@ $effective_og_image = isset($og_image) ? (strpos($og_image, 'http') === 0 ? $og_
     <meta property="og:image" content="<?php echo htmlspecialchars($effective_og_image); ?>">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <?php if (isset($product_price_irr)): ?>
+    <meta property="product:price:amount" content="<?php echo htmlspecialchars($product_price_irr); ?>">
+    <meta property="product:price:currency" content="IRR">
+    <?php endif; ?>
+
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -124,27 +141,84 @@ $effective_og_image = isset($og_image) ? (strpos($og_image, 'http') === 0 ? $og_
     <?php echo $page_schema; ?>
     </script>
     <?php else: ?>
-    <!-- Default Organization & Breadcrumb Schema -->
+    <!-- Master Platform Schema.org Graph (WebSite Sitelinks Searchbox, Organization & Breadcrumbs) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
+      "@graph": [
         {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "خانه",
-          "item": "<?php echo $proto . '://' . $host; ?>/"
+          "@type": "WebSite",
+          "@id": "<?php echo $proto . '://' . $host; ?>/#website",
+          "url": "<?php echo $proto . '://' . $host; ?>/",
+          "name": "آسنا | ASENA",
+          "description": "سامانه جامع خدمات دامپزشکی، نوبت‌دهی آنلاین و خرید ملزومات پت با تحویل دوره‌ای",
+          "inLanguage": "fa-IR",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "<?php echo $proto . '://' . $host; ?>/shop.php?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
         },
         {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "<?php echo htmlspecialchars($effective_title); ?>",
-          "item": "<?php echo htmlspecialchars($effective_canonical); ?>"
+          "@type": "Pharmacy",
+          "@id": "<?php echo $proto . '://' . $host; ?>/#organization",
+          "name": "داروخانه تخصصی دامپزشکی و سامانه سلامت آسنا",
+          "alternateName": "ASENA Pet Care & Veterinary Network",
+          "url": "<?php echo $proto . '://' . $host; ?>/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "<?php echo $proto . '://' . $host; ?>/assets/images/logo.png"
+          },
+          "telephone": "+98-914-667-6978",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+98-914-667-6978",
+            "contactType": "customer service",
+            "areaServed": "IR",
+            "availableLanguage": ["Persian", "fa"]
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "خیابان ولیعصر، بالاتر از پارک ساعی",
+            "addressLocality": "تهران",
+            "addressRegion": "تهران",
+            "addressCountry": "IR"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 35.7350,
+            "longitude": 51.4110
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "Iran"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "<?php echo htmlspecialchars($effective_canonical); ?>#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "خانه",
+              "item": "<?php echo $proto . '://' . $host; ?>/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "<?php echo htmlspecialchars($effective_title); ?>",
+              "item": "<?php echo htmlspecialchars($effective_canonical); ?>"
+            }
+          ]
         }
       ]
     }
     </script>
+
     <?php endif; ?>
 
     <!-- Fonts & Icons -->

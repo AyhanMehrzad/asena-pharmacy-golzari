@@ -12,18 +12,40 @@ Allow: /*.webp$
 Allow: /*.svg$
 Allow: /*.woff2$
 
-# AI / Search Crawlers
+# Dedicated Rules for Generative AI Search Engines (GEO)
 User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: ChatGPT-User
 Allow: /
 
 User-agent: PerplexityBot
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 
 User-agent: ClaudeBot
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 
-User-agent: Googlebot
+User-agent: Google-Extended
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Applebot-Extended
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: CCBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
 
 # Disallow Internal & Sensitive Paths
 Disallow: /admin/

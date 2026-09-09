@@ -1088,7 +1088,9 @@ function resetInterval() {
   "url": "http://localhost/asena/asena-pharmacy/",
   "logo": "http://localhost/asena/asena-pharmacy/assets/images/logo.png",
   "description": "مرجع تخصصی خرید آنلاین داروهای دامپزشکی، مکمل‌ها، واکسن‌ها و ملزومات حیوانات خانگی با تاییدیه دکتر داروساز و ارسال زنجیره سرد",
-  "telephone": "+98-21-88888888",
+  "telephone": "+98-914-667-6978",
+  "currenciesAccepted": "IRR",
+  "paymentAccepted": "Cash, Credit Card, Online",
   "priceRange": "$$",
   "address": {
     "@type": "PostalAddress",
@@ -1097,6 +1099,17 @@ function resetInterval() {
     "addressRegion": "تهران",
     "addressCountry": "IR"
   },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 35.7350,
+    "longitude": 51.4110
+  },
+  "hasMap": "https://maps.google.com/?q=35.7350,51.4110",
+  "areaServed": {
+    "@type": "Country",
+    "name": "Iran"
+  },
+
   "openingHoursSpecification": [
     {
       "@type": "OpeningHoursSpecification",

@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/header.php';
+require_once 'includes/db.php';
 
 $product_id = isset($_GET['id']) && is_numeric($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -105,7 +105,18 @@ $is_autoship = !empty($product['is_autoship']);
 $autoship_discount = $product['autoship_discount'] ?? 10;
 $base_price = $product['discount_price'] ?? $product['price'];
 $autoship_price = round($base_price * (100 - $autoship_discount) / 100);
+
+// Dynamic On-Page SEO, OpenGraph & GEO for Pharmacy Product Details
+$page_title = htmlspecialchars($product['name']) . ' | خرید آنلاین با تایید نسخه و ارسال سرد - آسنا';
+$clean_desc = mb_substr(strip_tags($product['description'] ?? $product['name']), 0, 150, 'UTF-8');
+$page_description = "خرید آنلاین داروی تخصصی {$product['name']} با تایید نسخه دکتر داروساز، ضمانت اصالت کالا و ارسال زنجیره سرد در داروخانه دامپزشکی آسنا.";
+$og_image = !empty($product['image_url']) ? $product['image_url'] : 'assets/images/pharma-default.svg';
+$og_type = 'product';
+$product_price_irr = ($product['discount_price'] ?: $product['price']) * 10;
+
+require_once 'includes/header.php';
 ?>
+
 
 <main class="max-w-container-max mx-auto overflow-hidden py-8 lg:py-12 px-margin-desktop min-h-[70vh]">
     
@@ -466,7 +477,26 @@ function addToCart(btn, productId) {
       "@type": "Pharmacy",
       "name": "داروخانه آنلاین و تخصصی آسنا"
     }
-  }<?php if(!empty($product['rating_cache']) && $product['rating_cache'] > 0): ?>,
+  ,
+    "hasMerchantReturnPolicy": {
+      "@type": "MerchantReturnPolicy",
+      "applicableCountry": "IR",
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "merchantReturnDays": 7
+    },
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingRate": {
+        "@type": "MonetaryAmount",
+        "value": "0",
+        "currency": "IRR"
+      },
+      "shippingDestination": {
+        "@type": "DefinedRegion",
+        "addressCountry": "IR"
+      }
+    }
+}<?php if(!empty($product['rating_cache']) && $product['rating_cache'] > 0): ?>,
   "aggregateRating": {
     "@type": "AggregateRating",
     "ratingValue": "<?php echo $product['rating_cache']; ?>",
