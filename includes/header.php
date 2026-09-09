@@ -230,8 +230,6 @@ $effective_geo_icbm = $geo_icbm ?? '35.7350, 51.4110';
     <script src="assets/js/tailwindcss-cdn.js"></script>
     <script src="assets/js/tailwind-config.js?v=<?php echo time(); ?>"></script>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/paw-loader.css">
-    <script src="assets/js/paw-loader.js" defer></script>
 </head>
 <body class="bg-background text-on-background overflow-x-hidden">
 <?php
